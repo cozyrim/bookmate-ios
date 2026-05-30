@@ -52,31 +52,6 @@
 			path = "BookMate-miniUITests";
 			sourceTree = "<group>";
 		};
-		E2870B912FBF912500973988 /* Book */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Book;
-			sourceTree = "<group>";
-		};
-		E2950C672FB4759400ADB181 /* Word */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Word;
-			sourceTree = "<group>";
-		};
-		E2A46CB42FB2FE660094CD4E /* Search */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Search;
-			sourceTree = "<group>";
-		};
-		E2D8001C2FB3A4C50008347A /* Components */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Components;
-			sourceTree = "<group>";
-		};
-		E2D8FFB12FB3988C0008347A /* Model */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Model;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,12 +87,7 @@
 				E286E4A12FB1B48600F1715A /* BookMate-miniUITests */,
 				E2B000022FB5000000000002 /* Config */,
 				E286E4862FB1B48400F1715A /* Products */,
-				E2A46CB42FB2FE660094CD4E /* Search */,
 				E2A46C952FB1D7640094CD4E /* Assets.xcassets */,
-				E2D8FFB12FB3988C0008347A /* Model */,
-				E2D8001C2FB3A4C50008347A /* Components */,
-				E2950C672FB4759400ADB181 /* Word */,
-				E2870B912FBF912500973988 /* Book */,
 			);
 			sourceTree = "<group>";
 		};
@@ -157,11 +127,6 @@
 			);
 			fileSystemSynchronizedGroups = (
 				E286E4872FB1B48400F1715A /* BookMate-mini */,
-				E2870B912FBF912500973988 /* Book */,
-				E2950C672FB4759400ADB181 /* Word */,
-				E2A46CB42FB2FE660094CD4E /* Search */,
-				E2D8001C2FB3A4C50008347A /* Components */,
-				E2D8FFB12FB3988C0008347A /* Model */,
 			);
 			name = "BookMate-mini";
 			packageProductDependencies = (

@@ -24,58 +24,58 @@ struct BookSearchView: View {
 //    bookSearchResults = 결과 저장
 //    @Published = 바뀐 걸 View에 알림
 //    ForEach = 결과 개수만큼 카드 그림
+    let onFinishRegistration: (Int) -> Void
     
+    private func finishRegistration(to tab: Int) {
+        onFinishRegistration(tab)
+    }
     
     
     
     var body: some View {
-        NavigationStack {
+        ZStack{
+            Color.skyblue
+                .ignoresSafeArea()
             
-            ZStack{
-                Color.skyblue
-                    .ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 12) {
+                SearchTextField(
+                    searchText: $query,
+                    placeholder: "책 제목 또는 저자를 입력하세요."
+                ) { // 버튼이나 텍스트 필드의 클로저는 기본적으로 async가 아니라서 비동기 작업을 시작하려면 Task로 감싼다
+                    Task{
+                        await viewModel.searchBooks(query: query)
+                    }
+                }
+                .padding(.horizontal)
+                .onChange(of: query) { _, newValue in
+                    searchTask?.cancel()
+                    
+                    let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    guard trimmed.count >= 2 else {
+                        viewModel.bookSearchResults = []
+                        viewModel.bookSearchErrorMessage = nil
+                        return
+                    }
+                    
+                    searchTask = Task {
+                        try? await Task.sleep(nanoseconds: 200_000_000)
+                        
+                        if Task.isCancelled { return }
+                        
+                        await viewModel.searchBooks(query: trimmed)
+                    }
+                }
+                resultTitleArea
                 
-                VStack(alignment: .leading, spacing: 12) {
-                    SearchTextField(
-                        searchText: $query,
-                        placeholder: "책 제목 또는 저자를 입력하세요."
-                    ) { // 버튼이나 텍스트 필드의 클로저는 기본적으로 async가 아니라서 비동기 작업을 시작하려면 Task로 감싼다
-                        Task{
-                            await viewModel.searchBooks(query: query)
-                        }
-                    }
-                    .padding(.horizontal)
-                    .onChange(of: query) { _, newValue in
-                        searchTask?.cancel()
-                        
-                        let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                        
-                        guard trimmed.count >= 2 else {
-                            viewModel.bookSearchResults = []
-                            viewModel.bookSearchErrorMessage = nil
-                            return
-                        }
-                        
-                        searchTask = Task {
-                            try? await Task.sleep(nanoseconds: 200_000_000)
-                            
-                            if Task.isCancelled { return }
-                            
-                            await viewModel.searchBooks(query: trimmed)
-                        }
-                    }
-                    resultTitleArea
-                    
-                    resultArea
-                    
-                    manualEntryArea
-                    
-                    Spacer(minLength: 0)
-                }
-                        .padding(.horizontal)
-                }
+                resultArea
+                
+                manualEntryArea
+                
+                Spacer(minLength: 0)
             }
-        
+            .padding(.horizontal)
+        }
     }
     private var resultTitleArea: some View {
         HStack {
@@ -101,7 +101,7 @@ struct BookSearchView: View {
                         let draft = BookRegistrationDraft(kakaoBook: kakaoBook)
                         
                         NavigationLink {
-                            BookManualEntryView(viewModel: viewModel, initialDraft: draft, selectedTab: $selectedTab)
+                            BookManualEntryView(viewModel: viewModel, initialDraft: draft, selectedTab: $selectedTab, onFinishRegistration: finishRegistration)
                         } label: {
                             BookSearchResultRow(imageName: draft.imageName, title: draft.title, author: draft.author)
                         }
@@ -121,7 +121,7 @@ struct BookSearchView: View {
                 
                 
                 NavigationLink {
-                    BookManualEntryView(viewModel: viewModel, selectedTab: $selectedTab)
+                    BookManualEntryView(viewModel: viewModel, selectedTab: $selectedTab, onFinishRegistration: finishRegistration)
                 } label: {
                     Text("직접 입력해서 등록하기")
                         .fontWeight(.semibold)
@@ -139,5 +139,5 @@ struct BookSearchView: View {
 
 
 #Preview {
-    BookSearchView(viewModel: BookMateViewModel(), selectedTab: .constant(0))
+    BookSearchView(viewModel: BookMateViewModel(), selectedTab: .constant(0), onFinishRegistration: { _ in})
 }

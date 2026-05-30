@@ -16,7 +16,7 @@ final class BookMateViewModel: ObservableObject {
         case savedWords
     }
 
-    @Published var books: [Book] = Book.dummyBooks
+    @Published var books: [Book] = []
     // 앱에서 보여줄 책 목록. 지금은 더미 데이터지만, 나중에는 서버에서 받아온 책 목록으로 바뀔 수 있음.
 
     @Published var savedWords: [Word] = []
@@ -44,6 +44,7 @@ final class BookMateViewModel: ObservableObject {
     // 사전 검색 모드에서 검색어를 입력하는 동안 TextField 아래에 보여줄 후보 단어 목록.
     
     @Published var bookSearchResults: [KakaoBook] = []
+    // 새 책 등록할 때 카카오 책 검색에만 관련된 상태.
     
     @Published var isBookSearchLoading = false
     
@@ -54,6 +55,10 @@ final class BookMateViewModel: ObservableObject {
     
     
     private let wordAPIService = WordAPIService()
+    
+    private var isRunningForPreview: Bool {
+        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+    }
     
     private var apiKey: String {
         guard let key = Bundle.main.object(forInfoDictionaryKey: "STDICT_API_KEY") as? String else {
@@ -278,7 +283,7 @@ final class BookMateViewModel: ObservableObject {
                 exampleSentence: exampleSentence?.isEmpty == true ? nil : exampleSentence,
                 targetCode: dictionarySearchResult.targetCode
             )
-            savedWords.append(savedWord)
+            savedWords.insert(savedWord, at: 0)
             errorMessage = nil
             return true
         } catch {
@@ -301,6 +306,19 @@ final class BookMateViewModel: ObservableObject {
         } catch {
             errorMessage = "저장한 단어를 불러오지 못했습니다."
             print("저장 단어 조회 실패:", error)
+        }
+    }
+
+    // 저장한 책 불러오기
+    func loadBooks() async {
+        do {
+            let fetchedBooks = try await bookAPIService.fetchBooks()
+
+            if !fetchedBooks.isEmpty {
+                books = fetchedBooks
+            }
+        } catch {
+            print("책 목록 조회 실패:", error)
         }
     }
     
@@ -331,11 +349,106 @@ final class BookMateViewModel: ObservableObject {
             title: draft.title,
             author: draft.author,
             imageName: draft.imageName,
+            category: draft.category,
             progress: draft.progress
         )
         books.insert(savedBook, at: 0)
         return savedBook
     }
+    
+    // 책 삭제
+    func deleteBook(_ book: Book) async -> Bool {
+        do {
+            try await bookAPIService.deleteBook(id: book.id)
+            
+            books.removeAll { $0.id == book.id }
+            savedWords.removeAll { $0.bookId == book.id}
+            
+            return true
+        } catch {
+            errorMessage = "책 삭제에 실패했습니다."
+            print("책 삭제 실패:", error)
+            return false
+        }
+    }
+    
+    // 단어 삭제
+    func deleteWord(_ word: Word) async -> Bool {
+        do {
+            try await wordAPIService.deleteWord(id: word.id)
+            
+            savedWords.removeAll { $0.id == word.id }
+            savedWordSearchResults.removeAll { $0.id == word.id }
+            
+            return true
+        } catch {
+            errorMessage = "단어 삭제에 실패했습니다."
+            print("단어 삭제 실패:",  error)
+            return false
+        }
+    }
+    
+    // 책 수정
+    func updateBook(_ book: Book) async -> Bool {
+        if isRunningForPreview {
+                if let index = books.firstIndex(where: { $0.id == book.id }) {
+                    books[index] = book
+                }
+                return true
+            }
+        
+        do {
+            let updateBook = try await bookAPIService.updateBook(book)
+            
+            if let index = books.firstIndex(where: {$0.id == updateBook.id }) {
+                books[index] = updateBook
+            }
+
+              return true
+        } catch {
+            errorMessage = "책 수정에 실패했습니다."
+            print("책 수정 실패:", error)
+            return false
+        }
+    }
+    
+    // 단어 수정
+    func updateWord(_ word: Word) async -> Bool {
+        do {
+            let updateWord = try await wordAPIService.updateWord(word)
+            
+            if let index = savedWords.firstIndex(where: { $0.id == updateWord.id }) {
+                savedWords[index] = updateWord
+            }
+                
+            if let index = savedWordSearchResults.firstIndex(where: { $0.id == updateWord.id }) {
+                savedWordSearchResults[index] = updateWord
+            }
+            
+            return true
+        } catch {
+                errorMessage = "단어 수정에 실패했습니다."
+                print("단어 수정 실패:", error)
+                return false
+        }
+    }
+    
+    // 다른 책으로 이동 (bookId 수정)
+    func moveWord(_ word: Word, to book: Book) async -> Bool {
+        let movedWord = Word(
+            id: word.id,
+            text: word.text,
+            meaning: word.meaning,
+            partOfSpeech: word.partOfSpeech,
+            exampleSentence: word.exampleSentence,
+            targetCode: word.targetCode,
+            bookId: book.id
+        )
+        
+        return await updateWord(movedWord)
+    }
+    
+    
     
     
 }

@@ -7,6 +7,53 @@
 
 import Foundation
 
+private struct WordCreateRequest: Encodable {
+    let bookId: UUID
+    let text: String
+    let meaning: String
+    let partOfSpeech: String
+    let exampleSentence: String?
+    let targetCode: String
+}
+
+private struct WordUpdateRequest: Encodable {
+    let bookId: UUID
+    let text: String
+    let meaning: String
+    let partOfSpeech: String
+    let exampleSentence: String?
+    let targetCode: String
+}
+
+
+private struct WordResponse: Decodable {
+    let id: UUID
+    let bookId: UUID
+    let text: String
+    let meaning: String
+    let partOfSpeech: String?
+    let exampleSentence: String?
+    let createdAt: String?
+    let targetCode: String?
+    
+    func toWord() -> Word {
+        Word(
+            id: id,
+            text: text,
+            meaning: meaning,
+            partOfSpeech: partOfSpeech ?? "",
+            exampleSentence: exampleSentence,
+            targetCode: targetCode ?? "",
+            bookId: bookId
+        )
+    }
+}
+
+enum WordAPIError: Error {
+    case invalidResponse
+    case badStatusCode(Int)
+}
+
 struct WordAPIService {
     private let baseURL = URL(string: "http://localhost:8080")!
     
@@ -79,6 +126,54 @@ struct WordAPIService {
         return wordResponse.toWord()
     }
     
+    // 서버에 단어 수정하기
+    func updateWord(_ word: Word) async throws -> Word {
+        let url = baseURL
+            .appendingPathComponent("api")
+            .appendingPathComponent("words")
+            .appendingPathComponent(word.id.uuidString)
+        
+        let requestBody = WordUpdateRequest(
+            bookId: word.bookId,
+            text: word.text,
+            meaning: word.meaning,
+            partOfSpeech: word.partOfSpeech,
+            exampleSentence: word.exampleSentence,
+            targetCode: word.targetCode
+        )
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(requestBody)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response)
+        
+        let wordResponse = try JSONDecoder().decode(WordResponse.self, from: data)
+        return wordResponse.toWord()
+    }
+    
+    // 서버에 단어 삭제하기
+    func deleteWord(id: UUID) async throws {
+        let url = baseURL
+            .appendingPathComponent("api")
+            .appendingPathComponent("words")
+            .appendingPathComponent(id.uuidString)
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try validate(response)
+        
+    }
+    
+    
+    
+    
+    
+    
     // 서버 응답이 성공인지 확인하기
     private func validate(_ response: URLResponse) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -91,38 +186,3 @@ struct WordAPIService {
     }
 }
 
-private struct WordCreateRequest: Encodable {
-    let bookId: UUID
-    let text: String
-    let meaning: String
-    let partOfSpeech: String
-    let exampleSentence: String?
-    let targetCode: String
-}
-
-private struct WordResponse: Decodable {
-    let id: UUID
-    let bookId: UUID
-    let text: String
-    let meaning: String
-    let partOfSpeech: String?
-    let exampleSentence: String?
-    let createdAt: String?
-    let targetCode: String?
-    
-    func toWord() -> Word {
-        Word(
-            text: text,
-            meaning: meaning,
-            partOfSpeech: partOfSpeech ?? "",
-            exampleSentence: exampleSentence,
-            targetCode: targetCode ?? "",
-            bookId: bookId
-        )
-    }
-}
-
-enum WordAPIError: Error {
-    case invalidResponse
-    case badStatusCode(Int)
-}

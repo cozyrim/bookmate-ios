@@ -12,6 +12,7 @@ struct Book: Identifiable, Hashable {
     let title: String
     let author: String
     let imageName: String
+    let category: String
     let progress: Double
     
     init(
@@ -19,12 +20,14 @@ struct Book: Identifiable, Hashable {
         title: String,
         author: String,
         imageName: String,
+        category: String = "카테고리 선택",
         progress: Double
     ) {
         self.id = id
         self.title = title
         self.author = author
         self.imageName = imageName
+        self.category = category
         self.progress = progress
     }
 }

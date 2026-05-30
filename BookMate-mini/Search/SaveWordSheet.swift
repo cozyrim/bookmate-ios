@@ -20,7 +20,7 @@ struct SaveWordSheet: View {
     
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 28) {
+        VStack(alignment: .leading, spacing: 20) {
             Text("단어 저장")
                 .font(.headline)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -45,23 +45,36 @@ struct SaveWordSheet: View {
             
             VStack(alignment: .leading, spacing: 12){
                 Text("어느 책에 저장할까요?")
-                    .font(.caption2)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.black.opacity(0.72))
                 
-                HStack{ // 이미지 크기가 안맞아서 나중에 무조건 똑같게 규격 갖춰야할듯
-                    ForEach(viewModel.books) { book in
-                        Button{
-                            selectedBookId = selectedBookId == book.id ? nil : book.id
-                        } label: {
-                            BookCoverCell(isSelected: selectedBookId == book.id, imageName: book.imageName)
+                if viewModel.books.isEmpty {
+                    Text("먼저 책을 등록해 주세요.")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.vertical, 12)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 14) {
+                            ForEach(viewModel.books) { book in
+                                Button {
+                                    selectedBookId = selectedBookId == book.id ? nil : book.id
+                                } label: {
+                                    selectableBookCover(book)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                        .buttonStyle(.plain)
+                        .padding(.vertical, 4)
                     }
                 }
             }
-            
             VStack(alignment: .leading, spacing: 12){
                 Text("책 속 문장")
-                    .font(.caption2)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.black.opacity(0.72))
                 
                 TextField(
                     "",
@@ -73,7 +86,7 @@ struct SaveWordSheet: View {
                 )
                 .lineLimit(3...5)
                 .padding(24)
-                .frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading)
+                .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
                 .background(Color.peach3.opacity(0.7))
                 .clipShape(RoundedRectangle(cornerRadius: 28))
                 .overlay(RoundedRectangle(cornerRadius: 28)
@@ -93,7 +106,7 @@ struct SaveWordSheet: View {
             HStack{
                 
                 Button {
-                    print("나중에")
+                    dismiss()
                 } label: {
                     HStack(spacing: 8) {
                         
@@ -123,6 +136,10 @@ struct SaveWordSheet: View {
                         let success = await viewModel.saveDictionaryResult(to: selectedBookId, exampleSentence: bookComment)
                         
                         if success {
+                            viewModel.searchText = ""
+                            viewModel.dictionarySearchResult = nil
+                            viewModel.dictionarySuggestions = []
+                            
                             dismiss()
                             onSaveComplete()
                         } else{
@@ -135,6 +152,29 @@ struct SaveWordSheet: View {
         }
         .padding(24)
         
+    }
+
+    private func selectableBookCover(_ book: Book) -> some View {
+        let isSelected = selectedBookId == book.id
+
+        return VStack(spacing: 8) {
+            BookCoverCell(
+                isSelected: isSelected,
+                imageName: book.imageName,
+                width: 54
+            )
+            .padding(.trailing, -12)
+            .frame(width: 64, height: 86)
+
+            Text(book.title)
+                .font(.caption)
+                .fontWeight(isSelected ? .bold : .medium)
+                .foregroundStyle(isSelected ? Color("Brown") : .black.opacity(0.66))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(width: 78, height: 18, alignment: .center)
+        }
+        .frame(width: 82)
     }
 
 }

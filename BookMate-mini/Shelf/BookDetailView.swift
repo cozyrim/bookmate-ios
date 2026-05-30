@@ -61,7 +61,7 @@ struct BookDetailView: View {
                 
                 ForEach(savedWordsForBook) { word in
                     NavigationLink{
-                        WordDetails(word: word)
+                        WordDetailsView(viewModel: viewModel, word: word)
                     } label: {
                         BookSavedWordCell(text: word.text, partOfSpeech: word.partOfSpeech, meaning: word.meaning)
                     }

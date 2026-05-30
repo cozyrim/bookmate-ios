@@ -11,6 +11,10 @@ struct WordCardView: View {
 //    let text: String
 //    let meaning: String
     let word: Word
+//    
+//    let onEdit: () -> Void
+//    let onDelete: () -> Void
+//    let onMove: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -27,6 +31,14 @@ struct WordCardView: View {
                     .padding(.vertical, 3)
                     .background(Color("Green"))
                     .clipShape(RoundedRectangle(cornerRadius: 6))
+                
+//                MoreOptionsMenu(
+//                    onEdit: onEdit,
+//                    onDelete: onDelete,
+//                    onMove: onMove
+//                )
+                
+                
             }
             //            .padding()
             Text("\(word.meaning)")

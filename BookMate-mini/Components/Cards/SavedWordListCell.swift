@@ -1,0 +1,207 @@
+//
+//  SavedWordListCell.swift
+//  BookMate
+//
+//  Created by 한채림 on 5/13/26.
+//
+
+import SwiftUI
+
+struct SavedWordListCell: View {
+    let text: String
+    let partOfSpeech: String
+    let meaning: String
+    let title: String
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+    let onMove: () -> Void
+
+//    var body: some View {
+//        VStack(alignment: .leading, spacing: 12) {
+//            HStack(alignment: .center, spacing: 10) {
+//                Text("\(text)")
+//                    .font(.title)
+//                    .fontWeight(.bold)
+//                
+//                Text("\(partOfSpeech)")
+//                    .font(.caption2)
+//                    .foregroundStyle(Color("Brown"))
+//                    .padding(.horizontal, 10)
+//                    .padding(.vertical, 6)
+//                    .background(Color(.systemGray5))
+//                    .clipShape(RoundedRectangle(cornerRadius: 12))
+//                
+//                Spacer()
+//                
+//                MoreOptionsMenu(
+//                    onEdit:onEdit,
+//                    onDelete: onDelete
+//                    )
+//                
+//            }
+//
+//            Text("\(meaning)")
+//                .font(.body)
+//
+//            Divider()
+//            
+//            HStack {
+//                Image(systemName: "book")
+//                Text("\(title)")
+//            }
+//            .font(.caption)
+//            .fontWeight(.semibold)
+//            .foregroundStyle(Color("GreenHeavy"))
+//            .padding(.horizontal)
+//            .padding(.vertical, 8)
+//            .background(Color("GreenLight"))
+//            .clipShape(Capsule())
+//        }
+//        .padding(20)
+//        .frame(maxWidth: .infinity)
+////        .background(
+////            RoundedRectangle(cornerRadius: 28)
+////                .fill(Color.white)
+////        )
+////        .padding(.horizontal, 28)
+//        
+//        .background {
+//            ZStack {
+//                RoundedRectangle(cornerRadius: 28)
+//                    .fill(.ultraThinMaterial)
+//
+//                RoundedRectangle(cornerRadius: 28)
+//                    .fill(
+//                        LinearGradient(
+//                            colors: [
+//                                Color.white.opacity(0.45),
+//                                Color(red: 0.86, green: 0.94, blue: 1.0).opacity(0.22),
+//                                Color(red: 0.72, green: 0.82, blue: 0.91).opacity(0.18)
+//                            ],
+//                            startPoint: .topLeading,
+//                            endPoint: .bottomTrailing
+//                        )
+//                    )
+//            }
+//        }
+//        .overlay {
+//            RoundedRectangle(cornerRadius: 28)
+//                .stroke(Color.white.opacity(0.55), lineWidth: 1)
+//        }
+//        .padding(.horizontal, 28)
+//        .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+//    }
+//}
+
+    var body: some View {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(text)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.black.opacity(0.86))
+
+                    Text(partOfSpeech)
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.black.opacity(0.45))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+//                        .background(Color.white.opacity(0.32))
+                        .background(Color.blue.opacity(0.11))
+                        .clipShape(Capsule())
+
+                    Spacer()
+
+                    MoreOptionsMenu(
+                        onEdit: onEdit,
+                        onDelete: onDelete,
+                        onMove: onMove
+                    )
+                }
+
+                Text(meaning)
+                    .font(.callout)
+                    .foregroundStyle(.black.opacity(0.72))
+                    .lineSpacing(4)
+                    .lineLimit(2)
+
+                HStack(spacing: 6) {
+                    Image(systemName: "book")
+                        .font(.caption2)
+
+                    Text(title)
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .lineLimit(1)
+                }
+                .foregroundStyle(Color("GreenHeavy").opacity(0.85))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color("Green").opacity(0.55))
+                .clipShape(Capsule())
+                .padding(.top, 2)
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 17)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 26, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.72),
+                                        Color.white.opacity(0.42),
+                                        Color(red: 0.92, green: 0.98, blue: 1.0).opacity(0.32)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.9),
+                                Color.white.opacity(0.35)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+            .shadow(color: .white.opacity(0.45), radius: 10, x: -4, y: -4)
+            .shadow(color: .black.opacity(0.035), radius: 18, x: 0, y: 10)
+            .padding(.horizontal, 24)
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+#Preview {
+    SavedWordListCell(
+        text: Word.sampleWords[0].text,
+        partOfSpeech: Word.sampleWords[0].partOfSpeech,
+        meaning: Word.sampleWords[0].meaning,
+        title: Book.dummyBooks[0].title,
+        onEdit: {
+            print("수정")
+        },
+        onDelete: {
+            print("삭제")
+        }) {
+            print("수정")
+        }
+}

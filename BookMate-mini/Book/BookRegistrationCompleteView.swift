@@ -12,7 +12,10 @@ struct BookRegistrationCompleteView: View {
     let draft: BookRegistrationDraft
     let book: Book
     @Binding var selectedTab: Int
+    let onFinishRegistration: (Int) -> Void
     @ViewBuilder // 여러 종류의 View를 조건에 따라 반환할 수 있게 해주는 도구
+    
+    
     private var coverImage: some View{
         if let url = URL(string: book.imageName),
             book.imageName.hasPrefix("http") {
@@ -90,7 +93,7 @@ struct BookRegistrationCompleteView: View {
                     Button{
                         viewModel.searchMode = .dictionary
                         viewModel.searchText = ""
-                        selectedTab = 0
+                        onFinishRegistration(0)
                     } label: {
                         Label("단어 검색 시작하기", systemImage: "magnifyingglass")
                             .font(.callout)
@@ -103,7 +106,7 @@ struct BookRegistrationCompleteView: View {
                             .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
                     }
                     Button{
-                        selectedTab = 1
+                        onFinishRegistration(1)
                     } label: {
                         Text("내 책장으로 이동")
                             .font(.callout)
@@ -132,9 +135,9 @@ struct BookRegistrationCompleteView: View {
             imageName: "책기본이미지",
             category: "인문"
         ),
-        book: Book.dummyBooks[0]
-        ,
-        selectedTab: .constant(0)
+        book: Book.dummyBooks[0],
+        selectedTab: .constant(0),
+        onFinishRegistration: { _ in }
     )
 }
 

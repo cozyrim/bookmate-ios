@@ -18,6 +18,7 @@ struct BookRegistrationPreviewView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
     
+    let onFinishRegistration: (Int) -> Void
     
     @ViewBuilder // 여러 종류의 View를 조건에 따라 반환할 수 있게 해주는 도구
     private var coverImage: some View{
@@ -168,7 +169,18 @@ struct BookRegistrationPreviewView: View {
                 
                 }
                 .navigationDestination(item: $savedBook) { book in
-                    BookRegistrationCompleteView(viewModel: viewModel, draft: draft, book: book, selectedTab: $selectedTab)
+                    BookRegistrationCompleteView(
+                        viewModel: viewModel,
+                        draft: draft,
+                        book: book,
+                        selectedTab: $selectedTab,
+                        onFinishRegistration: { tab in
+                            dismiss()
+                            DispatchQueue.main.async {
+                                onFinishRegistration(tab)
+                            }
+                        }
+                    )
                 }
                 .padding(.top,)
                 .padding()
@@ -190,6 +202,7 @@ struct BookRegistrationPreviewView: View {
                 category: "인문"
             ),
             viewModel: BookMateViewModel(),
-            selectedTab: .constant(0)
+            selectedTab: .constant(0),
+            onFinishRegistration: { _ in }
         )
 }

@@ -12,6 +12,10 @@ struct BookCardView: View {
     let title: String
     let author: String
     let progress: Double
+    
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+    
     var body: some View {
         HStack {
             BookCoverCell(imageName: imageName, width: 55)
@@ -22,9 +26,23 @@ struct BookCardView: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 
-                Text("\(title)")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                HStack{
+                    Text("\(title)")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    Spacer()
+                    
+                    MoreOptionsMenu(
+                                            editTitle: "책 수정하기",
+                                            deleteTitle: "책 삭제하기",
+                                            moveTitle: nil,
+                                            onEdit:onEdit,
+                                            onDelete: onDelete
+                                            )
+                    
+                       
+                }
                 
                 Text("\(author)")
                     .font(.caption2)
@@ -41,7 +59,7 @@ struct BookCardView: View {
                     }
                 
         }
-
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
         .padding(.horizontal)
         .frame(width: 350, height: 100)
@@ -54,5 +72,6 @@ struct BookCardView: View {
 }
 
 #Preview {
-    BookCardView(imageName: "싯타르타", title: "싯타르타", author: "해르만헤세 / 고전소설", progress: 0.65)
+    BookCardView(imageName: "싯타르타", title: "싯타르타", author: "해르만헤세 / 고전소설", progress: 0.65, onEdit: {},
+                 onDelete: {})
 }

@@ -10,6 +10,10 @@ import SwiftUI
 struct HomeSearchSection: View {
     @ObservedObject var viewModel: BookMateViewModel
     @State private var isShowingSearchResult = false
+    @State private var selectedWordToDelete: Word?
+    @State private var selectedWordToEdit: Word?
+    @State private var selectedWordToMove: Word?
+    @State private var isShowingDeleteAlert = false
     
     var body: some View {
         
@@ -150,13 +154,23 @@ struct HomeSearchSection: View {
                     let book = viewModel.books.first { $0.id == word.bookId}
                     
                     NavigationLink {
-                        WordDetails(word: word)
+                        WordDetailsView(viewModel: viewModel, word: word)
                     } label: {
                         SavedWordListCell(
                             text: word.text,
                             partOfSpeech: word.partOfSpeech,
                             meaning: word.meaning,
-                            title: book?.title ?? "책 정보 없음"
+                            title: book?.title ?? "책 정보 없음",
+                            onEdit: {
+                                selectedWordToEdit = word
+                            },
+                            onDelete: {
+                                selectedWordToDelete = word
+                                isShowingDeleteAlert = true
+                            },
+                            onMove: {
+                                    selectedWordToMove = word
+                                }
                         )
                     }
                     .buttonStyle(.plain)

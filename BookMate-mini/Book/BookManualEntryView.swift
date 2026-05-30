@@ -29,6 +29,8 @@ struct BookManualEntryView: View {
     private let headerTopPadding: CGFloat = 52
     private let bottomTabClearance: CGFloat = 96
     
+    let onFinishRegistration: (Int) -> Void
+    
     private var coverPlaceholder: some View {
         ZStack {
             RoundedRectangle(cornerRadius: coverCornerRadius)
@@ -92,11 +94,12 @@ struct BookManualEntryView: View {
         }
     }
     
-    init(viewModel: BookMateViewModel, initialDraft: BookRegistrationDraft? = nil, selectedTab: Binding<Int>) {
+    init(viewModel: BookMateViewModel, initialDraft: BookRegistrationDraft? = nil, selectedTab: Binding<Int>, onFinishRegistration: @escaping (Int) -> Void) {
         self.viewModel = viewModel
         self.initialDraft = initialDraft
         self._selectedTab = selectedTab
         // 검색 결과로 받은 책 정보를 새 책 등록 화면의 입력칸 초기값으로 넣어주는 코드
+        self.onFinishRegistration = onFinishRegistration
         
         // swiftui가 상태 관리, 처음 값을 정할 때 상자 직접 만듦
         // 값을 보관하고 바뀐 값을 감시하고 화면을 다시 그림
@@ -224,7 +227,18 @@ struct BookManualEntryView: View {
                         .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
                 }
                 .navigationDestination(item: $previewDraft){ draft in
-                    BookRegistrationPreviewView(draft: draft, viewModel: viewModel, selectedTab: $selectedTab)
+                    BookRegistrationPreviewView(
+                        draft: draft,
+                        viewModel: viewModel,
+                        selectedTab: $selectedTab,
+                        onFinishRegistration: { tab in
+                            dismiss()
+                            DispatchQueue.main.async {
+                                onFinishRegistration(tab)
+                            } // 나(BookManualEntryView)를 먼저 닫고,
+                            // 부모에게 "이제 tab으로 이동해줘"라고 전달
+                        }
+                    )
                 }
             }
             .padding(.horizontal, contentHorizontalPadding)
@@ -240,5 +254,6 @@ struct BookManualEntryView: View {
 
 
 #Preview {
-    BookManualEntryView(viewModel: BookMateViewModel(), selectedTab: .constant(0))
+    BookManualEntryView(viewModel: BookMateViewModel(), selectedTab: .constant(0), onFinishRegistration: { _ in }
+    )
 }

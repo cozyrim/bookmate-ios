@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @StateObject private var viewModel = BookMateViewModel()
+    @StateObject private var viewModel = BookMateViewModel() // StateObject는 처음 Viewmodel 만들고 소유
     @State var tabIndex = 0
-
+    
     var body: some View {
         TabView(selection: $tabIndex) {
             HomeView(viewModel: viewModel, selectedTab: $tabIndex)
@@ -45,6 +45,7 @@ struct MainTabView: View {
         }
         .tint(Color("PeachRed"))
         .task {
+            await viewModel.loadBooks()
             await viewModel.loadSavedWords()
         }
     }

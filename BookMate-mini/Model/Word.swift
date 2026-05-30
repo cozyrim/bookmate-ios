@@ -7,14 +7,32 @@
 
 import Foundation
 
-struct Word: Identifiable {
-    let id = UUID()
+struct Word: Identifiable, Hashable {
+    let id: UUID
     let text: String
     let meaning: String
     let partOfSpeech: String
     let exampleSentence: String?
     let targetCode: String
     let bookId: UUID
+    
+    init(
+        id: UUID = UUID(),
+        text: String,
+        meaning: String,
+        partOfSpeech: String,
+        exampleSentence: String?,
+        targetCode: String,
+        bookId: UUID
+    ) {
+        self.id = id
+        self.text = text
+        self.meaning = meaning
+        self.partOfSpeech = partOfSpeech
+        self.exampleSentence = exampleSentence
+        self.targetCode = targetCode
+        self.bookId = bookId
+    }
 }
 
 
