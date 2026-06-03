@@ -50,7 +50,7 @@ struct BookManualEntryView: View {
                 Text("커버 이미지 업로드")
                     .fontWeight(.semibold)
             }
-            .foregroundStyle(.gray)
+            .foregroundStyle(Color("TextMuted"))
         }
         .frame(width: coverWidth, height: coverHeight)
     }
@@ -111,7 +111,7 @@ struct BookManualEntryView: View {
     
     var body: some View {
         ZStack {
-            Color.skyblue
+            Color("AppBackground")
                 .ignoresSafeArea()
             VStack(spacing: 12) {
                 HStack{
@@ -120,7 +120,7 @@ struct BookManualEntryView: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.title2)
-                            .foregroundStyle(.black)
+                            .foregroundStyle(Color("TextPrimary"))
                     }
                     Spacer()
                     Text("새 책 등록")
@@ -133,7 +133,7 @@ struct BookManualEntryView: View {
                 .frame(height: 44)
                 PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                     coverPickerContent
-                        .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+                        .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
                         .padding(.top)
                 }
                 .onChange(of: selectedPhotoItem) { _, newItem in
@@ -150,7 +150,7 @@ struct BookManualEntryView: View {
                 VStack(alignment: .leading, spacing: 10){
                     Text("책 제목")
                         .fontWeight(.semibold)
-                        .foregroundStyle(Color("Brown"))
+                        .foregroundStyle(Color("TextSecondary"))
                         .padding(.horizontal, 4)
                     
                     ManualBookInputField(text: $title, placeholder: "제목을 입력하세요", iconName: "book.closed")
@@ -159,7 +159,7 @@ struct BookManualEntryView: View {
                 VStack(alignment: .leading, spacing: 10){
                     Text("저자")
                         .fontWeight(.semibold)
-                        .foregroundStyle(Color("Brown"))
+                        .foregroundStyle(Color("TextSecondary"))
                         .padding(.horizontal, 4)
                     
                     ManualBookInputField(text: $author, placeholder: "저자를 입력하세요", iconName: "book.closed")
@@ -168,7 +168,7 @@ struct BookManualEntryView: View {
                 VStack(alignment: .leading, spacing: 10){
                     Text("카테고리")
                         .fontWeight(.semibold)
-                        .foregroundStyle(Color("Brown"))
+                        .foregroundStyle(Color("TextSecondary"))
                         .padding(.horizontal, 4)
                     
                     Menu {
@@ -182,7 +182,7 @@ struct BookManualEntryView: View {
                     } label: {
                         HStack {
                             Image(systemName: "square.grid.2x2")
-                                .foregroundStyle(.gray)
+                                .foregroundStyle(Color("TextMuted"))
                             
                             Text(selectedCategory)
                                 .foregroundStyle(selectedCategory == "카테고리 선택" ? .gray : .black)
@@ -190,7 +190,7 @@ struct BookManualEntryView: View {
                             Spacer()
                             
                             Image(systemName: "chevron.down")
-                                .foregroundStyle(.gray)
+                                .foregroundStyle(Color("TextMuted"))
                         }
                         .padding(.horizontal, 20)
                         .frame(height: 58)
@@ -199,10 +199,10 @@ struct BookManualEntryView: View {
                                 .fill(Color(.skyblue3))
                                 .overlay{
                                     Capsule()
-                                        .stroke(Color.black.opacity(0.15), lineWidth: 1)
+                                        .stroke(Color("Border").opacity(0.15), lineWidth: 1)
                                         .blur(radius: 2)
                                         .offset(y: 2)
-                                        .mask(Capsule().fill(Color.black))
+                                        .mask(Capsule().fill(Color("TextPrimary")))
                                 }
                         }
                     }
@@ -222,10 +222,10 @@ struct BookManualEntryView: View {
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity)
                         .frame(height: 64)
-                        .background(Color("Peach"))
+                        .background(Color("Primary"))
                         .foregroundStyle(.white)
                         .clipShape(Capsule())
-                        .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+                        .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
                 }
                 .navigationDestination(item: $previewDraft){ draft in
                     BookRegistrationPreviewView(

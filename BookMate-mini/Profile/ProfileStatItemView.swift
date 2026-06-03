@@ -17,11 +17,11 @@ struct ProfileStatItemView: View {
             Text(value)
                 .font(.headline)
                 .fontWeight(.bold)
-                .foregroundStyle(Color("Brown"))
+                .foregroundStyle(Color("TextSecondary"))
             
             Text(label)
                 .font(.caption2)
-                .foregroundStyle(.black.opacity(0.56))
+                .foregroundStyle(Color("TextPrimary").opacity(0.56))
         }
         .frame(maxWidth: .infinity)
     }

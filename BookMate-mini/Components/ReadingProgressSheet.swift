@@ -59,7 +59,7 @@ struct ReadingProgressSheet: View {
                 
                 Text(book.title)
                     .font(.callout)
-                    .foregroundStyle(Color("Brown"))
+                    .foregroundStyle(Color("TextSecondary"))
             }
             
             VStack(alignment: .leading, spacing: 12) {
@@ -73,11 +73,11 @@ struct ReadingProgressSheet: View {
                     Text(calculatedPercentText)
                         .font(.title3)
                         .fontWeight(.bold)
-                        .foregroundStyle(Color("PeachRedHeavy"))
+                        .foregroundStyle(Color("PrimaryDeep"))
                 }
                 
                 ProgressView(value: calculatedProgress ?? book.progress)
-                    .tint(Color("Peach"))
+                    .tint(Color("Primary"))
             }
             
             VStack(spacing: 14) {
@@ -99,7 +99,7 @@ struct ReadingProgressSheet: View {
                currentPage > totalPages {
                 Text("읽은 쪽수는 전체 쪽수보다 클 수 없어요.")
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color("Error"))
             }
             
             Spacer()
@@ -121,7 +121,7 @@ struct ReadingProgressSheet: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 60)
-                    .background(calculatedProgress == nil ? Color.gray.opacity(0.35) : Color("Peach"))
+                    .background(calculatedProgress == nil ? Color.gray.opacity(0.35) : Color("Primary"))
                     .clipShape(Capsule())
             }
             .disabled(calculatedProgress == nil)
@@ -129,7 +129,7 @@ struct ReadingProgressSheet: View {
         .padding(.horizontal, 28)
         .padding(.top, 18)
         .padding(.bottom, 24)
-        .background(Color.skyblue)
+        .background(Color("AppBackground"))
         .onAppear {
             if let totalPages = book.totalPages {
                 totalPagesText = String(totalPages)
@@ -149,13 +149,13 @@ struct ReadingProgressSheet: View {
             Text(title)
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundStyle(Color("Brown"))
+                .foregroundStyle(Color("TextSecondary"))
             
             TextField(placeholder, text: text)
                 .keyboardType(.numberPad)
                 .padding(.horizontal, 18)
                 .frame(height: 54)
-                .background(Color.white.opacity(0.82))
+                .background(Color("Surface").opacity(0.82))
                 .clipShape(RoundedRectangle(cornerRadius: 18))
         }
     }

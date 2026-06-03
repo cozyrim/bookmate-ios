@@ -21,10 +21,10 @@ struct SaveButton: View {
             }
             .font(.headline)
             .fontWeight(.semibold)
-            .foregroundStyle(Color("PeachRedHeavy"))
+            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(Color("Peach"))
+            .background(Color("Primary"))
             .clipShape(Capsule())
         }
         .padding(.top, 8)

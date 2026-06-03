@@ -194,6 +194,9 @@ final class AuthSessionViewModel: ObservableObject {
             
             profile = updatedProfile
             currentUser = updatedProfile.toAuthUser()
+            
+//            await loadProfile()
+            
             isLoading = false
             return true
         } catch {
@@ -204,5 +207,43 @@ final class AuthSessionViewModel: ObservableObject {
         }
     }
     
+    func withdraw() async {
+        guard let token = tokenStore.load() else {
+            errorMessage = "로그인이 필요합니다."
+            return
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            try await authAPIService.withdraw(token: token)
+            
+            tokenStore.clear()
+            currentUser = nil
+            profile = nil
+            isLoggedIn = false
+        } catch {
+            errorMessage = "회원 탈퇴에 실패했습니다."
+            print("회원 탈퇴 실패:", error)
+        }
+         
+        isLoading = false
+    }
+    
+    func uploadProfileImage(imageData: Data) async -> String? {
+        guard let token = tokenStore.load() else {
+            errorMessage = "로그인이 필요합니다."
+            return nil
+        }
+        
+        do {
+            return try await authAPIService.uploadProfileImage(token: token, imageData: imageData)
+        } catch {
+            errorMessage = "프로필 이미지 업로드에 실패했습니다."
+            print("프뢸 이미지 업로드 실패:", error)
+            return nil
+        }
+    }
     
 }

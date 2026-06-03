@@ -93,7 +93,7 @@ struct MoreOptionsSheet: View {
 //                    }
 //                )
             }
-            .background(Color.white)
+            .background(Color("Surface"))
             .clipShape(RoundedRectangle(cornerRadius: 28))
             
             Button { // 여기서 onDelete()는 “삭제 버튼이 눌렸다”는 사실을 바깥에 알려주는 역할
@@ -108,10 +108,10 @@ struct MoreOptionsSheet: View {
                     Image(systemName: "trash")
                         .font(.title3)
                 }
-                .foregroundStyle(.red)
+                .foregroundStyle(Color("Error"))
                 .padding(.horizontal, 24)
                 .frame(height: 72)
-                .background(Color.white)
+                .background(Color("Surface"))
                 .clipShape(RoundedRectangle(cornerRadius: 28))
             }
             .padding(.top, moveTitle == nil ? 28 : 0)
@@ -123,10 +123,10 @@ struct MoreOptionsSheet: View {
                 Text("취소")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(Color("TextPrimary"))
                     .frame(maxWidth: .infinity)
                     .frame(height: 72)
-                    .background(Color.white)
+                    .background(Color("Surface"))
                     .clipShape(RoundedRectangle(cornerRadius: 28))
             }
         }

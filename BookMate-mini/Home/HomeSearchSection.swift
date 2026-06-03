@@ -64,7 +64,7 @@ struct HomeSearchSection: View {
                         ? "사전에서 단어 검색..."
                         : "저장한 단어 검색..."
                     )
-                    .foregroundStyle(.black.opacity(0.6))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.6))
                 )
                 
                 
@@ -99,14 +99,19 @@ struct HomeSearchSection: View {
                         clearSearchText()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.gray.opacity(0.55))
+                            .foregroundStyle(Color("TextMuted").opacity(0.55))
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(14)
-            .background(Color(.systemGray6))
+            .background(Color("Surface").opacity(0.82))
             .clipShape(Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(Color("Border").opacity(0.55), lineWidth: 1)
+            }
+            .shadow(color: Color("Shadow").opacity(0.035), radius: 10, x: 0, y: 4)
             
             if viewModel.searchMode == .dictionary,
                viewModel.searchText.isEmpty,
@@ -114,7 +119,7 @@ struct HomeSearchSection: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("최근 검색어")
                         .font(.caption)
-                        .foregroundStyle(Color("Brown"))
+                        .foregroundStyle(Color("TextSecondary"))
                     
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
@@ -126,7 +131,7 @@ struct HomeSearchSection: View {
                                         Text(recentWord)
                                             .font(.caption)
                                             .fontWeight(.semibold)
-                                            .foregroundStyle(Color("Brown"))
+                                            .foregroundStyle(Color("TextSecondary"))
                                     }
                                     .buttonStyle(.plain)
 
@@ -135,15 +140,15 @@ struct HomeSearchSection: View {
                                     } label: {
                                         Image(systemName: "xmark")
                                             .font(.system(size: 9, weight: .bold))
-                                            .foregroundStyle(Color("Brown").opacity(0.55))
+                                            .foregroundStyle(Color("TextSecondary").opacity(0.55))
                                     }
                                     .buttonStyle(.plain)
                                 }
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
-                                .background(Color.white.opacity(0.82))
+                                .background(Color("Surface").opacity(0.82))
                                 .clipShape(Capsule())
-                                .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
+                                .shadow(color: Color("Shadow").opacity(0.04), radius: 6, x: 0, y: 2)
 
                                 
                                 
@@ -205,15 +210,15 @@ struct HomeSearchSection: View {
                         Text("사전 검색")
                             .font(.caption2)
                             .fontWeight(.semibold)
-                            .foregroundStyle(viewModel.searchMode == .dictionary ? Color.white : Color.black)
+                            .foregroundStyle(viewModel.searchMode == .dictionary ? .white : Color("TextPrimary"))
                             .padding(.vertical, 8)
                             .padding(.horizontal, 12)
                             .background(
-                                Capsule().fill(viewModel.searchMode == .dictionary ? Color("Peach") : Color.white)
+                                Capsule().fill(viewModel.searchMode == .dictionary ? Color("Primary") : Color("Surface"))
                             )
                             .overlay(
                                 Capsule()
-                                    .stroke(Color("Peach2"), lineWidth: viewModel.searchMode == .dictionary ? 0 : 2)
+                                    .stroke(Color("PrimarySoft"), lineWidth: viewModel.searchMode == .dictionary ? 0 : 2)
                             )
                     }
                     .disabled(viewModel.isLoading)
@@ -225,15 +230,15 @@ struct HomeSearchSection: View {
                         Text("내 단어 검색")
                             .font(.caption2)
                             .fontWeight(.semibold)
-                            .foregroundStyle(viewModel.searchMode == .savedWords ? Color.white : Color.black)
+                            .foregroundStyle(viewModel.searchMode == .savedWords ? .white : Color("TextPrimary"))
                             .padding(.vertical, 8)
                             .padding(.horizontal, 14)
                             .background(
-                                Capsule().fill(viewModel.searchMode == .savedWords ? Color("Peach") : Color.white)
+                                Capsule().fill(viewModel.searchMode == .savedWords ? Color("Primary") : Color("Surface"))
                             )
                             .overlay(
                                 Capsule()
-                                    .stroke(Color("Peach2"), lineWidth: viewModel.searchMode == .savedWords ? 0 : 2)
+                                    .stroke(Color("PrimarySoft"), lineWidth: viewModel.searchMode == .savedWords ? 0 : 2)
                             )
                             .clipShape(Capsule())
                     }
@@ -249,7 +254,7 @@ struct HomeSearchSection: View {
             if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color("Error"))
             }
             
             if viewModel.searchMode == .savedWords {
@@ -285,7 +290,17 @@ struct HomeSearchSection: View {
         .padding(.top, 24)
         .padding(.bottom, 32)
         .frame(maxWidth: .infinity)
-        .background(Color.white)
+        .background {
+            LinearGradient(
+                colors: [
+                    Color("AppBackgroundSoft").opacity(0.82),
+                    Color("Surface").opacity(0.94),
+                    Color("Surface").opacity(0.88)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
         .clipShape(
             UnevenRoundedRectangle(
                 topLeadingRadius: 0,
@@ -294,7 +309,7 @@ struct HomeSearchSection: View {
                 topTrailingRadius: 0
             )
         )
-        .shadow(color: .black.opacity(0.03), radius: 16, x: 0, y:10)
+        .shadow(color: Color("Shadow").opacity(0.03), radius: 16, x: 0, y:10)
         .navigationDestination(isPresented: $isShowingSearchResult) {
             SearchResultView(viewModel: viewModel) {
                 isShowingSearchResult = false

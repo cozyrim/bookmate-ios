@@ -18,7 +18,7 @@ struct BookDetailView: View {
     
     var body: some View {
         ZStack{
-            Color.skyblue
+            Color("AppBackground")
                 .ignoresSafeArea()
             
             VStack(spacing: 24){
@@ -31,7 +31,7 @@ struct BookDetailView: View {
                             .fontWeight(.semibold)
                         Text("\(book.author)")
                             .font(.caption)
-                            .foregroundStyle(Color(.systemGray))
+                            .foregroundStyle(Color("TextMuted"))
                             .fontWeight(.bold)
                         
                         HStack{
@@ -40,11 +40,11 @@ struct BookDetailView: View {
                             Text("저장된 단어 \(savedWordsForBook.count)개")
                         }
                         .font(.caption2)
-                        .foregroundStyle(Color.peachRedHeavy)
+                        .foregroundStyle(Color("PrimaryDeep"))
                     }
                     .frame(width: 200, height: 130, alignment: .leading)
                     .padding(.leading, 24)
-                    .background(Color.white)
+                    .background(Color("Surface"))
                     .clipShape(RoundedRectangle(cornerRadius: 36))
                 }
                 

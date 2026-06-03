@@ -44,9 +44,9 @@ struct MainTabView: View {
                 .tag(3)
             
         }
-        .tint(Color("PeachRed"))
-        .task {
-            viewModel.loadRecentSearches()
+        .tint(Color("Primary"))
+        .task(id: authViewModel.currentUser?.id) {
+            viewModel.setRecentSearchOwner(userId: authViewModel.currentUser?.id) // 로그인한 사용자마다 최근 검색어 저장칸이 다름
             
             await viewModel.loadBooks()
             await viewModel.loadSavedWords()

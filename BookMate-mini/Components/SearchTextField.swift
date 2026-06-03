@@ -16,13 +16,13 @@ struct SearchTextField: View {
         
         HStack{
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(Color("Brown").opacity(0.7))
+                .foregroundStyle(Color("TextSecondary").opacity(0.7))
             
             TextField(
                 "",
                 text: $searchText,
                 prompt: Text(placeholder)
-                    .foregroundStyle(.black.opacity(0.6))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.6))
             )
             .submitLabel(.search)
             .disabled(isDisabled)
@@ -35,14 +35,14 @@ struct SearchTextField: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.gray.opacity(0.5))
+                        .foregroundStyle(Color("TextMuted").opacity(0.5))
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color(.systemGray6))
+        .background(Color("SurfaceSoft"))
         .clipShape(Capsule())
     }
 }

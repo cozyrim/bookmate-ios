@@ -25,34 +25,34 @@ struct ContentStateView: View {
         VStack(spacing: 26) {
             ZStack {
                 Circle()
-                    .fill(Color("Peach").opacity(0.16))
+                    .fill(Color("Primary").opacity(0.16))
                     .frame(width: 230, height: 230)
                     .blur(radius: 22)
                 
                 RoundedRectangle(cornerRadius: 42)
-                                    .fill(Color.white.opacity(0.78))
+                                    .fill(Color("Surface").opacity(0.78))
                                     .frame(width: 130, height: 130)
-                                    .shadow(color: .black.opacity(0.05), radius: 14, x: 0, y: 8)
+                                    .shadow(color: Color("Shadow").opacity(0.05), radius: 14, x: 0, y: 8)
 
                                 RoundedRectangle(cornerRadius: 28)
-                                    .fill(type == .empty ? Color("Peach").opacity(0.12) : Color.red.opacity(0.08))
+                                    .fill(type == .empty ? Color("Primary").opacity(0.12) : Color.red.opacity(0.08))
                                     .frame(width: 82, height: 82)
 
                                 Image(systemName: iconName)
                                     .font(.system(size: 42, weight: .semibold))
-                                    .foregroundStyle(type == .empty ? Color("Brown") : .red.opacity(0.8))
+                                    .foregroundStyle(type == .empty ? Color("TextSecondary") : .red.opacity(0.8))
             }
             
             VStack(spacing: 12) {
                             Text(title)
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundStyle(.black)
+                                .foregroundStyle(Color("TextPrimary"))
 
                             Text(message)
                                 .font(.body)
                                 .multilineTextAlignment(.center)
-                                .foregroundStyle(Color("Brown"))
+                                .foregroundStyle(Color("TextSecondary"))
                                 .lineSpacing(4)
                         }
             .padding(.horizontal, 34)
@@ -70,11 +70,11 @@ struct ContentStateView: View {
                                 }
                                 .font(.title3)
                                 .fontWeight(.bold)
-                                .foregroundStyle(Color("Brown"))
+                                .foregroundStyle(Color("TextSecondary"))
                                 .frame(width: 245, height: 64)
-                                .background(Color("Peach"))
+                                .background(Color("Primary"))
                                 .clipShape(Capsule())
-                                .shadow(color: Color("Peach").opacity(0.25), radius: 14, x: 0, y: 8)
+                                .shadow(color: Color("Primary").opacity(0.25), radius: 14, x: 0, y: 8)
                             }
                         }
                     }
@@ -84,7 +84,7 @@ struct ContentStateView: View {
 
 #Preview("Empty") {
     ZStack {
-        Color.skyblue.ignoresSafeArea()
+        Color("AppBackground").ignoresSafeArea()
 
         ContentStateView(
             type: .empty,
@@ -100,7 +100,7 @@ struct ContentStateView: View {
 
 #Preview("Error") {
     ZStack {
-        Color.skyblue.ignoresSafeArea()
+        Color("AppBackground").ignoresSafeArea()
 
         ContentStateView(
             type: .error,

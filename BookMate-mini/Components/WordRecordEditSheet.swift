@@ -42,7 +42,7 @@ struct WordRecordEditSheet: View {
             Text("기록 수정하기")
                 .font(.title2)
                 .fontWeight(.semibold)
-                .foregroundStyle(.black.opacity(0.78))
+                .foregroundStyle(Color("TextPrimary").opacity(0.78))
                 .padding(.top, 32)
             
             wordInfoHeader
@@ -52,7 +52,7 @@ struct WordRecordEditSheet: View {
                 Text("책 속 문장")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundStyle(.black.opacity(0.82))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.82))
                 
                 TextEditor(text: $exampleSentence)
                     .font(.body)
@@ -60,17 +60,17 @@ struct WordRecordEditSheet: View {
                     .padding(16)
                     .frame(height: 150)
                     .scrollContentBackground(.hidden)
-                    .background(Color.white.opacity(0.78))
+                    .background(Color("Surface").opacity(0.78))
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .overlay {
                         RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.black.opacity(0.12), lineWidth: 1)
+                            .stroke(Color("Border").opacity(0.12), lineWidth: 1)
                     }
                     .overlay(alignment: .topLeading) {
                         if exampleSentence.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             Text("책에서 만난 문장을 적어보세요.")
                                 .font(.body)
-                                .foregroundStyle(.gray.opacity(0.75))
+                                .foregroundStyle(Color("TextMuted").opacity(0.75))
                                 .padding(.horizontal, 22)
                                 .padding(.vertical, 24)
                                 .allowsHitTesting(false)
@@ -83,7 +83,7 @@ struct WordRecordEditSheet: View {
             if let errorMessage {
                 Text(errorMessage)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color("Error"))
             }
             
             Button {
@@ -121,9 +121,9 @@ struct WordRecordEditSheet: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 64)
-                        .background(Color("Peach"))
+                        .background(Color("Primary"))
                         .clipShape(Capsule())
-                        .shadow(color: Color("Peach").opacity(0.28), radius: 14, x: 0, y: 8)
+                        .shadow(color: Color("Primary").opacity(0.28), radius: 14, x: 0, y: 8)
                 }
                 .padding(.bottom, 10)
             }
@@ -131,19 +131,19 @@ struct WordRecordEditSheet: View {
             .padding(.top, 12)
             .padding(.bottom, 24)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .background(Color.skyblue)
+            .background(Color("AppBackground"))
         }
     
     private var wordInfoHeader: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(word.text)
                 .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(.black.opacity(0.88))
+                .foregroundStyle(Color("TextPrimary").opacity(0.88))
             
             Text(word.partOfSpeech)
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundStyle(.blue.opacity(0.78))
+                .foregroundStyle(Color("Primary").opacity(0.78))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(Color.blue.opacity(0.10))
@@ -151,7 +151,7 @@ struct WordRecordEditSheet: View {
 
             Text(word.meaning)
                         .font(.callout)
-                        .foregroundStyle(.black.opacity(0.72))
+                        .foregroundStyle(Color("TextPrimary").opacity(0.72))
                         .lineSpacing(5)
                         .padding(.top, 2)
         }

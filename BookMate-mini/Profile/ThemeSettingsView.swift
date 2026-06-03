@@ -31,7 +31,7 @@ struct ThemeSettingsView: View {
                     VStack(alignment: .leading, spacing: 22) {
                         Text("원하는 분위기로 배경을 바꿔보세요.")
                             .font(.callout)
-                            .foregroundStyle(Color("Brown"))
+                            .foregroundStyle(Color("TextSecondary"))
                             .padding(.horizontal, 4)
                         
                         LazyVGrid(
@@ -54,20 +54,20 @@ struct ThemeSettingsView: View {
                             Text("내 사진으로 설정")
                                 .font(.headline)
                                 .fontWeight(.bold)
-                                .foregroundStyle(Color("Brown"))
+                                .foregroundStyle(Color("TextSecondary"))
                             
                             PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                                 HStack(spacing: 14) {
                                     Image(systemName: "photo.on.rectangle")
                                         .font(.system(size: 21, weight: .semibold))
-                                        .foregroundStyle(Color("Peach").opacity(0.16))
+                                        .foregroundStyle(Color("Primary").opacity(0.16))
                                         .clipShape(Circle())
                                     
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("사진 선택하기")
                                             .font(.callout)
                                             .fontWeight(.semibold)
-                                            .foregroundStyle(.black)
+                                            .foregroundStyle(Color("TextPrimary"))
                                         
                                         Text(
                                                             selectedTheme == .customPhoto
@@ -75,32 +75,32 @@ struct ThemeSettingsView: View {
                                                             : "앨범에서 고른 사진을 배경으로 사용할 수 있어요."
                                                         )
                                                         .font(.caption)
-                                                        .foregroundStyle(Color("Brown").opacity(0.75))
+                                                        .foregroundStyle(Color("TextSecondary").opacity(0.75))
                                     }
                                     Spacer()
                                     
                                     if selectedTheme == .customPhoto {
                                         Image(systemName: "checkmark.circle.fill")
                                             .font(.system(size: 22, weight: .bold))
-                                            .foregroundStyle(Color("PeachRedHeavy"))
+                                            .foregroundStyle(Color("PrimaryDeep"))
                                     } else {
                                         Image(systemName: "chevron.right")
                                                             .font(.system(size: 13, weight: .semibold))
-                                                            .foregroundStyle(Color("Brown").opacity(0.65))
+                                                            .foregroundStyle(Color("TextSecondary").opacity(0.65))
                                     }
                                 }
                                 .padding(.horizontal, 18)
                                 .frame(height: 86)
-                                .background(Color.white.opacity(0.88))
+                                .background(Color("Surface").opacity(0.88))
                                 .clipShape(RoundedRectangle(cornerRadius: 24))
-                                .shadow(color: .black.opacity(0.045), radius: 14, x: 0, y: 6)
+                                .shadow(color: Color("Shadow").opacity(0.045), radius: 14, x: 0, y: 6)
                             }
                             .buttonStyle(.plain)
                             
                             if let imageSaveErrorMessage {
                                     Text(imageSaveErrorMessage)
                                         .font(.caption)
-                                        .foregroundStyle(.red)
+                                        .foregroundStyle(Color("Error"))
                                         .padding(.horizontal, 4)
                                 }
                         }
@@ -173,8 +173,8 @@ struct ThemeOptionCard: View {
                     if isSelected {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 24, weight: .bold))
-                            .foregroundStyle(Color("PeachRedHeavy"))
-                            .background(Color.white.clipShape(Circle()))
+                            .foregroundStyle(Color("PrimaryDeep"))
+                            .background(Color("Surface").clipShape(Circle()))
                             .padding(10)
                     }
                 }
@@ -182,26 +182,26 @@ struct ThemeOptionCard: View {
                     Text(theme.title)
                         .font(.callout)
                         .fontWeight(.bold)
-                        .foregroundStyle(.black)
+                        .foregroundStyle(Color("TextPrimary"))
                     
                     Text(theme.subtitle)
                         .font(.caption2)
-                        .foregroundStyle(Color("Brown").opacity(0.75))
+                        .foregroundStyle(Color("TextSecondary").opacity(0.75))
                         .lineLimit(2)
                 }
             }
             .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(isSelected ? 0.96 : 0.84))
+                    .background(Color("Surface").opacity(isSelected ? 0.96 : 0.84))
                     .clipShape(RoundedRectangle(cornerRadius: 26))
                     .overlay {
                         RoundedRectangle(cornerRadius: 26)
                             .stroke(
-                                isSelected ? Color("Peach").opacity(0.9) : Color.white.opacity(0.45),
+                                isSelected ? Color("Primary").opacity(0.9) : Color("Surface").opacity(0.45),
                                 lineWidth: isSelected ? 2 : 1
                             )
                     }
-                    .shadow(color: .black.opacity(0.05), radius: 14, x: 0, y: 6)
+                    .shadow(color: Color("Shadow").opacity(0.05), radius: 14, x: 0, y: 6)
                         }
                         .buttonStyle(.plain)
     }
@@ -210,7 +210,16 @@ struct ThemeOptionCard: View {
     private var themePreview: some View {
         switch theme {
         case .skyblue:
-            Color.skyblue
+            LinearGradient(
+                colors: [
+                    Color("AppBackgroundSoft"),
+                    Color("AppBackground"),
+                    Color("AccentSoft").opacity(0.62),
+                    Color("PrimarySoft").opacity(0.42)
+                ],
+                startPoint: .top,
+                endPoint: .bottomTrailing
+            )
             
             
             // 테마가 자연 배경일 때 패딩이 풀리는 것 같음,,
@@ -220,7 +229,7 @@ struct ThemeOptionCard: View {
                     .resizable()
                     .scaledToFill()
                 
-                Color.white.opacity(0.15)
+                Color("Surface").opacity(0.15)
                     .ignoresSafeArea()
             }
             
@@ -228,8 +237,8 @@ struct ThemeOptionCard: View {
         case .peach:
             LinearGradient(
                 colors: [
-                    Color("Peach").opacity(0.5),
-                    Color.white.opacity(0.8)
+                    Color("Primary").opacity(0.5),
+                    Color("Surface").opacity(0.8)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -239,7 +248,7 @@ struct ThemeOptionCard: View {
             LinearGradient(
                 colors: [
                     Color(red: 0.72, green: 0.91, blue: 0.76),
-                    Color.white.opacity(0.86)
+                    Color("Surface").opacity(0.86)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -247,8 +256,8 @@ struct ThemeOptionCard: View {
         case .customPhoto:
             LinearGradient(
                 colors: [
-                    Color("Peach").opacity(0.22),
-                    Color.skyblue.opacity(0.8)
+                    Color("Primary").opacity(0.22),
+                    Color("AppBackground").opacity(0.8)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -256,7 +265,7 @@ struct ThemeOptionCard: View {
             .overlay {
                 Image(systemName: "photo")
                     .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(Color("PeachRedHeavy"))
+                    .foregroundStyle(Color("PrimaryDeep"))
                 
             }
         }

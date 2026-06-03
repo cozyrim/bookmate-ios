@@ -34,7 +34,7 @@ struct ShelfView: View {
     var body: some View {
         NavigationStack(path: $path){
             ZStack{
-                Color.skyblue
+                Color("AppBackground")
                     .ignoresSafeArea()
                 
                 VStack(spacing: 20){
@@ -46,13 +46,13 @@ struct ShelfView: View {
                         NavigationLink(value: ShelfRoute.bookSearch) {
                             Text(" + 새 책 추가") // 이 버튼을 누르면 NavigationStack의 path에 ShelfRoute.bookSearch라는 값을 넣어줘.
                                 .font(.caption2)
-                                .foregroundStyle(Color("Brown"))
+                                .foregroundStyle(.white)
                                 .fontWeight(.semibold)
                                 .padding(.horizontal, 18)
                                 .padding(.vertical, 11)
-                                .background(Color("Peach"))
+                                .background(Color("Primary"))
                                 .clipShape(RoundedRectangle(cornerRadius: 18))
-                                .shadow(color: Color("Peach").opacity(0.3), radius: 7, x: 0, y: 2)
+                                .shadow(color: Color("Primary").opacity(0.3), radius: 7, x: 0, y: 2)
                         }
                     }
                     .padding(.horizontal, 24)
@@ -108,7 +108,7 @@ struct ShelfView: View {
                     )
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
-                    .presentationBackground(Color.skyblue)
+                    .presentationBackground(Color("AppBackground"))
                     
                 case .edit(let book):
                     BookEditSheet(book: book) { selectedCategory in

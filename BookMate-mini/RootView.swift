@@ -27,7 +27,7 @@ struct RootView: View {
     var body: some View {
         if authViewModel.isCheckingSession {
             ZStack {
-                Color.skyblue
+                Color("AppBackground")
                     .ignoresSafeArea()
                 
                 ProgressView()

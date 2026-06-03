@@ -30,7 +30,7 @@ struct SignupView: View {
     
     var body: some View {
         ZStack {
-            Color.skyblue
+            Color("AppBackground")
                 .ignoresSafeArea()
             
             VStack(spacing: 26) {
@@ -59,10 +59,10 @@ struct SignupView: View {
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity)
                         .frame(height: 62)
-                        .background((step == 1 ? canGoNext : canSubmit) ? Color("Peach") : Color.gray.opacity(0.25))
+                        .background((step == 1 ? canGoNext : canSubmit) ? Color("Primary") : Color.gray.opacity(0.25))
                         .foregroundStyle(.white)
                         .clipShape(Capsule())
-                        .shadow(color: Color("Peach").opacity(0.25), radius: 12, x: 0, y: 6)
+                        .shadow(color: Color("Primary").opacity(0.25), radius: 12, x: 0, y: 6)
                 }
                 .disabled(step == 1 ? !canGoNext : !canSubmit)
             }
@@ -83,7 +83,7 @@ struct SignupView: View {
             } label : {
                 Image(systemName: "chevron.left")
                     .font(.title2)
-                    .foregroundStyle(Color("Brown"))
+                    .foregroundStyle(Color("TextSecondary"))
             }
             
             Spacer()
@@ -91,7 +91,7 @@ struct SignupView: View {
             Text("회원가입")
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundStyle(Color(.black))
+                .foregroundStyle(Color("TextPrimary"))
             
             Spacer()
             
@@ -106,10 +106,10 @@ struct SignupView: View {
             Text("계정 정보를\n입력해주세요")
                 .font(.title)
                 .fontWeight(.bold)
-                .foregroundStyle(.black)
+                .foregroundStyle(Color("TextPrimary"))
             
             Text("북메이트에서 사용할 이메일과 비밀번호를 설정합니다.")
-                .foregroundStyle(Color("Brown"))
+                .foregroundStyle(Color("TextSecondary"))
             
             signupField(title: "이메일 주소", placeholder: "example@bookmate.com", text: $email, icon: "envelope")
             
@@ -119,7 +119,7 @@ struct SignupView: View {
             
             Text("영문, 숫자를 포함하여 8자 이상으로 설정해주세요.")
                 .font(.caption)
-                .foregroundStyle(Color("Brown").opacity(0.75))
+                .foregroundStyle(Color("TextSecondary").opacity(0.75))
         }
     }
     
@@ -130,11 +130,11 @@ struct SignupView: View {
             VStack(spacing: 18) {
                 Image(systemName: "person.crop.circle.badge.checkmark")
                     .font(.system(size: 54))
-                    .foregroundStyle(Color("PeachRedHeavy"))
+                    .foregroundStyle(Color("PrimaryDeep"))
                     .frame(width: 132, height: 132)
-                    .background(Color.white.opacity(0.85))
+                    .background(Color("Surface").opacity(0.85))
                     .clipShape(RoundedRectangle(cornerRadius: 36))
-                    .shadow(color: .black.opacity(0.05), radius: 12, x: 0, y: 6)
+                    .shadow(color: Color("Shadow").opacity(0.05), radius: 12, x: 0, y: 6)
             }
             .frame(maxWidth: .infinity)
             
@@ -143,7 +143,7 @@ struct SignupView: View {
                 .fontWeight(.bold)
             
             Text("북메이트에서 불릴 이름을 정해주세요.")
-                .foregroundStyle(Color("Brown"))
+                .foregroundStyle(Color("TextSecondary"))
             
             signupField(title: "닉네임", placeholder: "북메이트친구", text: $nickname, icon: "sparkles")
             
@@ -158,11 +158,11 @@ struct SignupView: View {
         HStack {
             HStack(spacing: 8) {
                 Capsule()
-                    .fill(current == 1 ? Color("Peach") : Color.gray.opacity(0.2))
+                    .fill(current == 1 ? Color("Primary") : Color.gray.opacity(0.2))
                     .frame(width: 48, height: 6)
                 
                 Capsule()
-                    .fill(current == 2 ? Color("Peach") : Color.gray.opacity(0.2))
+                    .fill(current == 2 ? Color("Primary") : Color.gray.opacity(0.2))
                     .frame(width: 48, height: 6)
             }
             
@@ -170,7 +170,7 @@ struct SignupView: View {
             
             Text("\(current) / 2")
                 .fontWeight(.semibold)
-                .foregroundStyle(Color("PeachRedHeavy"))
+                .foregroundStyle(Color("PrimaryDeep"))
         }
     }
     
@@ -178,18 +178,18 @@ struct SignupView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .fontWeight(.semibold)
-                .foregroundStyle(Color("Brown"))
+                .foregroundStyle(Color("TextSecondary"))
             
             HStack(spacing: 14) {
                 Image(systemName: icon)
-                    .foregroundStyle(Color("Brown").opacity(0.75))
+                    .foregroundStyle(Color("TextSecondary").opacity(0.75))
                 
                 TextField(placeholder, text: text)
                     .textInputAutocapitalization(.never)
             }
             .padding(.horizontal, 18)
             .frame(height: 58)
-            .background(Color.white.opacity(0.88))
+            .background(Color("Surface").opacity(0.88))
             .clipShape(RoundedRectangle(cornerRadius: 20))
         }
     }
@@ -198,17 +198,17 @@ struct SignupView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .fontWeight(.semibold)
-                .foregroundStyle(Color("Brown"))
+                .foregroundStyle(Color("TextSecondary"))
             
             HStack(spacing: 14) {
                 Image(systemName: "lock")
-                    .foregroundStyle(Color("Brown").opacity(0.75))
+                    .foregroundStyle(Color("TextSecondary").opacity(0.75))
                 
                 SecureField(placeholder, text: text)
             }
             .padding(.horizontal, 18)
             .frame(height: 58)
-            .background(Color.white.opacity(0.88))
+            .background(Color("Surface").opacity(0.88))
             .clipShape(RoundedRectangle(cornerRadius: 20))
         }
     }
@@ -216,7 +216,7 @@ struct SignupView: View {
     private func infoCard(icon: String, title: String) -> some View {
         HStack {
             Image(systemName: icon)
-                .foregroundStyle(Color("PeachRedHeavy"))
+                .foregroundStyle(Color("PrimaryDeep"))
             
             Text(title)
                 .font(.caption)
@@ -224,7 +224,7 @@ struct SignupView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 82)
-        .background(Color.white.opacity(0.86))
+        .background(Color("Surface").opacity(0.86))
         .clipShape(RoundedRectangle(cornerRadius: 24))
     }
 }

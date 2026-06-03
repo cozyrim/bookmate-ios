@@ -146,6 +146,11 @@ struct AuthAPIService {
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
+        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+            print("프로필 수정 status:", statusCode)
+            print("프로필 수정 body:", String(data: data, encoding: .utf8) ?? "body 없음")
+        
+        
         guard let httpResponse = response as? HTTPURLResponse,
               (200..<300).contains(httpResponse.statusCode) else {
             throw URLError(.badServerResponse)
@@ -153,5 +158,68 @@ struct AuthAPIService {
         
         return try JSONDecoder().decode(ProfileResponse.self, from: data)
     }
+    
+    func withdraw(token: String) async throws {
+        let url = baseURL
+            .appendingPathComponent("api")
+            .appendingPathComponent("users")
+            .appendingPathComponent("me")
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+            print("회원 탈퇴 status:", statusCode)
+            print("회원 탈퇴 body:", String(data: data, encoding: .utf8) ?? "body 없음")
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200..<300).contains(httpResponse.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+    }
+    
+    func uploadProfileImage(
+        token: String,
+        imageData: Data,
+        fileName: String = "profile.jpg",
+        mimeType: String = "image/jpeg"
+    ) async throws -> String {
+        let url = baseURL
+            .appendingPathComponent("api")
+            .appendingPathComponent("me")
+            .appendingPathComponent("profile-image")
+        
+        let boundary = "Boundary-\(UUID().uuidString)"
+    
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"image\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        request.httpBody = body
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200..<300).contains(httpResponse.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+        
+        let uploadResponse = try JSONDecoder().decode(ProfileImageUploadResponse.self, from: data)
+        return uploadResponse.profileImageUrl
+    }
+    
+    
+    
     
 }

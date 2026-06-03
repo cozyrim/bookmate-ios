@@ -15,33 +15,33 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             ZStack{
-                Color.skyblue
+                Color("AppBackground")
                     .ignoresSafeArea()
                 
                 VStack(spacing: 20) {
                     Text("북메이트")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundStyle(Color("Brown"))
+                        .foregroundStyle(Color("TextSecondary"))
                     
                     VStack(spacing: 12) {
                         TextField("이메일", text: $email)
                             .textInputAutocapitalization(.never)
                             .keyboardType(.emailAddress)
                             .padding()
-                            .background(Color.white.opacity(0.85))
+                            .background(Color("Surface").opacity(0.85))
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                         
                         SecureField("비밀번호", text: $password)
                             .padding()
-                            .background(Color.white.opacity(0.85))
+                            .background(Color("Surface").opacity(0.85))
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                     
                     if let errorMessage = authViewModel.errorMessage {
                         Text(errorMessage)
                             .font(.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color("Error"))
                     }
                     Button {
                         Task {
@@ -55,7 +55,7 @@ struct LoginView: View {
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
-                            .background(Color("Peach"))
+                            .background(Color("Primary"))
                             .foregroundStyle(.white)
                             .clipShape(Capsule())
                     }
@@ -75,7 +75,7 @@ struct LoginView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
                         .background(Color(red: 1.0, green: 0.90, blue: 0.0))
-                        .foregroundStyle(.black.opacity(0.85))
+                        .foregroundStyle(Color("TextPrimary").opacity(0.85))
                         .clipShape(Capsule())
                     }
                     .disabled(authViewModel.isLoading)
@@ -86,7 +86,7 @@ struct LoginView: View {
                         Text("아직 계정이 없나요? 회원가입")
                             .font(.callout)
                             .fontWeight(.semibold)
-                            .foregroundStyle(Color("Brown"))
+                            .foregroundStyle(Color("TextSecondary"))
                     }
                     
                 }

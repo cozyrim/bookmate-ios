@@ -19,7 +19,7 @@ struct DictionarySettingsView: View {
     
     var body: some View {
         ZStack {
-            Color.skyblue
+            Color("AppBackground")
                 .ignoresSafeArea()
             
             VStack(spacing: 24) {

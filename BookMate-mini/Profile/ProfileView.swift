@@ -10,6 +10,8 @@ import SwiftUI
 struct ProfileView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
     @State private var path = NavigationPath()
+    @State private var isShowingProfilePreview = false
+    
     
     private var userName: String {
         authViewModel.profile?.nickname
@@ -65,7 +67,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ZStack{
-                Color.skyblue
+                Color("AppBackground")
                     .ignoresSafeArea()
                 
                 ScrollView(showsIndicators: false){
@@ -114,17 +116,29 @@ struct ProfileView: View {
                 }
             }
         }
-            .task {
+        .sheet(isPresented: $isShowingProfilePreview) {
+            ProfileImagePreviewView(
+                imageURLString: authViewModel.profile?.profileImageUrl,
+                fallbackImageName: "profileImage"
+            )
+        }
+        .onAppear {
+            Task {
                 await authViewModel.loadProfile()
             }
         }
+    }
         
         private var profileHeader: some View {
             VStack(spacing: 14) {
-                ProfileImageView(imageName: "profileImage", showsEditIcon: false) {
-                    print("이미지 선택")
-                }
-                
+                ProfileImageView( // 실제 프로필 이미지 보여주기
+                    imageName: "profileImage",
+                        imageURLString: authViewModel.profile?.profileImageUrl,
+                        showsEditIcon: false,
+                        onTap: {
+                            isShowingProfilePreview = true
+                        }
+                    )
                 Text(userName)
                     .font(.title)
                     .fontWeight(.bold)
@@ -137,7 +151,7 @@ struct ProfileView: View {
         VStack(spacing: 16) {
 //            Divider()
             Rectangle()
-                .fill(Color("Brown").opacity(0.08))
+                .fill(Color("TextSecondary").opacity(0.08))
                 .frame(height: 1)
 
             HStack(spacing: 0) {
@@ -148,7 +162,7 @@ struct ProfileView: View {
 
 //                Divider()
                 Rectangle() // 세로 선
-                    .fill(Color("Brown").opacity(0.12))
+                    .fill(Color("TextSecondary").opacity(0.12))
                     .frame(width: 1, height: 28)
                 
                 
@@ -161,7 +175,7 @@ struct ProfileView: View {
 
 //                Divider()
                 Rectangle() // 새로선
-                    .fill(Color("Brown").opacity(0.12))
+                    .fill(Color("TextSecondary").opacity(0.12))
                     .frame(width: 1, height: 28)
                 
                 
@@ -174,7 +188,7 @@ struct ProfileView: View {
             }
 
             Rectangle()
-                .fill(Color("Brown").opacity(0.08))
+                .fill(Color("TextSecondary").opacity(0.08))
                 .frame(height: 1)
         }
         .padding(.horizontal, 36)

@@ -51,11 +51,11 @@ struct BookRegistrationPreviewView: View {
     private var fallbackCover: some View {
         ZStack{
             RoundedRectangle(cornerRadius: 30)
-                .fill(Color(.systemGray5))
+                .fill(Color("SurfaceSoft"))
             
             Image(systemName: "book.closed")
                 .font(.largeTitle)
-                            .foregroundStyle(.gray)
+                            .foregroundStyle(Color("TextMuted"))
         }
     }
     
@@ -63,10 +63,10 @@ struct BookRegistrationPreviewView: View {
     
     var body: some View {
         ZStack(alignment: .top) {
-            Color.whitePink
+            Color("AppBackgroundSoft")
                 .ignoresSafeArea()
             
-            Color.skyblue
+            Color("AppBackground")
                 .frame(height: 130)
                 .ignoresSafeArea(edges: .top)
             
@@ -77,7 +77,7 @@ struct BookRegistrationPreviewView: View {
                     } label: {
                         Image(systemName: "chevron.left")
                             .font(.title2)
-                            .foregroundStyle(.black)
+                            .foregroundStyle(Color("TextPrimary"))
                     }
                     
                     Spacer()
@@ -95,12 +95,12 @@ struct BookRegistrationPreviewView: View {
 //                                        } label: {
 //                                            Text("수정")
 //                                                .fontWeight(.semibold)
-//                                                .foregroundStyle(Color("PeachRedHeavy"))
+//                                                .foregroundStyle(Color("PrimaryDeep"))
 //                                        }
                 }
                 .padding(.horizontal, 24)
                 .frame(height: 90)
-                .background(Color.skyblue)
+                .background(Color("AppBackground"))
                 
                 ScrollView {
                     VStack(spacing: 6) {
@@ -118,18 +118,18 @@ struct BookRegistrationPreviewView: View {
                             
                         Text(draft.author)
                                 .font(.callout)
-                                .foregroundStyle(Color("Brown"))
+                                .foregroundStyle(Color("TextSecondary"))
                         
                         VStack{
                             Text(draft.contents.isEmpty ? "책 소개가 제공되지 않습니다.": draft.contents)
                         }
                         .font(.callout)
-                        .foregroundStyle(Color("Brown").opacity(0.9))
+                        .foregroundStyle(Color("TextSecondary").opacity(0.9))
                         .frame(maxWidth: .infinity)
                         .padding(24)
-                        .background(Color.white)
+                        .background(Color("Surface"))
                         .clipShape(RoundedRectangle(cornerRadius: 30))
-                        .shadow(color: .peachRed.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: Color("Primary").opacity(0.1), radius: 4, x: 0, y: 2)
                         .padding()
                     }
                     .padding()
@@ -152,15 +152,15 @@ struct BookRegistrationPreviewView: View {
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
                             .frame(height: 64)
-                            .background(Color("Peach"))
+                            .background(Color("Primary"))
                             .foregroundStyle(.white)
                             .clipShape(Capsule())
-                            .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+                            .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
                     }
                     if let errorMessage {
                         Text(errorMessage)
                             .font(.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color("Error"))
                     }
                     
                     

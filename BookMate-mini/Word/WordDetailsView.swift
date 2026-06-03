@@ -36,7 +36,7 @@ struct WordDetailsView: View {
     
     var body: some View {
         ZStack{
-            Color.skyblue
+            Color("AppBackground")
                 .ignoresSafeArea()
             
             VStack(spacing: 0){
@@ -66,9 +66,9 @@ struct WordDetailsView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 62)
-                        .background(Color("Peach"))
+                        .background(Color("Primary"))
                         .clipShape(Capsule())
-                        .shadow(color: Color("Peach").opacity(0.28), radius: 14, x: 0, y: 8)
+                        .shadow(color: Color("Primary").opacity(0.28), radius: 14, x: 0, y: 8)
                 }
                 .padding(.horizontal, 28)
                 .padding(.bottom, 24)
@@ -123,9 +123,9 @@ struct WordDetailsView: View {
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(.black.opacity(0.78))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.78))
                     .frame(width: 50, height: 50)
-                    .background(Color.white.opacity(0.22))
+                    .background(Color("Surface").opacity(0.22))
                     .clipShape(Circle())
             }
             
@@ -136,9 +136,9 @@ struct WordDetailsView: View {
             } label: {
                 Image(systemName: "bookmark.fill")
                     .font(.system(size: 19, weight: .semibold))
-                    .foregroundStyle(.black.opacity(0.68))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.68))
                     .frame(width: 50, height: 50)
-                    .background(Color.white.opacity(0.18))
+                    .background(Color("Surface").opacity(0.18))
                     .clipShape(Circle())
             }
             
@@ -152,7 +152,7 @@ struct WordDetailsView: View {
                 }
             )
             .frame(width: 50, height: 50)
-            .background(Color.white.opacity(0.18))
+            .background(Color("Surface").opacity(0.18))
             .clipShape(Circle())
         }
         .padding(.horizontal, 28)
@@ -164,31 +164,31 @@ struct WordDetailsView: View {
             HStack(alignment: .center, spacing: 12) {
                 Text(currentWord.text)
                     .font(.system(size: 44, weight: .bold))
-                    .foregroundStyle(.black.opacity(0.82))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.82))
                 
                 Text("저장됨")
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundStyle(Color("GreenHeavy"))
+                    .foregroundStyle(Color("Success"))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
-                    .background(Color("Green"))
+                    .background(Color("SuccessSoft"))
                     .clipShape(Capsule())
             }
             
             Text(currentWord.partOfSpeech)
                 .font(.callout)
                 .fontWeight(.semibold)
-                .foregroundStyle(.blue.opacity(0.75))
+                .foregroundStyle(Color("Primary").opacity(0.75))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color.white.opacity(0.18))
+                .background(Color("Surface").opacity(0.18))
                 .clipShape(Capsule())
             
             Text(currentWord.meaning)
                 .font(.title3)
                 .fontWeight(.regular)
-                .foregroundStyle(.black.opacity(0.78))
+                .foregroundStyle(Color("TextPrimary").opacity(0.78))
                 .lineSpacing(6)
             
         }
@@ -199,17 +199,17 @@ struct WordDetailsView: View {
             Text("책 속 문장")
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundStyle(.black.opacity(0.82))
+                .foregroundStyle(Color("TextPrimary").opacity(0.82))
             
             Text(currentWord.exampleSentence?.isEmpty == false ? currentWord.exampleSentence! : "아직 저장한 책 속 문장이 없어요.")
                 .font(.title3)
-                .foregroundStyle(.black.opacity(currentWord.exampleSentence == nil ? 0.42 : 0.78))
+                .foregroundStyle(Color("TextPrimary").opacity(currentWord.exampleSentence == nil ? 0.42 : 0.78))
                 .lineSpacing(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(22)
-                .background(Color.white.opacity(0.18))
+                .background(Color("Surface").opacity(0.18))
                 .clipShape(RoundedRectangle(cornerRadius: 22))
-                .shadow(color: .black.opacity(0.05), radius: 12, x: 0, y: 6)
+                .shadow(color: Color("Shadow").opacity(0.05), radius: 12, x: 0, y: 6)
         }
     }
     
@@ -219,7 +219,7 @@ struct WordDetailsView: View {
             Text("저장한 책")
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundStyle(.black.opacity(0.82))
+                .foregroundStyle(Color("TextPrimary").opacity(0.82))
             
             if let relatedBook {
                 NavigationLink {
@@ -231,29 +231,29 @@ struct WordDetailsView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(relatedBook.title)
                                 .font(.headline)
-                                .foregroundStyle(.black.opacity(0.82))
+                                .foregroundStyle(Color("TextPrimary").opacity(0.82))
                                 .lineLimit(1)
                             
                             Text(relatedBook.author)
                                 .font(.caption)
-                                .foregroundStyle(.black.opacity(0.55))
+                                .foregroundStyle(Color("TextPrimary").opacity(0.55))
                         }
                         
                         Spacer()
                         
                         Image(systemName: "chevron.right")
                             .font(.callout)
-                            .foregroundStyle(.black.opacity(0.45))
+                            .foregroundStyle(Color("TextPrimary").opacity(0.45))
                     }
                     .padding(16)
-                    .background(Color.white.opacity(0.18))
+                    .background(Color("Surface").opacity(0.18))
                     .clipShape(RoundedRectangle(cornerRadius: 22))
                 }
                 .buttonStyle(.plain)
             }else {
                 Text("연결된 책 정보를 찾을 수 없습니다.")
                     .font(.callout)
-                    .foregroundStyle(.black.opacity(0.55))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.55))
             }
         }
     }

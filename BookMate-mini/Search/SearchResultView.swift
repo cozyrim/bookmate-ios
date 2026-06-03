@@ -6,7 +6,7 @@ struct SearchResultView: View {
     
     var body: some View {
         ZStack{
-            Color.skyblue
+            Color("AppBackground")
                 .ignoresSafeArea()
             
             VStack(alignment: .leading){
@@ -23,13 +23,13 @@ struct SearchResultView: View {
                 
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color("Error"))
                 }
                 
                 if let word = viewModel.dictionarySearchResult {
                     Text("\"\(word.text)\"에 대한 검색 결과입니다.")
                         .font(.callout)
-                        .foregroundStyle(Color("Brown"))
+                        .foregroundStyle(Color("TextSecondary"))
                         .padding(.horizontal, 30)
                         .padding(.vertical, 10)
                 

@@ -42,12 +42,12 @@ struct ShelfBookCardView: View {
                     
                         Text("12 단어")
                             .font(.caption2)
-                            .foregroundStyle(Color("Brown"))
+                            .foregroundStyle(Color("TextSecondary"))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(Color("Green"))
+                            .background(Color("SuccessSoft"))
                             .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+                            .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
                         
                         Button {
                             onMoreTap()
@@ -63,35 +63,35 @@ struct ShelfBookCardView: View {
                 }
                 Text(authorLine)
                     .font(.caption2)
-                    .foregroundStyle(Color("Brown"))
+                    .foregroundStyle(Color("TextSecondary"))
                 
                 VStack(alignment: .leading){
                     HStack{
                         Text("Gorgeous")
                             .font(.caption2)
-                            .foregroundStyle(Color("GreenHeavy"))
+                            .foregroundStyle(Color("Success"))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 6)
-                            .background(Color("GreenLight"))
+                            .background(Color("SuccessSoft"))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         Text("Extravagant")
                             .font(.caption2)
-                            .foregroundStyle(Color("GreenHeavy"))
+                            .foregroundStyle(Color("Success"))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 6)
-                            .background(Color("GreenLight"))
+                            .background(Color("SuccessSoft"))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     VStack(spacing: 4) {
                         ProgressView(value: progress)
-                            .tint(Color("Peach"))
+                            .tint(Color("Primary"))
                         
                         HStack {
                             Spacer()
                             Text("\(Int(progress * 100))% 읽음")
                                 .font(.caption)
-                                .foregroundStyle(.black.opacity(0.7))
+                                .foregroundStyle(Color("TextPrimary").opacity(0.7))
                         }
                     }
                     
@@ -103,10 +103,10 @@ struct ShelfBookCardView: View {
     }
         .padding(.horizontal)
         .frame(width: 350, height: 160)
-//        .background(Color.white)
-        .background(Color.skyblue)
+//        .background(Color("Surface"))
+        .background(Color("AppBackground"))
         .clipShape(RoundedRectangle(cornerRadius: 36))
-        .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+        .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
         .contentShape(Rectangle())
         .onTapGesture {
             onTap()

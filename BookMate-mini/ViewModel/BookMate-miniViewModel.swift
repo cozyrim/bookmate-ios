@@ -52,7 +52,15 @@ final class BookMateViewModel: ObservableObject {
     
     @Published var recentSearches: [String] = []
     
-    private let recentSearchsKey = "recentDictionarySearches"
+    private var recentSearchOwnerId: UUID?
+    
+    private var recentSearchsKey: String {
+        if let recentSearchOwnerId {
+            return "recentDictionarySearches.\(recentSearchOwnerId.uuidString)"
+        } else {
+            return "recentDictionarySearches.guest"
+        }
+    }
     
     private var savedRecentSearches: Bool {
         UserDefaults.standard.object(forKey: "savesRecentSearches") as? Bool ?? true
@@ -507,5 +515,9 @@ final class BookMateViewModel: ObservableObject {
         }
     }
     
+    func setRecentSearchOwner(userId: UUID?) {
+        recentSearchOwnerId = userId
+        loadRecentSearches()
+    }
     
 }

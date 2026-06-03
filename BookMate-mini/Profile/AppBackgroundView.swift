@@ -19,21 +19,30 @@ struct AppBackgroundView: View {
     private var backgroundContent: some View {
         switch selectedTheme {
         case .skyblue:
-            Color.skyblue
+            LinearGradient(
+                colors: [
+                    Color("AppBackgroundSoft"),
+                    Color("AppBackground"),
+                    Color("AccentSoft").opacity(0.62),
+                    Color("PrimarySoft").opacity(0.42)
+                ],
+                startPoint: .top,
+                endPoint: .bottomTrailing
+            )
         case .nature:
             ZStack {
                 Image("자연4")
                     .resizable()
                     .scaledToFill()
                 
-                Color.white.opacity(0.15)
+                Color("Surface").opacity(0.15)
             }
         case .peach:
             LinearGradient(
                 colors: [
-                    Color("Peach").opacity(0.28),
-                    Color.skyblue,
-                    Color.white.opacity(0.75)
+                    Color("Primary").opacity(0.28),
+                    Color("AppBackground"),
+                    Color("Surface").opacity(0.75)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -42,8 +51,8 @@ struct AppBackgroundView: View {
             LinearGradient(
                 colors: [
                     Color(red: 0.83, green: 0.94, blue: 0.86),
-                    Color.skyblue,
-                    Color.white.opacity(0.8)
+                    Color("AppBackground"),
+                    Color("Surface").opacity(0.8)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -60,18 +69,18 @@ struct AppBackgroundView: View {
                     
                     LinearGradient(
                         colors: [
-                            Color.skyblue.opacity(0.78),
-                            Color.white.opacity(0.62),
-                            Color.skyblue.opacity(0.78)
+                            Color("AppBackground").opacity(0.78),
+                            Color("Surface").opacity(0.62),
+                            Color("AppBackground").opacity(0.78)
                         ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                     
-                    Color.white.opacity(0.10)
+                    Color("Surface").opacity(0.10)
                 }
             } else {
-                Color.skyblue
+                Color("AppBackground")
             }
         }
     }

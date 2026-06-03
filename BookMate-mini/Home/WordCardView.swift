@@ -22,14 +22,14 @@ struct WordCardView: View {
                 Text("\(word.text)")
                     .font(.title2)
                     .fontWeight(.semibold)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(Color("TextPrimary"))
                 Spacer()
                 Text("저장됨")
                     .font(.caption2)
-                    .foregroundStyle(Color("Brown"))
+                    .foregroundStyle(Color("TextSecondary"))
                     .padding(.horizontal, 7)
                     .padding(.vertical, 3)
-                    .background(Color("Green"))
+                    .background(Color("SuccessSoft"))
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                 
 //                MoreOptionsMenu(
@@ -44,15 +44,15 @@ struct WordCardView: View {
             Text("\(word.meaning)")
             
                 .font(.caption)
-                .foregroundStyle(Color("Brown"))
+                .foregroundStyle(Color("TextSecondary"))
                 .fontWeight(.medium)
                 .lineLimit(2)
         }
         .padding(18)
         .frame(width: 265, height: 90)
-        .background(Color.white)
+        .background(Color("Surface"))
         .clipShape(RoundedRectangle(cornerRadius: 36))
-        .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+        .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
         
     }
 }

@@ -79,7 +79,8 @@ struct WordAPIService {
             .appendingPathComponent("api")
             .appendingPathComponent("words")
         
-        let (data, response) = try await URLSession.shared.data(from: url)
+        let request = makeRequest(url: url)
+        let (data, response) = try await URLSession.shared.data(for: request)
         
         try validate(response)
         

@@ -15,14 +15,14 @@ struct ProfileMenuRowView: View {
     let item: ProfileMenuItem
     
     private var tintColor: Color {
-        item.isDestructive ? .red : Color("Brown")
+        item.isDestructive ? .red : Color("TextSecondary")
     }
 
             var body: some View {
                 HStack(spacing: 14) {
                     Image(systemName: item.imageName)
                         .font(.system(size: 21, weight: .regular))
-                        .foregroundStyle(Color("Brown"))
+                        .foregroundStyle(Color("TextSecondary"))
                         .frame(width: 22, height: 22)
 
                     Text(item.title)
@@ -34,7 +34,7 @@ struct ProfileMenuRowView: View {
                     if item.showChevron {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(Color("Brown").opacity(0.8))
+                            .foregroundStyle(Color("TextSecondary").opacity(0.8))
                     }
                 }
                 .frame(height: 42)

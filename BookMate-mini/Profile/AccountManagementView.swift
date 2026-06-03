@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AccountManagementView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
+    @State private var isShowingWithdrawAlert = false
     
     private var profile: ProfileResponse? {
             authViewModel.profile
@@ -36,9 +37,11 @@ struct AccountManagementView: View {
             return String(createdAt.prefix(10))
         }
     
+    
+    
     var body: some View {
         ZStack {
-                    Color.skyblue
+                    Color("AppBackground")
                         .ignoresSafeArea()
 
                     VStack(spacing: 24) {
@@ -72,14 +75,32 @@ struct AccountManagementView: View {
                                         showsChevron: false
                                     )
                                 }
+                                Button(role: .destructive) {
+                                    isShowingWithdrawAlert = true
+                                } label: {
+                                    Text("회원 탈퇴")
+                                }
+                                .alert("정말 탈퇴하시겠어요?", isPresented: $isShowingWithdrawAlert) {
+                                    Button("취소", role: .cancel) { }
+
+                                    Button("탈퇴하기", role: .destructive) {
+                                        Task {
+                                            await authViewModel.withdraw()
+                                        }
+                                    }
+                                } message: {
+                                    Text("탈퇴하면 저장한 책과 단어가 모두 삭제되며 복구할 수 없습니다.")
+                                }
                             }
                             .padding(.horizontal, 28)
                             .padding(.top, 8)
                         }
 
                         Spacer()
+                        
                     }
                 }
+        
                 .navigationBarBackButtonHidden(true)
                 .toolbar(.hidden, for: .tabBar)
                 .task {

@@ -10,9 +10,9 @@ import SwiftUI
 struct CardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .background(Color.white)
+            .background(Color("Surface"))
             .clipShape(RoundedRectangle(cornerRadius: 28))
-            .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+            .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
     }
 }
 

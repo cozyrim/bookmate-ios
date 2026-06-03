@@ -25,21 +25,21 @@ struct BookSearchResultRow: View {
                     
                     Text("\(author)")
                         .font(.caption2)
-                        .foregroundStyle(Color("Brown"))
+                        .foregroundStyle(Color("TextSecondary"))
                 }
                 Spacer()
                 Image(systemName: "plus.circle.fill")
                     .resizable()
                     .frame(width: 30, height: 30)
-                    .foregroundStyle(Color("Peach"))
+                    .foregroundStyle(Color("Primary"))
             }
     }
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity)
         .frame(height: 88)
-        .background(Color.white)
+        .background(Color("Surface"))
         .clipShape(RoundedRectangle(cornerRadius: 4))
-        .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+        .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
     }
 }
 

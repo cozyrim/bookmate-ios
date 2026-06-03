@@ -22,7 +22,7 @@ struct ProfileMenuCardView: View {
                 
                 if row.id != rows.last?.id {
                     Rectangle()
-                        .fill(Color.white.opacity(0.38))
+                        .fill(Color("Surface").opacity(0.38))
                         .frame(height: 1)
                         .padding(.leading, 36)
                 }
@@ -32,13 +32,13 @@ struct ProfileMenuCardView: View {
         .padding(.vertical, 8)
         /*
          이전 디자인 백업
-         .background(Color.white)
+         .background(Color("Surface"))
          .clipShape(RoundedRectangle(cornerRadius: 20))
-         .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+         .shadow(color: Color("Shadow").opacity(0.04), radius: 8, x: 0, y: 4)
          */
         .background {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Color.white.opacity(0.72))
+                .fill(Color("Surface").opacity(0.72))
                 .background {
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .fill(.ultraThinMaterial)
@@ -48,7 +48,7 @@ struct ProfileMenuCardView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.38),
+                                    Color("Surface").opacity(0.38),
                                     Color(red: 0.92, green: 0.98, blue: 1.0).opacity(0.22)
                                 ],
                                 startPoint: .topLeading,
@@ -59,9 +59,9 @@ struct ProfileMenuCardView: View {
         }
         .overlay {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(Color.white.opacity(0.82), lineWidth: 1)
+                .stroke(Color("Surface").opacity(0.82), lineWidth: 1)
         }
-        .shadow(color: .black.opacity(0.04), radius: 16, x: 0, y: 8)
+        .shadow(color: Color("Shadow").opacity(0.04), radius: 16, x: 0, y: 8)
         
     }
 }

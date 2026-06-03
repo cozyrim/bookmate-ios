@@ -58,7 +58,7 @@ struct BookCardView: View {
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(.black.opacity(0.55))
+                            .foregroundStyle(Color("TextPrimary").opacity(0.55))
                             .frame(width: 28, height: 28)
                             .contentShape(Rectangle())
                     }
@@ -68,16 +68,16 @@ struct BookCardView: View {
                 
                 Text(authorLine)
                     .font(.caption2)
-                    .foregroundStyle(Color("Brown"))
+                    .foregroundStyle(Color("TextSecondary"))
                 
                 ProgressView(value: progress)
-                    .tint(Color("Peach"))
+                    .tint(Color("Primary"))
                           
                         HStack {
                         Spacer()
                         Text("\(Int(progress * 100))% 읽음")
                             .font(.caption)
-                            .foregroundStyle(.black.opacity(0.7))
+                            .foregroundStyle(Color("TextPrimary").opacity(0.7))
                     }
                 
         }
@@ -85,9 +85,9 @@ struct BookCardView: View {
     }
         .padding(.horizontal)
         .frame(width: 350, height: 100)
-        .background(Color.white)
+        .background(Color("Surface"))
         .clipShape(RoundedRectangle(cornerRadius: 36))
-        .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+        .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
         .padding(.top, 8)
         .padding(.horizontal,  24)
         .contentShape(Rectangle())

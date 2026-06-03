@@ -42,7 +42,7 @@ struct NotificationSettingsView: View {
     
     var body: some View {
         ZStack {
-            Color.skyblue
+            Color("AppBackground")
                 .ignoresSafeArea()
             
             VStack(spacing: 24) {
@@ -64,9 +64,9 @@ struct NotificationSettingsView: View {
                                 HStack(spacing: 16) {
                                     Image(systemName: "clock")
                                         .font(.system(size: 20, weight: .semibold))
-                                        .foregroundStyle(Color("PeachRedHeavy"))
+                                        .foregroundStyle(Color("PrimaryDeep"))
                                         .frame(width: 44, height: 44)
-                                        .background(Color("Peach").opacity(0.16))
+                                        .background(Color("Primary").opacity(0.16))
                                         .clipShape(Circle())
                                     
                                     Text("알림 시간")
@@ -96,9 +96,9 @@ struct NotificationSettingsView: View {
                                 HStack(spacing: 16) {
                                     Image(systemName: "calendar.badge.clock")
                                         .font(.system(size: 20, weight: .semibold))
-                                        .foregroundStyle(Color("PeachRedHeavy"))
+                                        .foregroundStyle(Color("PrimaryDeep"))
                                         .frame(width: 44, height: 44)
-                                        .background(Color("Peach").opacity(0.16))
+                                        .background(Color("Primary").opacity(0.16))
                                         .clipShape(Circle())
                                     
                                     VStack(alignment: .leading, spacing: 4) {
@@ -108,7 +108,7 @@ struct NotificationSettingsView: View {
                                         
                                         Text("\(readingRecordReminderDays)일 동안 기록이 없을 때")
                                             .font(.caption)
-                                            .foregroundStyle(Color("Brown").opacity(0.75))
+                                            .foregroundStyle(Color("TextSecondary").opacity(0.75))
                                     }
                                     
                                     Spacer()

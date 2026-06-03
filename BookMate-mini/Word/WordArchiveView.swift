@@ -18,7 +18,7 @@ struct WordArchiveView: View {
     var body: some View {
         NavigationStack {
             ZStack{
-                Color.skyblue
+                Color("AppBackground")
                     .ignoresSafeArea()
                 
                 

@@ -73,7 +73,7 @@ struct MoreOptionsMenu: View {
                 )
                 .presentationDetents([.medium]) // sheet 높이
                 .presentationDragIndicator(.visible) // 위쪽 손잡이 표시 여부
-                .presentationBackground(Color.skyblue) // sheet 배경색
+                .presentationBackground(Color("AppBackground")) // sheet 배경색
             }
     }
     

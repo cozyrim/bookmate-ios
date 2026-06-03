@@ -21,10 +21,10 @@ import SwiftUI
 //                
 //                Text("\(partOfSpeech)")
 //                    .font(.caption2)
-//                    .foregroundStyle(Color("Brown"))
+//                    .foregroundStyle(Color("TextSecondary"))
 //                    .padding(.horizontal, 10)
 //                    .padding(.vertical, 6)
-//                    .background(Color(.systemGray5))
+//                    .background(Color("SurfaceSoft"))
 //                    .clipShape(RoundedRectangle(cornerRadius: 12))
 //            }
 //            
@@ -35,10 +35,10 @@ import SwiftUI
 //        .frame(maxWidth: .infinity, alignment: .leading)
 //        .background(
 //            RoundedRectangle(cornerRadius: 28)
-//                .fill(Color.white)
+//                .fill(Color("Surface"))
 //        )
 //        .padding(.horizontal, 28)
-//        .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+//        .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
 //    }
 //}
 //
@@ -62,22 +62,22 @@ import SwiftUI
                     Text(text)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundStyle(.black.opacity(0.88))
+                        .foregroundStyle(Color("TextPrimary").opacity(0.88))
 
                     Text(partOfSpeech)
                         .font(.caption2)
                         .fontWeight(.semibold)
-                        .foregroundStyle(.black.opacity(0.45))
+                        .foregroundStyle(Color("TextPrimary").opacity(0.45))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.white.opacity(0.45))
+                        .background(Color("Surface").opacity(0.45))
 //                        .background(Color.blue.opacity(0.11))
                         .clipShape(Capsule())
                 }
 
                 Text(meaning)
                     .font(.callout)
-                    .foregroundStyle(.black.opacity(0.72))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.72))
                     .lineSpacing(4)
                     .lineLimit(3)
             }
@@ -92,8 +92,8 @@ import SwiftUI
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color.white.opacity(0.82),
-                                        Color.white.opacity(0.48),
+                                        Color("Surface").opacity(0.82),
+                                        Color("Surface").opacity(0.48),
                                         Color(red: 0.92, green: 0.98, blue: 1.0).opacity(0.34)
                                     ],
                                     startPoint: .topLeading,
@@ -107,8 +107,8 @@ import SwiftUI
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.95),
-                                Color.white.opacity(0.28)
+                                Color("Surface").opacity(0.95),
+                                Color("Surface").opacity(0.28)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -117,7 +117,7 @@ import SwiftUI
                     )
             }
             .shadow(color: .white.opacity(0.45), radius: 8, x: -3, y: -3)
-            .shadow(color: .black.opacity(0.04), radius: 16, x: 0, y: 8)
+            .shadow(color: Color("Shadow").opacity(0.04), radius: 16, x: 0, y: 8)
             .padding(.horizontal, 28)
         }
     }

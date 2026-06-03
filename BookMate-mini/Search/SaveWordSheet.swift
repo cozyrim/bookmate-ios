@@ -43,18 +43,18 @@ struct SaveWordSheet: View {
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color("Peach3"))
+            .background(Color("PrimarySoft"))
             
             VStack(alignment: .leading, spacing: 12){
                 Text("어느 책에 저장할까요?")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(.black.opacity(0.72))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.72))
                 
                 if viewModel.books.isEmpty {
                     Text("먼저 책을 등록해 주세요.")
                         .font(.caption)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color("Error"))
                         .padding(.vertical, 12)
                 } else {
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -80,23 +80,23 @@ struct SaveWordSheet: View {
                 Text("책 속 문장")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(.black.opacity(0.72))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.72))
                 
                 TextField(
                     "",
                     text: $bookComment,
                     prompt: Text("단어가 포함된 문장을 적어두면 기억하기 좋아요.")
                         .font(.callout)
-                        .foregroundStyle(Color("PeachRedHeavy").opacity(0.45)),
+                        .foregroundStyle(Color("PrimaryDeep").opacity(0.45)),
                     axis: .vertical
                 )
                 .lineLimit(3...5)
                 .padding(24)
                 .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
-                .background(Color.peach3.opacity(0.7))
+                .background(Color("PrimarySoft").opacity(0.7))
                 .clipShape(RoundedRectangle(cornerRadius: 28))
                 .overlay(RoundedRectangle(cornerRadius: 28)
-                    .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                    .stroke(Color("Border").opacity(0.08), lineWidth: 1)
                 )
                 .shadow(color: .white.opacity(0.04), radius: 8)
             }
@@ -106,7 +106,7 @@ struct SaveWordSheet: View {
             if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color("Error"))
             }
             
             HStack{
@@ -120,13 +120,13 @@ struct SaveWordSheet: View {
                     }
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(Color("PeachRedHeavy"))
+                    .foregroundStyle(Color("PrimaryDeep"))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(.white)
+                    .background(Color("Surface"))
                     .clipShape(RoundedRectangle(cornerRadius: 28))
                     .overlay(RoundedRectangle(cornerRadius: 28)
-                        .stroke(Color.black.opacity(0.08), lineWidth: 2 )
+                        .stroke(Color("Border").opacity(0.08), lineWidth: 2 )
                     )
                     .clipShape(Capsule())
                 }
@@ -185,7 +185,7 @@ struct SaveWordSheet: View {
             Text(book.title)
                 .font(.caption)
                 .fontWeight(isSelected ? .bold : .medium)
-                .foregroundStyle(isSelected ? Color("Brown") : .black.opacity(0.66))
+                .foregroundStyle(isSelected ? Color("TextSecondary") : .black.opacity(0.66))
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .frame(width: 78, height: 18, alignment: .center)

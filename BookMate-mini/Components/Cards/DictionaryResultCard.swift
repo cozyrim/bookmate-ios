@@ -29,10 +29,10 @@ struct DictionaryResultCard: View {
                 
                 Text("[\(partOfSpeech)]")
                     .font(.caption2)
-                    .foregroundStyle(Color("Brown"))
+                    .foregroundStyle(Color("TextSecondary"))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Color(.systemGray5))
+                    .background(Color("SurfaceSoft"))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
 
@@ -41,10 +41,10 @@ struct DictionaryResultCard: View {
 
             Text("\"\(exampleSentence)\"")
                 .font(.footnote)
-                .foregroundStyle(Color("Brown"))
+                .foregroundStyle(Color("TextSecondary"))
                 .padding(.horizontal, 18)
                 .frame(maxWidth: .infinity, minHeight: 50, alignment: .leading)
-                .background(Color(.systemGray5).opacity(0.4))
+                .background(Color("SurfaceSoft").opacity(0.4))
             
             Button {
                 print("저장하기")
@@ -56,10 +56,10 @@ struct DictionaryResultCard: View {
                 }
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundStyle(Color("PeachRedHeavy"))
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Color("Peach"))
+                .background(Color("Primary"))
                 .clipShape(Capsule())
             }
             .sheet(isPresented: $showingSheet){
@@ -72,10 +72,10 @@ struct DictionaryResultCard: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 28)
-                .fill(Color.white)
+                .fill(Color("Surface"))
         )
         .padding(.horizontal, 28)
-        .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+        .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
     }
 }
 

@@ -46,3 +46,7 @@ extension ProfileResponse {
         )
     }
 }
+
+struct ProfileImageUploadResponse: Decodable {
+    let profileImageUrl: String
+}

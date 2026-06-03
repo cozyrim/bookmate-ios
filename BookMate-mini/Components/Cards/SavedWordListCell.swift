@@ -25,10 +25,10 @@ struct SavedWordListCell: View {
 //                
 //                Text("\(partOfSpeech)")
 //                    .font(.caption2)
-//                    .foregroundStyle(Color("Brown"))
+//                    .foregroundStyle(Color("TextSecondary"))
 //                    .padding(.horizontal, 10)
 //                    .padding(.vertical, 6)
-//                    .background(Color(.systemGray5))
+//                    .background(Color("SurfaceSoft"))
 //                    .clipShape(RoundedRectangle(cornerRadius: 12))
 //                
 //                Spacer()
@@ -51,17 +51,17 @@ struct SavedWordListCell: View {
 //            }
 //            .font(.caption)
 //            .fontWeight(.semibold)
-//            .foregroundStyle(Color("GreenHeavy"))
+//            .foregroundStyle(Color("Success"))
 //            .padding(.horizontal)
 //            .padding(.vertical, 8)
-//            .background(Color("GreenLight"))
+//            .background(Color("SuccessSoft"))
 //            .clipShape(Capsule())
 //        }
 //        .padding(20)
 //        .frame(maxWidth: .infinity)
 ////        .background(
 ////            RoundedRectangle(cornerRadius: 28)
-////                .fill(Color.white)
+////                .fill(Color("Surface"))
 ////        )
 ////        .padding(.horizontal, 28)
 //        
@@ -74,7 +74,7 @@ struct SavedWordListCell: View {
 //                    .fill(
 //                        LinearGradient(
 //                            colors: [
-//                                Color.white.opacity(0.45),
+//                                Color("Surface").opacity(0.45),
 //                                Color(red: 0.86, green: 0.94, blue: 1.0).opacity(0.22),
 //                                Color(red: 0.72, green: 0.82, blue: 0.91).opacity(0.18)
 //                            ],
@@ -86,10 +86,10 @@ struct SavedWordListCell: View {
 //        }
 //        .overlay {
 //            RoundedRectangle(cornerRadius: 28)
-//                .stroke(Color.white.opacity(0.55), lineWidth: 1)
+//                .stroke(Color("Surface").opacity(0.55), lineWidth: 1)
 //        }
 //        .padding(.horizontal, 28)
-//        .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+//        .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
 //    }
 //}
 
@@ -99,15 +99,15 @@ struct SavedWordListCell: View {
                     Text(text)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundStyle(.black.opacity(0.86))
+                        .foregroundStyle(Color("TextPrimary").opacity(0.86))
 
                     Text(partOfSpeech)
                         .font(.caption2)
                         .fontWeight(.semibold)
-                        .foregroundStyle(.black.opacity(0.45))
+                        .foregroundStyle(Color("TextPrimary").opacity(0.45))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-//                        .background(Color.white.opacity(0.32))
+//                        .background(Color("Surface").opacity(0.32))
                         .background(Color.blue.opacity(0.11))
                         .clipShape(Capsule())
 
@@ -122,7 +122,7 @@ struct SavedWordListCell: View {
 
                 Text(meaning)
                     .font(.callout)
-                    .foregroundStyle(.black.opacity(0.72))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.72))
                     .lineSpacing(4)
                     .lineLimit(2)
 
@@ -135,10 +135,10 @@ struct SavedWordListCell: View {
                         .fontWeight(.semibold)
                         .lineLimit(1)
                 }
-                .foregroundStyle(Color("GreenHeavy").opacity(0.85))
+                .foregroundStyle(Color("Success").opacity(0.85))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(Color("Green").opacity(0.55))
+                .background(Color("SuccessSoft").opacity(0.55))
                 .clipShape(Capsule())
                 .padding(.top, 2)
             }
@@ -153,8 +153,8 @@ struct SavedWordListCell: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color.white.opacity(0.72),
-                                        Color.white.opacity(0.42),
+                                        Color("Surface").opacity(0.72),
+                                        Color("Surface").opacity(0.42),
                                         Color(red: 0.92, green: 0.98, blue: 1.0).opacity(0.32)
                                     ],
                                     startPoint: .topLeading,
@@ -168,8 +168,8 @@ struct SavedWordListCell: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.9),
-                                Color.white.opacity(0.35)
+                                Color("Surface").opacity(0.9),
+                                Color("Surface").opacity(0.35)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -178,7 +178,7 @@ struct SavedWordListCell: View {
                     )
             }
             .shadow(color: .white.opacity(0.45), radius: 10, x: -4, y: -4)
-            .shadow(color: .black.opacity(0.035), radius: 18, x: 0, y: 10)
+            .shadow(color: Color("Shadow").opacity(0.035), radius: 18, x: 0, y: 10)
             .padding(.horizontal, 24)
         }
     }

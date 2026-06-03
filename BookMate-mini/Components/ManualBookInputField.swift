@@ -23,22 +23,22 @@ struct ManualBookInputField: View {
                 "",
                 text: $text,
                 prompt: Text(placeholder)
-                    .foregroundStyle(.gray.opacity(0.6))
+                    .foregroundStyle(Color("TextMuted").opacity(0.6))
             )
         }
         .padding(.horizontal, 20)
         .frame(height: 58)
-        //        .background(Color(.systemGray6).opacity(0.6))
+        //        .background(Color("SurfaceSoft").opacity(0.6))
         //        .clipShape(Capsule())
         .background {
             Capsule()
                 .fill(Color(.skyblue3))
                 .overlay{
                     Capsule()
-                        .stroke(Color.black.opacity(0.15), lineWidth: 1)
+                        .stroke(Color("Border").opacity(0.15), lineWidth: 1)
                         .blur(radius: 2)
                         .offset(y: 2)
-                        .mask(Capsule().fill(Color.black))
+                        .mask(Capsule().fill(Color("TextPrimary")))
                 }
         }
     }

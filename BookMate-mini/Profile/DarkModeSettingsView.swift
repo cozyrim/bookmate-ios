@@ -33,7 +33,7 @@ struct DarkModeSettingsView: View {
     
     var body: some View {
         ZStack {
-            Color.skyblue.ignoresSafeArea()
+            Color("AppBackground").ignoresSafeArea()
             
             VStack(spacing: 24) {
                 SettingsScreenHeader(title: "다크 모드")

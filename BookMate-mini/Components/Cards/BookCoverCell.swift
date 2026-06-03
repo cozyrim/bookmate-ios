@@ -21,17 +21,17 @@ struct BookCoverCell: View {
     var body: some View {
         ZStack {
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(.systemGray5))
+                    .fill(Color("SurfaceSoft"))
                     .frame(width: width, height: height)
-                    .shadow(color: .black.opacity(0.09), radius: 8, x: 0, y: 4)
+                    .shadow(color: Color("Shadow").opacity(0.09), radius: 8, x: 0, y: 4)
 
                 coverImage
                     .frame(width:imageWidth, height: imageHeight)
-                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                    .shadow(color: Color("Shadow").opacity(0.2), radius: 4, x: 0, y: 2)
             }
         .overlay{
             RoundedRectangle(cornerRadius: 8)
-                .stroke(isSelected ? Color("PeachRedHeavy") : Color.clear, lineWidth: 3)
+                .stroke(isSelected ? Color("PrimaryDeep") : Color.clear, lineWidth: 3)
         }
             .padding(.trailing, 12)
     }

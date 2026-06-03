@@ -34,8 +34,8 @@ struct HomeView: View {
 //                    .resizable()
 //                    .scaledToFill()
 //                    .ignoresSafeArea()
-//                Color.white.opacity(0.15)
-//                //                    Color.skyblue
+//                Color("Surface").opacity(0.15)
+//                //                    Color("AppBackground")
 //                    .ignoresSafeArea()
                 AppBackgroundView()
                 
@@ -54,7 +54,7 @@ struct HomeView: View {
                                 Spacer()
                                 
                                 Text("모두 보기")
-                                    .foregroundStyle(Color("Brown"))
+                                    .foregroundStyle(Color("TextSecondary"))
                                     .font(.caption)
                                     .fontWeight(.semibold)
                                 
@@ -113,8 +113,8 @@ struct HomeView: View {
                             Image(systemName: "plus.circle.fill")
                                 .resizable()
                                 .frame(width: 50, height: 50)
-                                .foregroundStyle(Color("Peach"))
-                                .shadow(color: Color("Peach").opacity(0.08), radius: 14, x: 0, y: 8)
+                                .foregroundStyle(Color("Primary"))
+                                .shadow(color: Color("Primary").opacity(0.08), radius: 14, x: 0, y: 8)
                                 .padding()
                         } // 이 버튼을 누르면 path에 HomeRoute.bookSearch 라는 값을 넣어줘.
                         // 그 값을 받으면 어디로 갈지는 아래에서 정함
@@ -158,7 +158,7 @@ struct HomeView: View {
                     )
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
-                    .presentationBackground(Color.skyblue)
+                    .presentationBackground(Color("AppBackground"))
 
                 case .edit(let book):
                     BookEditSheet(book: book) { selectedCategory in

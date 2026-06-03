@@ -18,7 +18,7 @@ struct SettingsScreenHeader: View {
             } label : {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(Color("Brown"))
+                    .foregroundStyle(Color("TextSecondary"))
                     .frame(width: 44, height: 44)
             }
             
@@ -27,7 +27,7 @@ struct SettingsScreenHeader: View {
             Text(title)
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundStyle(.black)
+                .foregroundStyle(Color("TextPrimary"))
             
             Spacer()
             
@@ -47,15 +47,15 @@ struct SettingsSectionCard<Content: View>: View {
                 Text(title)
                     .font(.headline)
                     .fontWeight(.bold)
-                    .foregroundStyle(Color("Brown"))
+                    .foregroundStyle(Color("TextSecondary"))
                     .padding(.horizontal, 4)
 
                 VStack(spacing: 0) {
                     content
                 }
-                .background(Color.white.opacity(0.88))
+                .background(Color("Surface").opacity(0.88))
                 .clipShape(RoundedRectangle(cornerRadius: 28))
-                .shadow(color: .black.opacity(0.045), radius: 14, x: 0, y: 6)
+                .shadow(color: Color("Shadow").opacity(0.045), radius: 14, x: 0, y: 6)
             }
         }
 }
@@ -74,19 +74,19 @@ struct SettingsToggleRow: View {
                             Text(title)
                                 .font(.callout)
                                 .fontWeight(.semibold)
-                                .foregroundStyle(.black)
+                                .foregroundStyle(Color("TextPrimary"))
 
                             if let subtitle {
                                 Text(subtitle)
                                     .font(.caption)
-                                    .foregroundStyle(Color("Brown").opacity(0.75))
+                                    .foregroundStyle(Color("TextSecondary").opacity(0.75))
                             }
                         }
                         Spacer()
 
                         Toggle("", isOn: $isOn)
                             .labelsHidden()
-                            .tint(Color("Peach"))
+                            .tint(Color("Primary"))
                     }
                     .padding(.horizontal, 20)
                     .frame(minHeight: 72)
@@ -107,19 +107,19 @@ struct SettingsValueRow: View {
             Text(title)
                 .font(.callout)
                 .fontWeight(.semibold)
-                .foregroundStyle(.black)
+                .foregroundStyle(Color("TextPrimary"))
 
             Spacer()
 
             Text(value)
                 .font(.callout)
-                .foregroundStyle(Color("Brown").opacity(0.78))
+                .foregroundStyle(Color("TextSecondary").opacity(0.78))
                 .lineLimit(1)
 
             if showsChevron {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color("Brown").opacity(0.55))
+                    .foregroundStyle(Color("TextSecondary").opacity(0.55))
             }
         }
         .padding(.horizontal, 20)
@@ -131,7 +131,7 @@ struct SettingsValueRow: View {
 struct SettingsDivider: View {
     var body: some View {
         Rectangle()
-            .fill(Color("Brown").opacity(0.08))
+            .fill(Color("TextSecondary").opacity(0.08))
             .frame(height: 1)
             .padding(.leading, 72)
     }
@@ -148,10 +148,10 @@ struct SettingsPrimaryButton: View {
                 .fontWeight(.bold)
                 .frame(maxWidth: .infinity)
                 .frame(height: 62)
-                .background(Color("Peach"))
+                .background(Color("Primary"))
                 .foregroundStyle(.white)
                 .clipShape(Capsule())
-                .shadow(color: Color("Peach").opacity(0.25), radius: 14, x: 0, y: 8)
+                .shadow(color: Color("Primary").opacity(0.25), radius: 14, x: 0, y: 8)
         }
     }
 }
@@ -159,8 +159,8 @@ struct SettingsPrimaryButton: View {
 private func settingsIcon(_ iconName: String) -> some View {
     Image(systemName: iconName)
         .font(.system(size: 20, weight: .semibold))
-        .foregroundStyle(Color("PeachRedHeavy"))
+        .foregroundStyle(Color("PrimaryDeep"))
         .frame(width: 44, height: 44)
-        .background(Color("Peach").opacity(0.16))
+        .background(Color("Primary").opacity(0.16))
         .clipShape(Circle())
 }

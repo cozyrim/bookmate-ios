@@ -41,7 +41,7 @@ struct BookEditSheet: View {
 
                                     Text(book.author)
                                         .font(.caption)
-                                        .foregroundStyle(.black.opacity(0.55))
+                                        .foregroundStyle(Color("TextPrimary").opacity(0.55))
                                 }
                             }
                             Text("카테고리")
@@ -59,15 +59,15 @@ struct BookEditSheet: View {
                                         Text(selectedCategory)
                                             .foregroundStyle(
                                                     selectedCategory == "카테고리 선택"
-                                                    ? .peach
-                                                    : Color("PeachRedHeavy")
+                                                    ? Color("TextMuted")
+                                                    : Color("PrimaryDeep")
                                 )
                                         Spacer()
                                         Image(systemName: "chevron.down")
                                     }
                                     .padding(.horizontal, 18)
                                     .frame(height: 54)
-                                    .background(Color.white.opacity(0.78))
+                                    .background(Color("Surface").opacity(0.78))
                                     .clipShape(RoundedRectangle(cornerRadius: 18))
                 }
                 Spacer()
@@ -85,13 +85,13 @@ struct BookEditSheet: View {
                                                 .foregroundStyle(.white)
                                                 .frame(maxWidth: .infinity)
                                                 .frame(height: 56)
-                                                .background(Color("Peach"))
+                                                .background(Color("Primary"))
                                                 .clipShape(Capsule())
                                         }
                                         .padding(.bottom, 12)
                                     }
                                     .padding(.horizontal, 26)
-                                    .background(Color.skyblue)
+                                    .background(Color("AppBackground"))
     }
 }
 

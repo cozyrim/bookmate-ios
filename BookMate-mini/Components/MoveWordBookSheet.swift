@@ -43,11 +43,11 @@ struct MoveWordBookSheet: View {
                                 
                                 if book.id == currentBookId {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(Color("Peach"))
+                                        .foregroundStyle(Color("Primary"))
                                 }
                             }
                             .padding(14)
-                                                        .background(Color.white.opacity(0.9))
+                                                        .background(Color("Surface").opacity(0.9))
                                                         .clipShape(RoundedRectangle(cornerRadius: 18))
                                                     }
                                                     .buttonStyle(.plain)
@@ -57,7 +57,7 @@ struct MoveWordBookSheet: View {
                 }
             }
         .padding(.horizontal, 24)
-        .background(Color.skyblue)
+        .background(Color("AppBackground"))
     
     }
 }

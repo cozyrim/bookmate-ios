@@ -34,7 +34,7 @@ struct BookSearchView: View {
     
     var body: some View {
         ZStack{
-            Color.skyblue
+            Color("AppBackground")
                 .ignoresSafeArea()
             
             VStack(alignment: .leading, spacing: 12) {
@@ -88,7 +88,7 @@ struct BookSearchView: View {
             Spacer()
         }
         .font(.callout)
-        .foregroundStyle(Color("Brown"))
+        .foregroundStyle(Color("TextSecondary"))
         .padding(.horizontal, 24)
         .frame(height: 42)
     }
@@ -117,7 +117,7 @@ struct BookSearchView: View {
             VStack(spacing: 6){
                 Text("원하는 책이 없나요?")
                     .font(.callout)
-                    .foregroundStyle(Color("Brown"))
+                    .foregroundStyle(Color("TextSecondary"))
                 
                 
                 NavigationLink {
@@ -125,7 +125,7 @@ struct BookSearchView: View {
                 } label: {
                     Text("직접 입력해서 등록하기")
                         .fontWeight(.semibold)
-                        .foregroundStyle(Color("PeachRedHeavy"))
+                        .foregroundStyle(Color("PrimaryDeep"))
                         .underline()
                 }
             }

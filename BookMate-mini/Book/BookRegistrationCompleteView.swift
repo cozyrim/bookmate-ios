@@ -46,11 +46,11 @@ struct BookRegistrationCompleteView: View {
     private var fallbackCover: some View {
         ZStack{
             RoundedRectangle(cornerRadius: 30)
-                .fill(Color(.systemGray5))
+                .fill(Color("SurfaceSoft"))
             
             Image(systemName: "book.closed")
                 .font(.largeTitle)
-                            .foregroundStyle(.gray)
+                            .foregroundStyle(Color("TextMuted"))
         }
     }
     
@@ -59,21 +59,21 @@ struct BookRegistrationCompleteView: View {
     
     var body: some View {
         ZStack {
-            Color.skyblue
+            Color("AppBackground")
                 .ignoresSafeArea()
             
 
             VStack(spacing: 12){
                 ZStack{
                     Circle()
-                        .fill(Color.greenLight)
+                        .fill(Color("SuccessSoft"))
                                 .frame(width: 100, height: 100)
-                                .shadow(color: Color.greenHeavy.opacity(0.08), radius: 10)
+                                .shadow(color: Color("Success").opacity(0.08), radius: 10)
                     
                     
                     Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 44, weight: .semibold))
-                            .foregroundStyle(Color.greenHeavy)
+                            .foregroundStyle(Color("Success"))
                 }
                 .padding(.bottom)
                 
@@ -82,7 +82,7 @@ struct BookRegistrationCompleteView: View {
                 
                 Text("성공적으로 내 책장에 책이 등록되었습니다.")
                     .font(.callout)
-                    .foregroundStyle(Color("Brown").opacity(0.9))
+                    .foregroundStyle(Color("TextSecondary").opacity(0.9))
                 
                 coverImage
                     .frame(width: 170, height: 260)
@@ -100,10 +100,10 @@ struct BookRegistrationCompleteView: View {
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
                             .frame(height: 64)
-                            .background(Color("Peach"))
+                            .background(Color("Primary"))
                             .foregroundStyle(.white)
                             .clipShape(Capsule())
-                            .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+                            .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
                     }
                     Button{
                         onFinishRegistration(1)
@@ -114,9 +114,9 @@ struct BookRegistrationCompleteView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 64)
                             .background(Color(.black).opacity(0.02))
-                            .foregroundStyle(.black)
+                            .foregroundStyle(Color("TextPrimary"))
                             .clipShape(Capsule())
-                            .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+                            .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
                     }
                 }
                 .padding()
