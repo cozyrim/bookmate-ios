@@ -106,6 +106,7 @@ struct BookManualEntryView: View {
         _title = State(initialValue: initialDraft?.title ?? "")
         _author = State(initialValue: initialDraft?.author ?? "")
         _imageName = State(initialValue: initialDraft?.imageName ?? "책기본이미지")
+        _selectedCategory = State(initialValue: initialDraft?.category ?? "카테고리 선택")
     }
     
     var body: some View {

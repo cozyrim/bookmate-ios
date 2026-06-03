@@ -12,6 +12,8 @@ struct SaveWordSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var bookComment: String = ""
     @State private var selectedBookId: UUID?
+    @AppStorage("lastSelectedBookId") private var lastSelectedBookId = ""
+    @AppStorage("remembersLastSelectedBook") private var remembersLastSelectedBook = true
     
     let text: String
     let meaning: String
@@ -60,6 +62,10 @@ struct SaveWordSheet: View {
                             ForEach(viewModel.books) { book in
                                 Button {
                                     selectedBookId = selectedBookId == book.id ? nil : book.id
+                                    
+                                    if selectedBookId == book.id {
+                                        lastSelectedBookId = book.id.uuidString
+                                    }
                                 } label: {
                                     selectableBookCover(book)
                                 }
@@ -151,6 +157,16 @@ struct SaveWordSheet: View {
             }
         }
         .padding(24)
+        .onAppear {
+            guard remembersLastSelectedBook,
+                  selectedBookId == nil,
+                  let lastBookUUID = UUID(uuidString: lastSelectedBookId),
+                  viewModel.books.contains(where: {$0.id == lastBookUUID}) else {
+                return
+            }
+            
+            selectedBookId = lastBookUUID
+        }
         
     }
 

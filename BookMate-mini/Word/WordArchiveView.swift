@@ -13,7 +13,7 @@ struct WordArchiveView: View {
     @State private var selectedWordToEdit: Word?
     @State private var selectedWordToMove: Word?
     @State private var isShowingDeleteAlert = false
-    
+    @Binding var selectedTab: Int
     
     var body: some View {
         NavigationStack {
@@ -21,35 +21,71 @@ struct WordArchiveView: View {
                 Color.skyblue
                     .ignoresSafeArea()
                 
-                ScrollView {
-                    VStack {
-                        ForEach(viewModel.savedWords) { word in
-                            let book = viewModel.books.first { $0.id == word.bookId }
-                            
-                            NavigationLink {
-                                WordDetailsView(viewModel: viewModel, word: word)
-                            } label: {
-                                SavedWordListCell(
-                                    text: word.text,
-                                    partOfSpeech: word.partOfSpeech,
-                                    meaning: word.meaning,
-                                    title: book?.title ?? "책 정보 없음",
-                                    onEdit: {
-                                        selectedWordToEdit = word
-                                    },
-                                    onDelete: {
-                                        selectedWordToDelete = word
-                                        isShowingDeleteAlert = true
-                                    },
-                                    onMove: {
+                
+                
+                if let errorMessage = viewModel.errorMessage {
+                    ContentStateView(
+                        type: .error,
+                        iconName: "exclamationmark.triangle",
+                        title: "단어를 불러오지 못했어요.",
+                        message: errorMessage,
+                        buttonTitle: "다시 시도하기",
+                        buttonIconName: "arrow.clockwise",
+                        buttonAction: {
+                            Task {
+                                await viewModel.loadSavedWords()
+                            }
+                        }
+                    )
+                    .padding(.top, 40)
+                    
+                } else if viewModel.savedWords.isEmpty {
+                    ContentStateView(
+                        type: .empty,
+                        iconName: "book",
+                        title: "아직 저장한 단어가 없어요.",
+                        message: "지금 읽고 있는 책에서 모르는 단어를 검색해보세요.",
+                        buttonTitle: "단어 검색하기",
+                        buttonIconName: "magnifyingglass",
+                        buttonAction: {
+                            viewModel.searchMode = .dictionary
+                            viewModel.searchText = ""
+                            selectedTab = 0
+                        }
+                    )
+                    .padding(.top, 40)
+                    
+                } else {
+                    ScrollView {
+                        VStack {
+                            ForEach(viewModel.savedWords) { word in
+                                let book = viewModel.books.first { $0.id == word.bookId }
+                                
+                                NavigationLink {
+                                    WordDetailsView(viewModel: viewModel, word: word)
+                                } label: {
+                                    SavedWordListCell(
+                                        text: word.text,
+                                        partOfSpeech: word.partOfSpeech,
+                                        meaning: word.meaning,
+                                        title: book?.title ?? "책 정보 없음",
+                                        onEdit: {
+                                            selectedWordToEdit = word
+                                        },
+                                        onDelete: {
+                                            selectedWordToDelete = word
+                                            isShowingDeleteAlert = true
+                                        },
+                                        onMove: {
                                             selectedWordToMove = word
                                         }
-                                )
+                                    )
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
+                        .padding(.vertical)
                     }
-                    .padding(.vertical)
                 }
             }
             .sheet(item: $selectedWordToEdit) { word in
@@ -100,5 +136,5 @@ struct WordArchiveView: View {
 }
 
 #Preview {
-    WordArchiveView(viewModel: BookMateViewModel())
+    WordArchiveView(viewModel: BookMateViewModel(), selectedTab: .constant(2))
 }

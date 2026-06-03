@@ -8,29 +8,30 @@
 import SwiftUI
 
 struct ProfileMenuRowView: View {
-        let imageName: String
-        let title: String
-        var showsChevron: Bool = true
-        var isDestructive: Bool = false
+//        let imageName: String
+//        let title: String
+//        var showsChevron: Bool = true
+//        var isDestructive: Bool = false
+    let item: ProfileMenuItem
     
     private var tintColor: Color {
-        isDestructive ? .red : Color("Brown")
+        item.isDestructive ? .red : Color("Brown")
     }
 
             var body: some View {
                 HStack(spacing: 14) {
-                    Image(systemName: imageName)
+                    Image(systemName: item.imageName)
                         .font(.system(size: 21, weight: .regular))
                         .foregroundStyle(Color("Brown"))
                         .frame(width: 22, height: 22)
 
-                    Text(title)
+                    Text(item.title)
                         .font(.callout)
-                        .foregroundStyle(isDestructive ? .red : .black)
+                        .foregroundStyle(item.isDestructive ? .red : .black)
 
                     Spacer()
 
-                    if showsChevron {
+                    if item.showChevron {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(Color("Brown").opacity(0.8))
@@ -41,5 +42,10 @@ struct ProfileMenuRowView: View {
 }
 
 #Preview {
-    ProfileMenuRowView(imageName: "person.crop.circle", title: "내 계정")
+    ProfileMenuRowView(
+            item: ProfileMenuItem(
+                imageName: "person.crop.circle",
+                title: "프로필 수정"
+            )
+        )
 }

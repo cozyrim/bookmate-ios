@@ -80,7 +80,7 @@ struct MoreOptionsMenu: View {
     private func closeSheetThen(_ action: @escaping () -> Void) {
         isShowingSheet = false
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
             action()
         }
     }

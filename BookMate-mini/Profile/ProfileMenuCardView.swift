@@ -9,19 +9,17 @@ import SwiftUI
 
 struct ProfileMenuCardView: View {
     let rows: [ProfileMenuItem]
+    var onTap: (ProfileMenuItem) -> Void = { _ in }
     
     var body: some View {
         VStack(spacing: 0) {
             ForEach(rows) { row in
-                ProfileMenuRowView(imageName: row.imageName, title: row.title, showsChevron: row.showChevron, isDestructive: row.isDestructive)
-
-                /*
-                 이전 디자인 백업
-                 if row.id != rows.last?.id {
-                     Divider()
-                         .padding(.leading, 36)
-                 }
-                 */
+                Button {
+                    onTap(row)
+                } label: { ProfileMenuRowView(item: row)
+                    }
+                .buttonStyle(.plain)
+                
                 if row.id != rows.last?.id {
                     Rectangle()
                         .fill(Color.white.opacity(0.38))

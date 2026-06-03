@@ -14,6 +14,8 @@ struct Book: Identifiable, Hashable {
     let imageName: String
     let category: String
     let progress: Double
+    let totalPages: Int?
+    let currentPage: Int?
     
     init(
         id: UUID = UUID(),
@@ -21,7 +23,9 @@ struct Book: Identifiable, Hashable {
         author: String,
         imageName: String,
         category: String = "카테고리 선택",
-        progress: Double
+        progress: Double,
+        totalPages: Int? = nil,
+        currentPage: Int? = nil
     ) {
         self.id = id
         self.title = title
@@ -29,6 +33,8 @@ struct Book: Identifiable, Hashable {
         self.imageName = imageName
         self.category = category
         self.progress = progress
+        self.totalPages = totalPages
+        self.currentPage = currentPage
     }
 }
 

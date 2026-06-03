@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @ObservedObject var authViewModel: AuthSessionViewModel
     @StateObject private var viewModel = BookMateViewModel() // StateObject는 처음 Viewmodel 만들고 소유
     @State var tabIndex = 0
     
@@ -28,14 +29,14 @@ struct MainTabView: View {
                 .tag(1)
             
             
-            WordArchiveView(viewModel: viewModel)
+            WordArchiveView(viewModel: viewModel, selectedTab: $tabIndex)
                 .tabItem {
                     Image(systemName: "tag")
                     Text("단어 아카이빙")
                 }
                 .tag(2)
             
-            ProfileView()
+            ProfileView(authViewModel: authViewModel)
                 .tabItem{
                     Image(systemName: "person.crop.circle.fill")
                     Text("프로필")
@@ -45,6 +46,8 @@ struct MainTabView: View {
         }
         .tint(Color("PeachRed"))
         .task {
+            viewModel.loadRecentSearches()
+            
             await viewModel.loadBooks()
             await viewModel.loadSavedWords()
         }
@@ -52,5 +55,5 @@ struct MainTabView: View {
 }
 
 #Preview {
-    MainTabView()
+    MainTabView(authViewModel: AuthSessionViewModel())
 }

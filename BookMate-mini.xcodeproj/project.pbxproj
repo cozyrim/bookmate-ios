@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E29F41A52FCF592500021309 /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = E29F41A42FCF592500021309 /* KakaoSDKAuth */; };
+		E29F41A72FCF592500021309 /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = E29F41A62FCF592500021309 /* KakaoSDKCommon */; };
+		E29F41A92FCF592500021309 /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = E29F41A82FCF592500021309 /* KakaoSDKUser */; };
 		E2A46C992FB1D7640094CD4E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2A46C952FB1D7640094CD4E /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -59,6 +62,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E29F41A72FCF592500021309 /* KakaoSDKCommon in Frameworks */,
+				E29F41A52FCF592500021309 /* KakaoSDKAuth in Frameworks */,
+				E29F41A92FCF592500021309 /* KakaoSDKUser in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,6 +136,9 @@
 			);
 			name = "BookMate-mini";
 			packageProductDependencies = (
+				E29F41A42FCF592500021309 /* KakaoSDKAuth */,
+				E29F41A62FCF592500021309 /* KakaoSDKCommon */,
+				E29F41A82FCF592500021309 /* KakaoSDKUser */,
 			);
 			productName = "BookMate-mini";
 			productReference = E286E4852FB1B48400F1715A /* BookMate-mini.app */;
@@ -213,6 +222,9 @@
 			);
 			mainGroup = E286E47C2FB1B48400F1715A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E29F41A32FCF592500021309 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E286E4862FB1B48400F1715A /* Products */;
 			projectDirPath = "";
@@ -628,6 +640,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E29F41A32FCF592500021309 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kakao/kakao-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.27.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E29F41A42FCF592500021309 /* KakaoSDKAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E29F41A32FCF592500021309 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
+			productName = KakaoSDKAuth;
+		};
+		E29F41A62FCF592500021309 /* KakaoSDKCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E29F41A32FCF592500021309 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
+			productName = KakaoSDKCommon;
+		};
+		E29F41A82FCF592500021309 /* KakaoSDKUser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E29F41A32FCF592500021309 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
+			productName = KakaoSDKUser;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E286E47D2FB1B48400F1715A /* Project object */;
 }

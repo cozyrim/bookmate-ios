@@ -15,12 +15,8 @@ struct ShelfView: View {
     @State private var selectedBookToDelete: Book?
     @State private var isShowingDeleteAlert = false
     
-    
-    private struct BookEditTarget: Identifiable {
-        let id: UUID
-    }
 
-    @State private var selectedBookToEdit: BookEditTarget?
+    @State private var activeBookSheet: BookActionSheet?
     
     private enum ShelfRoute: Hashable {
         case bookSearch
@@ -65,15 +61,13 @@ struct ShelfView: View {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 16){
                             ForEach(viewModel.books) { book in
-                                NavigationLink(value: ShelfRoute.bookDetail(book.id)) {
-                                    ShelfBookCardView(imageName: book.imageName, author: book.author, title: book.title, onEdit: {
-                                        selectedBookToEdit = BookEditTarget(id: book.id)
+                                    ShelfBookCardView(imageName: book.imageName, author: book.author, title: book.title, category: book.category, progress: book.progress,
+                                                      onTap: {
+                                        path.append(ShelfRoute.bookDetail(book.id))
                                     },
-                                    onDelete: {
-                                        selectedBookToDelete = book
-                                        isShowingDeleteAlert = true
+                                                      onMoreTap: {
+                                        activeBookSheet = .options(book)
                                     })
-                                }
                                 .buttonStyle(.plain)
                             }
                         }
@@ -82,15 +76,88 @@ struct ShelfView: View {
                     }
                 }
             }
-            .sheet(item: $selectedBookToEdit) { target in
-                if let book = viewModel.books.first(where: { $0.id == target.id }) {
-                    BookEditSheet(book: book) { updatedBook in
-                        await viewModel.updateBook(updatedBook)
+            .sheet(item: $activeBookSheet) { sheet in
+                switch sheet {
+                case .options(let book):
+                    MoreOptionsSheet(
+                        editTitle: "책 수정하기",
+                        deleteTitle: "책 삭제하기",
+                        moveTitle: "읽은 쪽수 업데이트",
+                        onEdit: {
+                            activeBookSheet = nil
+
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                activeBookSheet = .edit(book)
+                            }
+                        },
+                        onDelete: {
+                            activeBookSheet = nil
+
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                selectedBookToDelete = book
+                                isShowingDeleteAlert = true
+                            }
+                        },
+                        onMove: {
+                            activeBookSheet = nil
+
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                activeBookSheet = .progress(book)
+                            }
+                        }
+                    )
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+                    .presentationBackground(Color.skyblue)
+                    
+                case .edit(let book):
+                    BookEditSheet(book: book) { selectedCategory in
+                        let latestBook = viewModel.books.first(where: { $0.id == book.id }) ?? book
+                        
+                        let updatedBook = Book(
+                            id: latestBook.id,
+                            title: latestBook.title,
+                            author: latestBook.author,
+                            imageName: latestBook.imageName,
+                            category: selectedCategory,
+                            progress: latestBook.progress,
+                            totalPages: latestBook.totalPages,
+                            currentPage: latestBook.currentPage
+                        )
+                        
+                        activeBookSheet = nil
+                        
+                        Task {
+                            await viewModel.updateBook(updatedBook)
+                        }
                     }
                     .presentationDetents([.height(420)])
                     .presentationDragIndicator(.visible)
-                } else {
-                    Text("책 정보를 찾을 수 없습니다.")
+                    
+                case .progress(let book):
+                    ReadingProgressSheet(book: book) { totalPages, currentPage in
+                        let progress = Double(currentPage) / Double(totalPages)
+                        let latestBook = viewModel.books.first(where: { $0.id == book.id }) ?? book
+                        
+                        let updatedBook = Book(
+                            id: latestBook.id,
+                            title: latestBook.title,
+                            author: latestBook.author,
+                            imageName: latestBook.imageName,
+                            category: latestBook.category,
+                            progress: progress,
+                            totalPages: totalPages,
+                            currentPage: currentPage
+                        )
+                        
+                        activeBookSheet = nil
+                        
+                        Task {
+                            await viewModel.updateBook(updatedBook)
+                        }
+                    }
+                    .presentationDetents([.height(430)])
+                    .presentationDragIndicator(.visible)
                 }
             }
             .alert("책을 삭제할까요?", isPresented: $isShowingDeleteAlert) {

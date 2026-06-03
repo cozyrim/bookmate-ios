@@ -12,14 +12,14 @@ struct BookEditSheet: View {
         @Environment(\.dismiss) private var dismiss
 
         let book: Book
-        let onSave: (Book) async -> Bool
+        let onSave: (String) -> Void
 
         @State private var selectedCategory: String
         @State private var isSaving = false
         
         private let categories = ["카테고리 선택", "소설", "에세이", "인문", "자기계발", "과학", "기타"]
 
-        init(book: Book, onSave: @escaping (Book) async -> Bool) {
+        init(book: Book, onSave: @escaping (String) -> Void) {
             self.book = book
             self.onSave = onSave
             _selectedCategory = State(initialValue: book.category)
@@ -73,23 +73,11 @@ struct BookEditSheet: View {
                 Spacer()
 
                             Button {
-                                let updatedBook = Book(
-                                    id: book.id,
-                                    title: book.title,
-                                    author: book.author,
-                                    imageName: book.imageName,
-                                    category: selectedCategory,
-                                    progress: book.progress
-                                )
-                                Task {
-                                    isSaving = true
-                                    let success = await onSave(updatedBook)
-                                    isSaving = false
-                                    
-                                    if success {
-                                        dismiss()
-                                    }
-                                }
+                                let categoryToSave = selectedCategory
+                                
+                                onSave(categoryToSave)
+                                
+                              
                             } label: {
                                             Text(isSaving ? "저장 중..." : "저장하기")
                                                 .font(.headline)
@@ -108,8 +96,7 @@ struct BookEditSheet: View {
 }
 
 #Preview {
-    BookEditSheet(book: Book.dummyBooks[0]) { updatedBook in
-            print("수정된 카테고리:", updatedBook.category)
-            return true
-        }
+    BookEditSheet(book: Book.dummyBooks[0]) { selectedCategory in
+        print("선택된 카테고리:", selectedCategory)
+    }
 }

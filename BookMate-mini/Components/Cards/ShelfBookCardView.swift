@@ -11,9 +11,22 @@ struct ShelfBookCardView: View {
     let imageName: String
     let author: String
     let title: String
+    let category: String
+    let progress: Double
     
-    let onEdit: () -> Void
-    let onDelete: () -> Void
+    let onTap: () -> Void
+    let onMoreTap: () -> Void
+    
+    private var authorLine: String {
+        let trimmedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmedCategory.isEmpty || trimmedCategory == "카테고리 선택" {
+            return author
+        }
+
+        return "\(author) · \(trimmedCategory)"
+    }
+    
     
     var body: some View {
         HStack {
@@ -36,16 +49,19 @@ struct ShelfBookCardView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                             .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
                         
-                        MoreOptionsMenu(
-                            editTitle: "책 수정하기",
-                            deleteTitle: "책 삭제하기",
-                            moveTitle: nil,
-                            onEdit: onEdit,
-                            onDelete: onDelete
-                        )
+                        Button {
+                            onMoreTap()
+                        } label: {
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.black.opacity(0.55))
+                                .frame(width: 22, height: 22)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
 
                 }
-                Text("\(author)")
+                Text(authorLine)
                     .font(.caption2)
                     .foregroundStyle(Color("Brown"))
                 
@@ -67,14 +83,16 @@ struct ShelfBookCardView: View {
                             .background(Color("GreenLight"))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    HStack {
-                        Text("Evolution")
-                            .font(.caption2)
-                            .foregroundStyle(Color("GreenHeavy"))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 6)
-                            .background(Color("GreenLight"))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    VStack(spacing: 4) {
+                        ProgressView(value: progress)
+                            .tint(Color("Peach"))
+                        
+                        HStack {
+                            Spacer()
+                            Text("\(Int(progress * 100))% 읽음")
+                                .font(.caption)
+                                .foregroundStyle(.black.opacity(0.7))
+                        }
                     }
                     
                 }
@@ -89,12 +107,16 @@ struct ShelfBookCardView: View {
         .background(Color.skyblue)
         .clipShape(RoundedRectangle(cornerRadius: 36))
         .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
+        }
 
     }
 
 }
 
 #Preview {
-    ShelfBookCardView(imageName: Book.dummyBooks[0].imageName, author:Book.dummyBooks[0].author , title: Book.dummyBooks[0].title, onEdit: {},
-                      onDelete: {})
+    ShelfBookCardView(imageName: Book.dummyBooks[0].imageName, author:Book.dummyBooks[0].author , title: Book.dummyBooks[0].title, category: "소설", progress: 0.65, onTap: {},
+                      onMoreTap: {})
 }

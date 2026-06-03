@@ -15,6 +15,34 @@ struct HomeSearchSection: View {
     @State private var selectedWordToMove: Word?
     @State private var isShowingDeleteAlert = false
     
+    private func searchRecentWord(_ word: String) {
+        let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        viewModel.searchMode = .dictionary
+            viewModel.searchText = trimmed
+            viewModel.dictionarySuggestions = []
+            viewModel.dictionarySearchResult = nil
+            viewModel.errorMessage = nil
+            viewModel.isLoading = true
+        
+        withAnimation(.easeInOut(duration: 0.2)) {
+                isShowingSearchResult = true
+            }
+        
+        Task { @MainActor in
+                await viewModel.performSearch()
+            }
+    }
+    
+    private func clearSearchText() {
+        viewModel.searchText = ""
+        viewModel.dictionarySuggestions = []
+        viewModel.savedWordSearchResults = []
+        viewModel.dictionarySearchResult = nil
+        viewModel.errorMessage = nil
+    }
+    
     var body: some View {
         
         VStack(alignment: .leading, spacing: 20) {
@@ -28,6 +56,7 @@ struct HomeSearchSection: View {
                 .disabled(viewModel.isLoading)
                 
                 TextField(
+                    
                     "",
                     text: $viewModel.searchText,
                     prompt: Text(
@@ -37,12 +66,24 @@ struct HomeSearchSection: View {
                     )
                     .foregroundStyle(.black.opacity(0.6))
                 )
+                
+                
                 .submitLabel(.search)
                 .onSubmit {
                     runSearch()
                 }
                 // 검색 버튼을 누르지 않아도 입력할 때마다 현재 모드에 맞는 검색 결과가 갱신됨.
-                .onChange(of: viewModel.searchText) { _, _ in
+                .onChange(of: viewModel.searchText) { _, newValue in
+                    let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    if trimmed.isEmpty {
+                            viewModel.dictionarySuggestions = []
+                            viewModel.savedWordSearchResults = []
+                            viewModel.dictionarySearchResult = nil
+                            viewModel.errorMessage = nil
+                            return
+                        }
+                    
                     switch viewModel.searchMode{
                     case .dictionary:
                         Task {
@@ -53,10 +94,68 @@ struct HomeSearchSection: View {
                         viewModel.searchSavedWords()
                     }
                 }
+                if !viewModel.searchText.isEmpty {
+                    Button {
+                        clearSearchText()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.gray.opacity(0.55))
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .padding(14)
             .background(Color(.systemGray6))
             .clipShape(Capsule())
+            
+            if viewModel.searchMode == .dictionary,
+               viewModel.searchText.isEmpty,
+               !viewModel.recentSearches.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("최근 검색어")
+                        .font(.caption)
+                        .foregroundStyle(Color("Brown"))
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(viewModel.recentSearches, id: \.self) { recentWord in
+                                HStack(spacing: 6) {
+                                    Button {
+                                        searchRecentWord(recentWord)
+                                    } label: {
+                                        Text(recentWord)
+                                            .font(.caption)
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(Color("Brown"))
+                                    }
+                                    .buttonStyle(.plain)
+
+                                    Button {
+                                        viewModel.removeRecentSearch(recentWord)
+                                    } label: {
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 9, weight: .bold))
+                                            .foregroundStyle(Color("Brown").opacity(0.55))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color.white.opacity(0.82))
+                                .clipShape(Capsule())
+                                .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
+
+                                
+                                
+                                
+                            }
+                        }
+                    }
+                }
+            }
+            
+            
+            
             
             if viewModel.searchMode == .dictionary,
                !viewModel.dictionarySuggestions.isEmpty {
@@ -67,7 +166,11 @@ struct HomeSearchSection: View {
                             viewModel.searchText = suggestion.text
                             viewModel.dictionarySearchResult = suggestion
                             viewModel.dictionarySuggestions = []
+                            
+                            viewModel.addRecentSearch(suggestion.text)
+                            
                             isShowingSearchResult = true
+                            
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(suggestion.text)
@@ -169,8 +272,8 @@ struct HomeSearchSection: View {
                                 isShowingDeleteAlert = true
                             },
                             onMove: {
-                                    selectedWordToMove = word
-                                }
+                                selectedWordToMove = word
+                            }
                         )
                     }
                     .buttonStyle(.plain)
@@ -197,20 +300,62 @@ struct HomeSearchSection: View {
                 isShowingSearchResult = false
             }
         }
-    }
-    /// `$viewModel.dictionarySearchResult` 는 Binding 이라서 `await` 할 수 없습니다.
-    /// `dictionarySearchResult`는 `performSearch()` / `searchDictionaryEntry()` 안에서 채워집니다.
-    private func runSearch() {
-        print("검색 실행:", viewModel.searchMode)
-
-        Task { @MainActor in
-            await viewModel.performSearch()
-
-            if viewModel.searchMode == .dictionary, viewModel.dictionarySearchResult != nil {
-                isShowingSearchResult = true
+        .onChange(of: isShowingSearchResult) { _, isShowing in
+            if !isShowing {
+                clearDictionarySearchState()
             }
         }
     }
+        private func clearDictionarySearchState() {
+            guard viewModel.searchMode == .dictionary else { return }
+
+            viewModel.searchText = ""
+            viewModel.dictionarySuggestions = []
+            viewModel.dictionarySearchResult = nil
+            viewModel.errorMessage = nil
+            viewModel.isLoading = false
+        }
+        
+        
+        
+    /// `$viewModel.dictionarySearchResult` 는 Binding 이라서 `await` 할 수 없습니다.
+    /// `dictionarySearchResult`는 `performSearch()` / `searchDictionaryEntry()` 안에서 채워집니다.
+    private func runSearch() {
+        let trimmed = viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !trimmed.isEmpty else {
+                viewModel.errorMessage = "검색어를 입력해 주세요."
+                return
+            }
+        
+        viewModel.dictionarySuggestions = []
+        
+        switch viewModel.searchMode {
+        case .dictionary:
+            viewModel.dictionarySearchResult = nil
+            viewModel.errorMessage = nil
+            viewModel.isLoading = true
+            
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isShowingSearchResult = true
+            }
+            
+            Task { @MainActor in
+                await viewModel.performSearch()
+            }
+            
+        case .savedWords:
+            Task { @MainActor in
+                await viewModel.performSearch()
+            }
+        }
+    }
+    
+    
+    
+    
+    
+    
 }
 #Preview {
     HomeSearchSection(viewModel: BookMateViewModel())

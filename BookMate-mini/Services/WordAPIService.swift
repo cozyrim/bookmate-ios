@@ -54,8 +54,23 @@ enum WordAPIError: Error {
     case badStatusCode(Int)
 }
 
+private let tokenStore: AuthTokenStore = KeychainTokenStore()
+
+private func makeRequest(url: URL, method: String = "GET") -> URLRequest {
+    var request = URLRequest(url: url)
+    request.httpMethod = method
+    
+    if let token = tokenStore.load() {
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+    
+    return request
+}
+
+
+
 struct WordAPIService {
-    private let baseURL = URL(string: "http://localhost:8080")!
+    private let baseURL = URL(string: "http://127.0.0.1:8080")!
     
     // 서버에서 전체 저장 단어 목록 가져오기
     // GET /api/words
@@ -82,7 +97,8 @@ struct WordAPIService {
             .appendingPathComponent(bookId.uuidString)
             .appendingPathComponent("words")
         
-        let (data, response) = try await URLSession.shared.data(from: url)
+        let request = makeRequest(url: url)
+        let (data, response) = try await URLSession.shared.data(for: request)
         
         try validate(response)
         
@@ -113,7 +129,7 @@ struct WordAPIService {
             targetCode: targetCode
         )
         
-        var request = URLRequest(url: url)
+        var request = makeRequest(url: url, method: "POST")
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(requestBody)
@@ -142,7 +158,7 @@ struct WordAPIService {
             targetCode: word.targetCode
         )
         
-        var request = URLRequest(url: url)
+        var request = makeRequest(url: url, method: "PATCH")
         request.httpMethod = "PATCH"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(requestBody)
@@ -161,7 +177,7 @@ struct WordAPIService {
             .appendingPathComponent("words")
             .appendingPathComponent(id.uuidString)
         
-        var request = URLRequest(url: url)
+        var request = makeRequest(url: url, method: "DELETE")
         request.httpMethod = "DELETE"
         
         let (_, response) = try await URLSession.shared.data(for: request)

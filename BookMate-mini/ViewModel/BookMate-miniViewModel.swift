@@ -50,10 +50,21 @@ final class BookMateViewModel: ObservableObject {
     
     @Published var bookSearchErrorMessage: String?
     
+    @Published var recentSearches: [String] = []
+    
+    private let recentSearchsKey = "recentDictionarySearches"
+    
+    private var savedRecentSearches: Bool {
+        UserDefaults.standard.object(forKey: "savesRecentSearches") as? Bool ?? true
+    }
+    
+    private var suggestsSimilarWordsOnFailure: Bool {
+        UserDefaults.standard.object(forKey: "suggestsSimilarWordsOnFailure") as? Bool ?? true
+    }
+    
+    
     private let kakaoBookSearchService = KakaoBookSearchService()
     private let bookAPIService = BookAPIService()
-    
-    
     private let wordAPIService = WordAPIService()
     
     private var isRunningForPreview: Bool {
@@ -134,7 +145,9 @@ final class BookMateViewModel: ObservableObject {
     // 사전 api에서 단어를 찾아오는 함수
     func searchDictionaryEntry() async {
         
-        let trimmedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedSearchText = searchText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "-", with: "")
         
         guard !trimmedSearchText.isEmpty else {
             errorMessage = "검색어를 입력해 주세요."
@@ -183,6 +196,11 @@ final class BookMateViewModel: ObservableObject {
             
             guard let firstItem = response.channel.item.first else {
                 errorMessage = "검색 결과가 없습니다."
+                
+                if suggestsSimilarWordsOnFailure {
+                        await fetchDictionarySuggestions()
+                    }
+                
                 isLoading = false
                 return
             }
@@ -194,7 +212,9 @@ final class BookMateViewModel: ObservableObject {
                 exampleSentence: nil,
                 targetCode: firstItem.targetCode
             )
-  
+            
+            addRecentSearch(trimmedSearchText) // 최근 검색어 저장
+            
             isLoading = false
             
         } catch {
@@ -390,6 +410,9 @@ final class BookMateViewModel: ObservableObject {
     
     // 책 수정
     func updateBook(_ book: Book) async -> Bool {
+        print("ViewModel updateBook 받음:", book.id.uuidString, book.title, book.author, book.imageName, book.category)
+        
+        
         if isRunningForPreview {
                 if let index = books.firstIndex(where: { $0.id == book.id }) {
                     books[index] = book
@@ -449,6 +472,40 @@ final class BookMateViewModel: ObservableObject {
     }
     
     
+    
+    func loadRecentSearches() {
+        guard let data = UserDefaults.standard.data(forKey: recentSearchsKey),
+              let decoded = try? JSONDecoder().decode([String].self, from: data) else {
+            recentSearches = []
+            return
+        }
+        
+        recentSearches = decoded
+    }
+    
+    func addRecentSearch(_ word: String) {
+        guard savedRecentSearches else { return }
+        
+        let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        recentSearches.removeAll() { $0 == trimmed }
+        recentSearches.insert(trimmed, at: 0)
+        recentSearches = Array(recentSearches.prefix(10))
+        
+        if let data = try? JSONEncoder().encode(recentSearches) {
+            UserDefaults.standard.set(data, forKey: recentSearchsKey)
+        }
+    }
+    
+    func removeRecentSearch(_ word: String) {
+        let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
+        recentSearches.removeAll { $0 == trimmed }
+        
+        if let data = try? JSONEncoder().encode(recentSearches) {
+            UserDefaults.standard.set(data, forKey: recentSearchsKey)
+        }
+    }
     
     
 }

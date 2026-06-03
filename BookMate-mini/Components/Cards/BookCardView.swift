@@ -12,9 +12,21 @@ struct BookCardView: View {
     let title: String
     let author: String
     let progress: Double
+    let category: String
     
-    let onEdit: () -> Void
-    let onDelete: () -> Void
+    let onTap: () -> Void
+    let onMoreTap: () -> Void
+    
+    private var authorLine: String {
+        let trimmedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if trimmedCategory.isEmpty || trimmedCategory == "카테고리 선택" {
+            return author
+        }
+        
+        return "\(author) · \(trimmedCategory)"
+    }
+    
     
     var body: some View {
         HStack {
@@ -33,18 +45,28 @@ struct BookCardView: View {
                     
                     Spacer()
                     
-                    MoreOptionsMenu(
-                                            editTitle: "책 수정하기",
-                                            deleteTitle: "책 삭제하기",
-                                            moveTitle: nil,
-                                            onEdit:onEdit,
-                                            onDelete: onDelete
-                                            )
+//                    MoreOptionsMenu(
+//                                            editTitle: "책 수정하기",
+//                                            deleteTitle: "책 삭제하기",
+//                                            moveTitle: nil,
+//                                            onEdit:onEdit,
+//                                            onDelete: onDelete
+//                                            )
                     
+                    Button {
+                        onMoreTap()
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(.black.opacity(0.55))
+                            .frame(width: 28, height: 28)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                        
                 }
                 
-                Text("\(author)")
+                Text(authorLine)
                     .font(.caption2)
                     .foregroundStyle(Color("Brown"))
                 
@@ -68,10 +90,14 @@ struct BookCardView: View {
         .shadow(color: .black.opacity(0.06), radius: 7, x: 0, y: 2)
         .padding(.top, 8)
         .padding(.horizontal,  24)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
+        }
     }
 }
 
 #Preview {
-    BookCardView(imageName: "싯타르타", title: "싯타르타", author: "해르만헤세 / 고전소설", progress: 0.65, onEdit: {},
-                 onDelete: {})
+    BookCardView(imageName: "싯타르타", title: "싯타르타", author: "해르만헤세 / 고전소설", progress: 0.65, category: "소설", onTap: {},
+                 onMoreTap: {})
 }

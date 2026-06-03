@@ -8,69 +8,130 @@
 import SwiftUI
 
 struct ProfileView: View {
-    private let userName = "한독서님"
+    @ObservedObject var authViewModel: AuthSessionViewModel
+    @State private var path = NavigationPath()
     
-    private let savedWordCount = 128
-    private let readBookCount = 12
-    private let togetherDays = 45
+    private var userName: String {
+        authViewModel.profile?.nickname
+        ?? authViewModel.currentUser?.nickname
+        ?? "사용자"
+    }
+    
+    private var savedWordCount: Int {
+            authViewModel.profile?.savedWordCount ?? 0
+        }
+    
+    private var readBookCount: Int {
+            authViewModel.profile?.readBookCount ?? 0
+        }
+
+    private var togetherDays: Int {
+            authViewModel.profile?.togetherDays ?? 0
+        }
     
     private let accountRows = [
-            ProfileMenuItem(imageName: "person.crop.circle", title: "내 계정"),
-            ProfileMenuItem(imageName: "person.badge.plus", title: "프로필 수정"),
-            ProfileMenuItem(imageName: "bell", title: "알림 설정")
+        ProfileMenuItem(imageName: "person.crop.circle", title: "프로필 수정", route: .editProfile),
+            ProfileMenuItem(imageName: "person.badge.plus", title: "계정 관리", route: .accountManagement),
+            ProfileMenuItem(imageName: "bell", title: "알림 설정", route: .notificationSettings)
         ]
 
         private let settingRows = [
-            ProfileMenuItem(imageName: "book", title: "사전 설정"),
-            ProfileMenuItem(imageName: "moon", title: "다크 모드"),
+            ProfileMenuItem(imageName: "book", title: "화면 테마", route: .themeSettings),
+            ProfileMenuItem(imageName: "moon", title: "다크 모드", route: .darkModeSettings),
             ProfileMenuItem(imageName: "icloud", title: "iCloud 백업")
         ]
 
         private let supportRows = [
             ProfileMenuItem(imageName: "headphones", title: "고객 센터"),
-            ProfileMenuItem(imageName: "info.circle", title: "앱 정보"),
+            ProfileMenuItem(imageName: "info.circle", title: "앱 정보", route: .appInfo),
             ProfileMenuItem(imageName: "rectangle.portrait.and.arrow.right", title: "로그아웃", isDestructive: true, showChevron: false)
         ]
     
+    private func handleMenuTap(_ item: ProfileMenuItem) {
+        if item.isDestructive {
+            authViewModel.logout()
+            return
+        }
+
+        guard let route = item.route else { return }
+
+        path.append(route)
+        // NavigationLink(value:) 대신 코드로 이동하고 싶으면 path가 필요하지만,
+        // 여기서는 간단히 NavigationLink 방식이 더 좋아.
+    }
+    
+    
     
     var body: some View {
-        ZStack{
-            Color.skyblue
-                .ignoresSafeArea()
-
-            ScrollView(showsIndicators: false){
-                VStack(spacing: 16){
+        NavigationStack(path: $path) {
+            ZStack{
+                Color.skyblue
+                    .ignoresSafeArea()
                 
-                    profileHeader
-    
-                    profileStatsView
-                    
-                    VStack(spacing: 12){
-                    ProfileMenuCardView(rows: accountRows)
-                    ProfileMenuCardView(rows: settingRows)
-                    ProfileMenuCardView(rows: supportRows)
+                ScrollView(showsIndicators: false){
+                    VStack(spacing: 16){
+                        
+                        profileHeader
+                        
+                        profileStatsView
+                        
+                        VStack(spacing: 12){
+                            ProfileMenuCardView(rows: accountRows) { item in
+                                    handleMenuTap(item)
+                            }
+                            ProfileMenuCardView(rows: settingRows) { item in
+                                handleMenuTap(item)
+                            }
+                            ProfileMenuCardView(rows: supportRows) { item in
+                                handleMenuTap(item)
+                            }
+                        }
+                        .padding(.horizontal, 28)
+                    }
+                    .padding(.top, 18)
+                    .padding(.bottom, 24)
                 }
-                    .padding(.horizontal, 28)
             }
-                .padding(.top, 18)
-                .padding(.bottom, 24)
-        }
-    }
-}
-    
-    private var profileHeader: some View {
-        VStack(spacing: 14) {
-            ProfileImageView(imageName: "profileImage") {
-                print("이미지 선택")
+            .navigationDestination(for: ProfileRoute.self) { route in
+                switch route {
+                case .editProfile:
+                    ProfileEditView(authViewModel: authViewModel)
+                    
+                case .accountManagement:
+                    AccountManagementView(authViewModel: authViewModel)
+                    
+                case .notificationSettings:
+                    NotificationSettingsView()
+                    
+                case .themeSettings:
+                    ThemeSettingsView()
+                    
+                case .appInfo:
+                    AppInfoView()
+                    
+                case .darkModeSettings:
+                    DarkModeSettingsView()
+                }
             }
-            
-            Text(userName)
-                .font(.title)
-                .fontWeight(.bold)
-            
-            // 멤버쉽
         }
-    }
+            .task {
+                await authViewModel.loadProfile()
+            }
+        }
+        
+        private var profileHeader: some View {
+            VStack(spacing: 14) {
+                ProfileImageView(imageName: "profileImage", showsEditIcon: false) {
+                    print("이미지 선택")
+                }
+                
+                Text(userName)
+                    .font(.title)
+                    .fontWeight(.bold)
+                
+                // 멤버쉽
+            }
+        }
     
     private var profileStatsView: some View {
         VStack(spacing: 16) {
@@ -82,7 +143,7 @@ struct ProfileView: View {
             HStack(spacing: 0) {
                 ProfileStatItemView(
                     value: "\(savedWordCount)",
-                    label: "단어장"
+                    label: "저장 단어"
                 )
 
 //                Divider()
@@ -112,15 +173,13 @@ struct ProfileView: View {
                 )
             }
 
-//            Divider()
             Rectangle()
                 .fill(Color("Brown").opacity(0.08))
                 .frame(height: 1)
         }
         .padding(.horizontal, 36)
     }
-    
 }
 #Preview {
-    ProfileView()
+    ProfileView(authViewModel: AuthSessionViewModel())
 }
