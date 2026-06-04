@@ -34,8 +34,7 @@ struct ShelfView: View {
     var body: some View {
         NavigationStack(path: $path){
             ZStack{
-                Color("AppBackground")
-                    .ignoresSafeArea()
+                AppBackgroundView()
                 
                 VStack(spacing: 20){
                     HStack{

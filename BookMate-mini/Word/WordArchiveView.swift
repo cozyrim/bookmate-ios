@@ -13,16 +13,31 @@ struct WordArchiveView: View {
     @State private var selectedWordToEdit: Word?
     @State private var selectedWordToMove: Word?
     @State private var isShowingDeleteAlert = false
+    @State private var archiveSearchText = ""
     @Binding var selectedTab: Int
-    
+
+    private var filteredWords: [Word] {
+        let trimmed = archiveSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmed.isEmpty else {
+            return viewModel.savedWords
+        }
+
+        return viewModel.savedWords.filter { word in
+            word.text.localizedCaseInsensitiveContains(trimmed)
+                || word.meaning.localizedCaseInsensitiveContains(trimmed)
+                || word.partOfSpeech.localizedCaseInsensitiveContains(trimmed)
+        }
+    }
+
+
     var body: some View {
         NavigationStack {
             ZStack{
-                Color("AppBackground")
-                    .ignoresSafeArea()
-                
-                
-                
+                AppBackgroundView()
+
+
+
                 if let errorMessage = viewModel.errorMessage {
                     ContentStateView(
                         type: .error,
@@ -38,7 +53,7 @@ struct WordArchiveView: View {
                         }
                     )
                     .padding(.top, 40)
-                    
+
                 } else if viewModel.savedWords.isEmpty {
                     ContentStateView(
                         type: .empty,
@@ -54,13 +69,38 @@ struct WordArchiveView: View {
                         }
                     )
                     .padding(.top, 40)
-                    
+
                 } else {
                     ScrollView {
                         VStack {
-                            ForEach(viewModel.savedWords) { word in
+
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundStyle(Color("TextSecondary"))
+
+                                TextField("저장한 단어 검색...", text: $archiveSearchText)
+
+                                if !archiveSearchText.isEmpty {
+                                    Button {
+                                        archiveSearchText = ""
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(Color("TextMuted").opacity(0.6))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .frame(height: 50)
+                            .background(Color("Surface"))
+                            .clipShape(Capsule())
+                            .padding(.horizontal, 24)
+                            .padding(.top, 18)
+
+
+                            ForEach(filteredWords) { word in
                                 let book = viewModel.books.first { $0.id == word.bookId }
-                                
+
                                 NavigationLink {
                                     WordDetailsView(viewModel: viewModel, word: word)
                                 } label: {
@@ -101,7 +141,7 @@ struct WordArchiveView: View {
             }
             .sheet(item: $selectedWordToMove) { word in
                 let currentWord = viewModel.savedWords.first { $0.id == word.id } ?? word
-                
+
                 MoveWordBookSheet(
                     books: viewModel.books,
                     currentBookId: currentWord.bookId,
@@ -116,13 +156,13 @@ struct WordArchiveView: View {
             }
             .alert("단어를 삭제할까요?", isPresented: $isShowingDeleteAlert) {
                 Button("취소", role: .cancel) { }
-                
+
                 Button("삭제", role: .destructive) {
                     guard let selectedWordToDelete else { return }
-                    
+
                     Task {
                         let success = await viewModel.deleteWord(selectedWordToDelete)
-                        
+
                         if success {
                             self.selectedWordToDelete = nil
                         }

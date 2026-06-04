@@ -14,21 +14,27 @@ struct HomeView: View {
     @State private var activeBookSheet: BookActionSheet?
     @State private var isShowingDeleteAlert = false
     @State private var selectedBookToDelete: Book?
-    
+
 //    private struct BookEditTarget: Identifiable {
 //        let id: UUID
 //    }
-    
+
     @State private var selectedBookToEdit: Book?
-    
+
     private enum HomeRoute: Hashable {
         case bookSearch
         case bookDetail(UUID)
     }
 
+    private let recentWordRows = [
+        GridItem(.fixed(90), spacing: 12),
+        GridItem(.fixed(90), spacing: 12)
+    ]
+
+
     var body: some View {
         NavigationStack(path: $path){
-            
+
             ZStack{
 //                Image("자연4")
 //                    .resizable()
@@ -38,55 +44,100 @@ struct HomeView: View {
 //                //                    Color("AppBackground")
 //                    .ignoresSafeArea()
                 AppBackgroundView()
-                
+
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        
+
+                        homeIntroHeader
+
                         HomeSearchSection(viewModel: viewModel)
-                        
+
                         VStack(alignment: .leading, spacing: 18){
                             HStack {
                                 Text("최근 저장한 단어")
                                     .font(.title2)
                                     .fontWeight(.medium)
-                                    .padding(.horizontal)
-                                
+
                                 Spacer()
-                                
-                                Text("모두 보기")
-                                    .foregroundStyle(Color("TextSecondary"))
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                
-                            }
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 30)
-                        }
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack {
-                                ForEach(viewModel.savedWords.prefix(5)) { word in
-                                    NavigationLink {
-                                        WordDetailsView(viewModel: viewModel, word: word)
+
+                                if !viewModel.savedWords.isEmpty {
+                                    Button {
+                                        selectedTab = 2
                                     } label: {
-                                        WordCardView(word: word)
+                                        HStack(spacing: 4) {
+                                            Text("더보기")
+                                                .font(.caption)
+                                                .fontWeight(.semibold)
+
+                                            Image(systemName: "chevron.right")
+                                                .font(.caption2)
+                                                .fontWeight(.semibold)
+
+                                        }
+                                        .foregroundStyle(Color("TextSecondary"))
+                                        .padding(.vertical, 8)
+                                        .contentShape(Rectangle())
                                     }
+                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(.horizontal, 24)
+                            .padding(.top, 22)
+                            .padding(.bottom, 16)
                         }
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack {
+                                if viewModel.savedWords.isEmpty {
+                                    HStack {
+                                        recentWordsPlaceholderCard
+                                    }
+                                    .padding(.horizontal, 24)
+                                } else {
+                                    LazyHGrid(rows: recentWordRows, spacing: 12) {
+                                        ForEach(viewModel.savedWords.prefix(8)) { word in
+                                            NavigationLink {
+                                                WordDetailsView(viewModel: viewModel, word: word)
+                                            } label: {
+                                                WordCardView(word: word)
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal, 24)
+                                }
+                            }
+                        }
+//                        .frame(height: 90)
+                        .frame(height: 192)
+
                         HStack {
                             Text("내 책장")
                                 .font(.title3)
                                 .fontWeight(.medium)
-                            
+
                             Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                            
+
+
+                                Button {
+                                    selectedTab = 1
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Text("더보기")
+                                            .font(.caption)
+                                            .fontWeight(.semibold)
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption2)
+                                            .fontWeight(.semibold)
+                                    }
+                                    .foregroundStyle(Color("TextSecondary"))
+                                    .padding(.vertical, 8)
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
                         }
                         .padding(.horizontal, 24)
                         .padding(.top, 24)
-                        
+
                         ForEach(viewModel.books) { book in
                             BookCardView(
                                 imageName: book.imageName,
@@ -104,10 +155,10 @@ struct HomeView: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    
+
                     HStack {
                         Spacer()
-                        
+
                         NavigationLink(value: HomeRoute.bookSearch) {
                             //                                BookSearchView(viewModel: viewModel, selectedTab: $selectedTab)
                             Image(systemName: "plus.circle.fill")
@@ -119,12 +170,12 @@ struct HomeView: View {
                         } // 이 버튼을 누르면 path에 HomeRoute.bookSearch 라는 값을 넣어줘.
                         // 그 값을 받으면 어디로 갈지는 아래에서 정함
                         .padding(.trailing, 24)
-                        
+
                     }
-                    
+
                 }
                 .buttonStyle(.plain)
-                
+
             }
             .sheet(item: $activeBookSheet) { sheet in
                 switch sheet {
@@ -181,7 +232,7 @@ struct HomeView: View {
                     }
                     .presentationDetents([.height(420)])
                     .presentationDragIndicator(.visible)
-                    
+
                 case .progress(let book):
                     ReadingProgressSheet(book: book) { totalPages, currentPage in
                         let progress = Double(currentPage) / Double(totalPages)
@@ -207,19 +258,19 @@ struct HomeView: View {
                     }
                     .presentationDetents([.height(430)])
                     .presentationDragIndicator(.visible)
-                    
-                    
+
+
                 }
             }
             .alert("책을 삭제할까요?", isPresented: $isShowingDeleteAlert) {
                 Button("취소", role: .cancel) { }
-                
+
                 Button("삭제", role: .destructive) {
                     guard let selectedBookToDelete else { return }
-                    
+
                     Task {
                         let success = await viewModel.deleteBook(selectedBookToDelete)
-                        
+
                         if success {
                             self.selectedBookToDelete = nil
                         }
@@ -246,6 +297,53 @@ struct HomeView: View {
                 }
             }
         }
+    }
+
+    private var recentWordsPlaceholderCard: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "bookmark")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color("Primary"))
+                .frame(width: 36, height: 36)
+                .background(Color("PrimarySoft").opacity(0.55))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("저장한 단어가 없어요")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color("TextPrimary"))
+
+                Text("검색한 단어를 저장하면 여기에 보여요.")
+                    .font(.caption)
+                    .foregroundStyle(Color("TextSecondary"))
+                    .lineLimit(1)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 18)
+        .frame(width: 285, height: 90)
+        .background(Color("Surface").opacity(0.92))
+        .clipShape(RoundedRectangle(cornerRadius: 34))
+        .shadow(color: Color("Shadow").opacity(0.045), radius: 9, x: 0, y: 3)
+    }
+
+    private var homeIntroHeader: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("오늘의 단어장")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color("TextSecondary"))
+
+            Text("읽다가 만난 단어들")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundStyle(Color("TextPrimary"))
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 18)
+        .padding(.bottom, 2)
     }
 }
 

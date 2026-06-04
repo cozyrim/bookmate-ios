@@ -211,14 +211,13 @@ struct ThemeOptionCard: View {
         switch theme {
         case .skyblue:
             LinearGradient(
-                colors: [
-                    Color("AppBackgroundSoft"),
-                    Color("AppBackground"),
-                    Color("AccentSoft").opacity(0.62),
-                    Color("PrimarySoft").opacity(0.42)
-                ],
+                gradient: Gradient(stops: [
+                    .init(color: Color("PrimarySoft").opacity(0.58), location: 0.00),
+                    .init(color: Color("AppBackgroundSoft").opacity(0.95), location: 0.42),
+                    .init(color: Color("AppBackground").opacity(0.98), location: 1.00)
+                ]),
                 startPoint: .top,
-                endPoint: .bottomTrailing
+                endPoint: .bottom
             )
             
             

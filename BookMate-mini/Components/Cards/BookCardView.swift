@@ -82,9 +82,10 @@ struct BookCardView: View {
                 
         }
             .frame(maxWidth: .infinity, alignment: .leading)
-    }
+        }
         .padding(.horizontal)
-        .frame(width: 350, height: 100)
+        .frame(maxWidth: .infinity)
+        .frame(height: 100)
         .background(Color("Surface"))
         .clipShape(RoundedRectangle(cornerRadius: 36))
         .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
