@@ -57,9 +57,20 @@ struct ShelfView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
                     
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 16){
-                            ForEach(viewModel.books) { book in
+                    if viewModel.books.isEmpty {
+                        Spacer()
+                        
+                        ContentStateView(type: .empty, iconName: "book", title: "아직 등록한 책이 없어요.", message: "읽고 있는 책을 등록하면\n내 책장에서 관리할 수 있어요.", buttonTitle: "책 등록하기", buttonIconName: "plus", buttonAction: {
+                            path.append(ShelfRoute.bookSearch)
+                        }
+                        )
+                        .padding(.horizontal, 24)
+                        
+                        Spacer()
+                    } else {
+                        ScrollView(showsIndicators: false) {
+                            VStack(spacing: 16){
+                                ForEach(viewModel.books) { book in
                                     ShelfBookCardView(imageName: book.imageName, author: book.author, title: book.title, category: book.category, progress: book.progress,
                                                       onTap: {
                                         path.append(ShelfRoute.bookDetail(book.id))
@@ -67,11 +78,12 @@ struct ShelfView: View {
                                                       onMoreTap: {
                                         activeBookSheet = .options(book)
                                     })
-                                .buttonStyle(.plain)
+                                    .buttonStyle(.plain)
+                                }
                             }
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 110)
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 110)
                     }
                 }
             }

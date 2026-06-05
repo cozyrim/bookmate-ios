@@ -70,9 +70,13 @@ struct ContentStateView: View {
                                 }
                                 .font(.title3)
                                 .fontWeight(.bold)
-                                .foregroundStyle(Color("TextSecondary"))
                                 .frame(width: 245, height: 64)
                                 .background(Color("Primary"))
+//                                .foregroundStyle(Color("TextPrimary"))
+                                .foregroundStyle(.white)
+                                
+                                
+                                
                                 .clipShape(Capsule())
                                 .shadow(color: Color("Primary").opacity(0.25), radius: 14, x: 0, y: 8)
                             }

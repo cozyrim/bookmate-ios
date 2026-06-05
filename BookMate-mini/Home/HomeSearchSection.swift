@@ -23,7 +23,7 @@ struct HomeSearchSection: View {
             viewModel.searchText = trimmed
             viewModel.dictionarySuggestions = []
             viewModel.dictionarySearchResult = nil
-            viewModel.errorMessage = nil
+            viewModel.searchErrorMessage = nil
             viewModel.isLoading = true
 
         withAnimation(.easeInOut(duration: 0.2)) {
@@ -41,7 +41,7 @@ struct HomeSearchSection: View {
         viewModel.savedWordSearchResults = []
         viewModel.savedBookSearchResults = []
         viewModel.dictionarySearchResult = nil
-        viewModel.errorMessage = nil
+        viewModel.searchErrorMessage = nil
     }
 
     private func selectSearchMode(_ mode: BookMateViewModel.SearchMode) {
@@ -52,7 +52,7 @@ struct HomeSearchSection: View {
             viewModel.dictionarySuggestions = []
             viewModel.savedWordSearchResults = []
             viewModel.dictionarySearchResult = nil
-            viewModel.errorMessage = nil
+            viewModel.searchErrorMessage = nil
             return
         }
 
@@ -148,7 +148,7 @@ struct HomeSearchSection: View {
                             viewModel.dictionarySuggestions = []
                             viewModel.savedWordSearchResults = []
                             viewModel.dictionarySearchResult = nil
-                            viewModel.errorMessage = nil
+                            viewModel.searchErrorMessage = nil
                             return
                         }
 
@@ -271,7 +271,7 @@ struct HomeSearchSection: View {
                     .font(.caption)
             }
 
-            if let errorMessage = viewModel.errorMessage {
+            if let errorMessage = viewModel.searchErrorMessage {
                 Text(errorMessage)
                     .font(.caption)
                     .foregroundStyle(Color("Error"))
@@ -380,7 +380,7 @@ struct HomeSearchSection: View {
             viewModel.searchText = ""
             viewModel.dictionarySuggestions = []
             viewModel.dictionarySearchResult = nil
-            viewModel.errorMessage = nil
+            viewModel.searchErrorMessage = nil
             viewModel.isLoading = false
         }
 
@@ -392,7 +392,7 @@ struct HomeSearchSection: View {
         let trimmed = viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmed.isEmpty else {
-                viewModel.errorMessage = "검색어를 입력해 주세요."
+                viewModel.searchErrorMessage = "검색어를 입력해 주세요."
                 return
             }
 
@@ -401,7 +401,7 @@ struct HomeSearchSection: View {
         switch viewModel.searchMode {
         case .dictionary:
             viewModel.dictionarySearchResult = nil
-            viewModel.errorMessage = nil
+            viewModel.searchErrorMessage = nil
             viewModel.isLoading = true
 
             withAnimation(.easeInOut(duration: 0.2)) {

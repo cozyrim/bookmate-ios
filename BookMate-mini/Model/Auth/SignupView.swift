@@ -74,16 +74,12 @@ struct SignupView: View {
     
     private var header: some View {
         HStack {
-            Button {
+            CircleIconButton(systemName: "chevron.left") {
                 if step == 1 {
                     dismiss()
                 } else {
                     step = 1
                 }
-            } label : {
-                Image(systemName: "chevron.left")
-                    .font(.title2)
-                    .foregroundStyle(Color("TextSecondary"))
             }
             
             Spacer()
@@ -95,7 +91,7 @@ struct SignupView: View {
             
             Spacer()
             
-            Color.clear.frame(width: 28, height: 28)
+            Color.clear.frame(width: 44, height: 44)
         }
     }
     

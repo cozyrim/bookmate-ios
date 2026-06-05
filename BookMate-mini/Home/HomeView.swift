@@ -47,19 +47,19 @@ struct HomeView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-
+                        
                         homeIntroHeader
-
+                        
                         HomeSearchSection(viewModel: viewModel)
-
+                        
                         VStack(alignment: .leading, spacing: 18){
                             HStack {
                                 Text("최근 저장한 단어")
                                     .font(.title2)
                                     .fontWeight(.medium)
-
+                                
                                 Spacer()
-
+                                
                                 if !viewModel.savedWords.isEmpty {
                                     Button {
                                         selectedTab = 2
@@ -68,11 +68,11 @@ struct HomeView: View {
                                             Text("더보기")
                                                 .font(.caption)
                                                 .fontWeight(.semibold)
-
+                                            
                                             Image(systemName: "chevron.right")
                                                 .font(.caption2)
                                                 .fontWeight(.semibold)
-
+                                            
                                         }
                                         .foregroundStyle(Color("TextSecondary"))
                                         .padding(.vertical, 8)
@@ -106,17 +106,17 @@ struct HomeView: View {
                                 }
                             }
                         }
-//                        .frame(height: 90)
-                        .frame(height: 192)
-
+                        //                        .frame(height: 90)
+                        .frame(height: viewModel.savedWords.isEmpty ? 115 : 192, alignment: .top)
+                        
                         HStack {
                             Text("내 책장")
                                 .font(.title3)
                                 .fontWeight(.medium)
-
+                            
                             Spacer()
-
-
+                            
+                            if !viewModel.books.isEmpty {
                                 Button {
                                     selectedTab = 1
                                 } label: {
@@ -124,7 +124,7 @@ struct HomeView: View {
                                         Text("더보기")
                                             .font(.caption)
                                             .fontWeight(.semibold)
-
+                                        
                                         Image(systemName: "chevron.right")
                                             .font(.caption2)
                                             .fontWeight(.semibold)
@@ -134,24 +134,31 @@ struct HomeView: View {
                                     .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
+                            }
                         }
                         .padding(.horizontal, 24)
                         .padding(.top, 24)
-
-                        ForEach(viewModel.books) { book in
-                            BookCardView(
-                                imageName: book.imageName,
-                                title: book.title,
-                                author: book.author,
-                                progress: book.progress,
-                                category: book.category,
-                                onTap: {
+                        
+                        if viewModel.books.isEmpty {
+                            emptyBooksPlaceholderCard
+                                .padding(.horizontal, 24)
+                                .padding(.top, 14)
+                        } else {
+                            ForEach(viewModel.books) { book in
+                                BookCardView(
+                                    imageName: book.imageName,
+                                    title: book.title,
+                                    author: book.author,
+                                    progress: book.progress,
+                                    category: book.category,
+                                    onTap: {
                                         path.append(HomeRoute.bookDetail(book.id))
                                     }, // 카드 눌렀을 때 상세 이동.
                                     onMoreTap: {
                                         activeBookSheet = .options(book)
                                     } // 점 버튼 눌렀을 때 메뉴 시트 열기.
-                            )
+                                )
+                            }
                         }
                     }
                     .buttonStyle(.plain)
@@ -329,6 +336,37 @@ struct HomeView: View {
         .shadow(color: Color("Shadow").opacity(0.045), radius: 9, x: 0, y: 3)
     }
 
+    private var emptyBooksPlaceholderCard: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "books.vertical")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color("Primary"))
+                .frame(width: 38, height: 38)
+                .background(Color("PrimarySoft").opacity(0.55))
+                .clipShape(Circle())
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("아직 등록한 책이 없어요")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color("TextPrimary"))
+                
+                Text("책을 등록하면 내 책장에 보여요.")
+                    .font(.caption)
+                    .foregroundStyle(Color("TextSecondary"))
+                    .lineLimit(1)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 18)
+            .frame(maxWidth: .infinity)
+            .frame(height: 96)
+            .background(Color("Surface").opacity(0.92))
+            .clipShape(RoundedRectangle(cornerRadius: 34))
+            .shadow(color: Color("Shadow").opacity(0.045), radius: 9, x: 0, y: 3)
+    }
+    
+    
     private var homeIntroHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("오늘의 단어장")

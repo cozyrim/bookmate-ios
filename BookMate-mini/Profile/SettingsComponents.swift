@@ -13,13 +13,8 @@ struct SettingsScreenHeader: View {
     
     var body: some View {
         HStack {
-            Button {
+            CircleIconButton(systemName: "chevron.left") {
                 dismiss()
-            } label : {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(Color("TextSecondary"))
-                    .frame(width: 44, height: 44)
             }
             
             Spacer()
@@ -40,7 +35,15 @@ struct SettingsScreenHeader: View {
 
 struct SettingsSectionCard<Content: View>: View {
     let title: String
-    @ViewBuilder let content: Content
+    let content: Content
+    
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+    // 뷰 빌더는 SettingsValueRow, SettingsDivider, SettingsNavigationRow 같은
+    // 여러 뷰를 카드 안에 순서대로 넣을 수 있게 해준다.
+    
     
     var body: some View {
             VStack(alignment: .leading, spacing: 12) {
@@ -164,3 +167,41 @@ private func settingsIcon(_ iconName: String) -> some View {
         .background(Color("Primary").opacity(0.16))
         .clipShape(Circle())
 }
+
+struct SettingsNavigationRow: View {
+    let iconName: String
+    let title: String
+    var value: String? = nil
+    let action: () -> Void
+    
+    var body: some View {
+            Button {
+                action()
+            } label: {
+                HStack(spacing: 16) {
+                    settingsIcon(iconName)
+
+                    Text(title)
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color("TextPrimary"))
+
+                    Spacer()
+
+                    if let value {
+                        Text(value)
+                            .font(.callout)
+                            .foregroundStyle(Color("TextSecondary"))
+                    }
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color("TextMuted"))
+                }
+                .padding(.horizontal, 18)
+                .frame(height: 58)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+    }

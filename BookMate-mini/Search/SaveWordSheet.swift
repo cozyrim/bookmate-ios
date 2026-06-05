@@ -103,7 +103,7 @@ struct SaveWordSheet: View {
             
             Spacer()
             
-            if let errorMessage = viewModel.errorMessage {
+            if let errorMessage = viewModel.operationErrorMessage {
                 Text(errorMessage)
                     .font(.caption)
                     .foregroundStyle(Color("Error"))
@@ -149,7 +149,7 @@ struct SaveWordSheet: View {
                             dismiss()
                             onSaveComplete()
                         } else{
-                            print(viewModel.errorMessage ?? "단어 저장 실패")
+                            print(viewModel.operationErrorMessage ?? "단어 저장 실패")
                         }
                     }
                 }

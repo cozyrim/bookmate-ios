@@ -72,12 +72,8 @@ struct BookRegistrationPreviewView: View {
             
             VStack(spacing: 0) {
                 HStack {
-                    Button {
+                    CircleIconButton(systemName: "chevron.left") {
                         dismiss()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.title2)
-                            .foregroundStyle(Color("TextPrimary"))
                     }
                     
                     Spacer()
@@ -89,7 +85,7 @@ struct BookRegistrationPreviewView: View {
                     Spacer()
                     
                     Color.clear
-                        .frame(width: 28, height: 28)
+                        .frame(width: 44, height: 44)
 //                    Button {
 //                                            
 //                                        } label: {

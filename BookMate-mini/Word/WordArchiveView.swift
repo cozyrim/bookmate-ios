@@ -38,7 +38,7 @@ struct WordArchiveView: View {
 
 
 
-                if let errorMessage = viewModel.errorMessage {
+                if let errorMessage = viewModel.loadErrorMessage {
                     ContentStateView(
                         type: .error,
                         iconName: "exclamationmark.triangle",

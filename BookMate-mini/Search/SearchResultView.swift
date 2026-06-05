@@ -21,7 +21,7 @@ struct SearchResultView: View {
                     ProgressView("검색 중...")
                 }
                 
-                if let errorMessage = viewModel.errorMessage {
+                if let errorMessage = viewModel.searchErrorMessage {
                     Text(errorMessage)
                         .foregroundStyle(Color("Error"))
                 }

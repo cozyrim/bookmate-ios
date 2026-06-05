@@ -23,15 +23,8 @@ struct ProfileImagePreviewView: View {
                         HStack {
                             Spacer()
 
-                            Button {
+                            CircleIconButton(systemName: "xmark") {
                                 dismiss()
-                            } label: {
-                                Image(systemName: "xmark")
-                                    .font(.title3)
-                                    .foregroundStyle(.white)
-                                    .frame(width: 44, height: 44)
-                                    .background(.white.opacity(0.16))
-                                    .clipShape(Circle())
                             }
                         }
                         .padding(.horizontal, 24)

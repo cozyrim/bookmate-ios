@@ -12,6 +12,7 @@ struct BookSearchView: View {
     //    let imageName: String
     //    let title: String
     //    let author: String
+    @Environment(\.dismiss) private var dismiss
     @State private var query = ""
     @State private var searchTask: Task<Void, Never>? // 이전에 실행 중이던 검색 예약
     @ObservedObject var viewModel: BookMateViewModel
@@ -38,6 +39,16 @@ struct BookSearchView: View {
                 .ignoresSafeArea()
             
             VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    CircleIconButton(systemName: "chevron.left") {
+                        dismiss()
+                    }
+
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.top, 12)
+
                 SearchTextField(
                     searchText: $query,
                     placeholder: "책 제목 또는 저자를 입력하세요."
@@ -76,6 +87,7 @@ struct BookSearchView: View {
             }
             .padding(.horizontal)
         }
+        .navigationBarBackButtonHidden(true)
     }
     private var resultTitleArea: some View {
         HStack {
@@ -96,7 +108,7 @@ struct BookSearchView: View {
     
         private var resultArea: some View {
             ScrollView {
-                LazyVStack(spacing: 8){// bookSearchResults는 @Published라서 SwiftUI가 변화를 감지
+                LazyVStack(spacing: 10){// bookSearchResults는 @Published라서 SwiftUI가 변화를 감지
                     ForEach(viewModel.bookSearchResults) { kakaoBook in
                         let draft = BookRegistrationDraft(kakaoBook: kakaoBook)
                         
@@ -110,7 +122,7 @@ struct BookSearchView: View {
                 }
                 .padding(.horizontal, 24)
             }
-            .frame(height: 376)
+            .frame(height: 430)
         }
         
         private var manualEntryArea: some View {

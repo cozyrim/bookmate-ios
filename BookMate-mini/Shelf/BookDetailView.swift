@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct BookDetailView: View {
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: BookMateViewModel
     
     let book: Book // 어떤 책인지
@@ -22,6 +23,15 @@ struct BookDetailView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 24){
+                HStack {
+                    CircleIconButton(systemName: "chevron.left") {
+                        dismiss()
+                    }
+
+                    Spacer()
+                }
+                .padding(.horizontal, 24)
+
                 HStack{
                     BookCoverCell(imageName: book.imageName)
                     
@@ -71,6 +81,7 @@ struct BookDetailView: View {
             }
             .padding(.top)
         }
+        .navigationBarBackButtonHidden(true)
     }
 }
 #Preview {

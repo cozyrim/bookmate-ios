@@ -115,12 +115,8 @@ struct BookManualEntryView: View {
                 .ignoresSafeArea()
             VStack(spacing: 12) {
                 HStack{
-                    Button {
+                    CircleIconButton(systemName: "xmark") {
                         dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.title2)
-                            .foregroundStyle(Color("TextPrimary"))
                     }
                     Spacer()
                     Text("새 책 등록")
@@ -128,7 +124,7 @@ struct BookManualEntryView: View {
                         .fontWeight(.semibold)
                     Spacer()
                     Color.clear
-                        .frame(width: 28, height: 28)
+                        .frame(width: 44, height: 44)
                 }
                 .frame(height: 44)
                 PhotosPicker(selection: $selectedPhotoItem, matching: .images) {

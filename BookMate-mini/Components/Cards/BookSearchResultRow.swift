@@ -36,10 +36,10 @@ struct BookSearchResultRow: View {
     }
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity)
-        .frame(height: 88)
+        .frame(height: 86)
         .background(Color("Surface"))
-        .clipShape(RoundedRectangle(cornerRadius: 4))
-        .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
+        .clipShape(RoundedRectangle(cornerRadius: 30))
+        .shadow(color: Color("Shadow").opacity(0.06), radius: 8, x: 0, y: 3)
     }
 }
 

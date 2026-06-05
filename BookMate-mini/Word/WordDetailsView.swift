@@ -118,16 +118,10 @@ struct WordDetailsView: View {
     
     private var topBar: some View {
         HStack {
-            Button {
+            CircleIconButton(systemName: "chevron.left") {
                 dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(Color("TextPrimary").opacity(0.78))
-                    .frame(width: 50, height: 50)
-                    .background(Color("Surface").opacity(0.22))
-                    .clipShape(Circle())
             }
+            .frame(width: 50, height: 50)
             
             Spacer()
             

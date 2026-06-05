@@ -37,9 +37,6 @@ final class BookMateViewModel: ObservableObject {
     @Published var isLoading = false
     // true면 사전 API 요청 중, false면 현재 요청하지 않는 상태.
 
-    @Published var errorMessage: String?
-    // 검색 실패, 결과 없음, API 키 없음처럼 화면에 보여줄 에러 메시지.
-
     @Published var dictionarySuggestions: [DictionaryEntry] = []
     // 사전 검색 모드에서 검색어를 입력하는 동안 TextField 아래에 보여줄 후보 단어 목록.
 
@@ -55,6 +52,18 @@ final class BookMateViewModel: ObservableObject {
     @Published var savedBookSearchResults: [Book] = []
     // 책 검색 결과 배열 추가
 
+    @Published var toast: AppToast?
+    // toast 상태 추가
+    
+    @Published var searchErrorMessage: String?
+    // 사전 검색, 내 기록 검색처럼 검색 UI에 보여줄 에러.
+
+    @Published var loadErrorMessage: String?
+    // 저장한 책/단어를 서버에서 불러올 때 생긴 에러.
+
+    @Published var operationErrorMessage: String?
+    // 저장, 수정, 삭제처럼 사용자가 실행한 작업의 실패 에러.
+    
 
     private var recentSearchOwnerId: UUID?
 
@@ -137,13 +146,13 @@ final class BookMateViewModel: ObservableObject {
     func searchSavedWords() {
         let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            errorMessage = "검색어를 입력해 주세요."
+            searchErrorMessage = "검색어를 입력해 주세요."
             savedWordSearchResults = []
             savedBookSearchResults = []
             return
         }
 
-        errorMessage = nil
+        searchErrorMessage = nil
 
         savedWordSearchResults = savedWords.filter { word in
             word.text.localizedCaseInsensitiveContains(trimmed)
@@ -158,7 +167,7 @@ final class BookMateViewModel: ObservableObject {
             }
 
         if savedWordSearchResults.isEmpty && savedBookSearchResults.isEmpty {
-            errorMessage = "저장한 단어 또는 책에서 검색 결과가 없습니다."
+            searchErrorMessage = "저장한 단어 또는 책에서 검색 결과가 없습니다."
         }
     }
 
@@ -170,19 +179,19 @@ final class BookMateViewModel: ObservableObject {
             .replacingOccurrences(of: "-", with: "")
 
         guard !trimmedSearchText.isEmpty else {
-            errorMessage = "검색어를 입력해 주세요."
+            searchErrorMessage = "검색어를 입력해 주세요."
             return
         }
 
         print("검색 시작:", trimmedSearchText)
 
         isLoading = true
-        errorMessage = nil
+        searchErrorMessage = nil
         dictionarySearchResult = nil
 
         let apiKey = apiKey
         guard !apiKey.isEmpty else {
-            errorMessage = "API 키가 설정되지 않았습니다."
+            searchErrorMessage = "API 키가 설정되지 않았습니다."
             isLoading = false
             return
         }
@@ -199,7 +208,7 @@ final class BookMateViewModel: ObservableObject {
             ]
 
             guard let url = components.url else {
-                errorMessage = "URL을 만들 수 없습니다."
+                searchErrorMessage = "URL을 만들 수 없습니다."
                 isLoading = false
                 return
             }
@@ -215,7 +224,7 @@ final class BookMateViewModel: ObservableObject {
             let response = try JSONDecoder().decode(StdDictSearchResponse.self, from: data) // 여기서 표준국어대사전 서버가 보내준 json 데이터를 swift 구조체로 변환
 
             guard let firstItem = response.channel.item.first else {
-                errorMessage = "검색 결과가 없습니다."
+                searchErrorMessage = "검색 결과가 없습니다."
 
                 if suggestsSimilarWordsOnFailure {
                         await fetchDictionarySuggestions()
@@ -238,7 +247,7 @@ final class BookMateViewModel: ObservableObject {
             isLoading = false
 
         } catch {
-            errorMessage = "검색 중 오류가 발생했습니다."
+            searchErrorMessage = "검색 중 오류가 발생했습니다."
             isLoading = false
             print(error)
         }
@@ -324,10 +333,10 @@ final class BookMateViewModel: ObservableObject {
                 targetCode: dictionarySearchResult.targetCode
             )
             savedWords.insert(savedWord, at: 0)
-            errorMessage = nil
+            operationErrorMessage = nil
             return true
         } catch {
-            errorMessage = "단어 저장에 실패했습니다."
+            operationErrorMessage = "단어 저장에 실패했습니다."
             print("단어 저장 실패:", error)
             return false
         }
@@ -343,8 +352,9 @@ final class BookMateViewModel: ObservableObject {
     func loadSavedWords() async {
         do {
             savedWords = try await wordAPIService.fetchWords()
+            loadErrorMessage = nil
         } catch {
-            errorMessage = "저장한 단어를 불러오지 못했습니다."
+            loadErrorMessage = "저장한 단어를 불러오지 못했습니다."
             print("저장 단어 조회 실패:", error)
         }
     }
@@ -357,7 +367,9 @@ final class BookMateViewModel: ObservableObject {
             if !fetchedBooks.isEmpty {
                 books = fetchedBooks
             }
+            loadErrorMessage = nil
         } catch {
+            loadErrorMessage = "책 목록을 불러오지 못했습니다."
             print("책 목록 조회 실패:", error)
         }
     }
@@ -404,9 +416,10 @@ final class BookMateViewModel: ObservableObject {
             books.removeAll { $0.id == book.id }
             savedWords.removeAll { $0.bookId == book.id}
 
+            operationErrorMessage = nil
             return true
         } catch {
-            errorMessage = "책 삭제에 실패했습니다."
+            operationErrorMessage = "책 삭제에 실패했습니다."
             print("책 삭제 실패:", error)
             return false
         }
@@ -420,9 +433,10 @@ final class BookMateViewModel: ObservableObject {
             savedWords.removeAll { $0.id == word.id }
             savedWordSearchResults.removeAll { $0.id == word.id }
 
+            operationErrorMessage = nil
             return true
         } catch {
-            errorMessage = "단어 삭제에 실패했습니다."
+            operationErrorMessage = "단어 삭제에 실패했습니다."
             print("단어 삭제 실패:",  error)
             return false
         }
@@ -435,8 +449,9 @@ final class BookMateViewModel: ObservableObject {
 
         if isRunningForPreview {
                 if let index = books.firstIndex(where: { $0.id == book.id }) {
-                    books[index] = book
-                }
+                books[index] = book
+            }
+            operationErrorMessage = nil
                 return true
             }
 
@@ -447,9 +462,10 @@ final class BookMateViewModel: ObservableObject {
                 books[index] = updateBook
             }
 
+              operationErrorMessage = nil
               return true
         } catch {
-            errorMessage = "책 수정에 실패했습니다."
+            operationErrorMessage = "책 수정에 실패했습니다."
             print("책 수정 실패:", error)
             return false
         }
@@ -468,9 +484,10 @@ final class BookMateViewModel: ObservableObject {
                 savedWordSearchResults[index] = updateWord
             }
 
+            operationErrorMessage = nil
             return true
         } catch {
-                errorMessage = "단어 수정에 실패했습니다."
+                operationErrorMessage = "단어 수정에 실패했습니다."
                 print("단어 수정 실패:", error)
                 return false
         }
@@ -532,4 +549,8 @@ final class BookMateViewModel: ObservableObject {
         loadRecentSearches()
     }
 
+    func showToast(_ message: String, style: AppToast.Style = .info) {
+        toast = AppToast(message: message, style: style)
+    }
+    
 }
