@@ -52,6 +52,13 @@ struct MainTabView: View {
             await viewModel.loadBooks()
             await viewModel.loadSavedWords()
         }
+        .onChange(of: viewModel.didReceiveUnauthorized) { _, expired in
+            guard expired else { return }
+            authViewModel.logout()
+            viewModel.didReceiveUnauthorized = false
+        } // 401이 오면 자동으로 로그아웃되고 로그인 화면으로 돌아감
+
+
     }
 }
 

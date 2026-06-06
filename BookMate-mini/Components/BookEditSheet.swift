@@ -96,7 +96,5 @@ struct BookEditSheet: View {
 }
 
 #Preview {
-    BookEditSheet(book: Book.dummyBooks[0]) { selectedCategory in
-        print("선택된 카테고리:", selectedCategory)
-    }
+    BookEditSheet(book: Book.dummyBooks[0]) { _ in }
 }

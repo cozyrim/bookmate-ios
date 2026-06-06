@@ -10,14 +10,14 @@ import SwiftUI
 struct ShelfView: View {
     @ObservedObject var viewModel: BookMateViewModel
     @Binding var selectedTab: Int
-    
+
     @State private var path = NavigationPath()
     @State private var selectedBookToDelete: Book?
     @State private var isShowingDeleteAlert = false
-    
+
 
     @State private var activeBookSheet: BookActionSheet?
-    
+
     private enum ShelfRoute: Hashable {
         case bookSearch
         case bookDetail(UUID)
@@ -35,7 +35,7 @@ struct ShelfView: View {
         NavigationStack(path: $path){
             ZStack{
                 AppBackgroundView()
-                
+
                 VStack(spacing: 20){
                     HStack{
                         Text("내 책장")
@@ -56,16 +56,38 @@ struct ShelfView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
-                    
-                    if viewModel.books.isEmpty {
+
+                    if let errorMessage = viewModel.loadErrorMessage {
                         Spacer()
-                        
+
+                        ContentStateView(
+                            type: .error,
+                            iconName: "exclamationmark.triangle",
+                            title: "책장을 불러오지 못했어요.",
+                            message: errorMessage,
+                            buttonTitle: "다시 시도하기",
+                            buttonIconName: "arrow.clockwise",
+                            buttonAction: {
+                                Task {
+                                    await viewModel.loadBooks()
+                                }
+                            }
+                        )
+                        .padding(.horizontal, 24)
+
+                        Spacer()
+
+
+
+                    } else if viewModel.books.isEmpty {
+                        Spacer()
+
                         ContentStateView(type: .empty, iconName: "book", title: "아직 등록한 책이 없어요.", message: "읽고 있는 책을 등록하면\n내 책장에서 관리할 수 있어요.", buttonTitle: "책 등록하기", buttonIconName: "plus", buttonAction: {
                             path.append(ShelfRoute.bookSearch)
                         }
                         )
                         .padding(.horizontal, 24)
-                        
+
                         Spacer()
                     } else {
                         ScrollView(showsIndicators: false) {
@@ -120,11 +142,11 @@ struct ShelfView: View {
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
                     .presentationBackground(Color("AppBackground"))
-                    
+
                 case .edit(let book):
                     BookEditSheet(book: book) { selectedCategory in
                         let latestBook = viewModel.books.first(where: { $0.id == book.id }) ?? book
-                        
+
                         let updatedBook = Book(
                             id: latestBook.id,
                             title: latestBook.title,
@@ -135,21 +157,21 @@ struct ShelfView: View {
                             totalPages: latestBook.totalPages,
                             currentPage: latestBook.currentPage
                         )
-                        
+
                         activeBookSheet = nil
-                        
+
                         Task {
                             await viewModel.updateBook(updatedBook)
                         }
                     }
                     .presentationDetents([.height(420)])
                     .presentationDragIndicator(.visible)
-                    
+
                 case .progress(let book):
                     ReadingProgressSheet(book: book) { totalPages, currentPage in
                         let progress = Double(currentPage) / Double(totalPages)
                         let latestBook = viewModel.books.first(where: { $0.id == book.id }) ?? book
-                        
+
                         let updatedBook = Book(
                             id: latestBook.id,
                             title: latestBook.title,
@@ -160,9 +182,9 @@ struct ShelfView: View {
                             totalPages: totalPages,
                             currentPage: currentPage
                         )
-                        
+
                         activeBookSheet = nil
-                        
+
                         Task {
                             await viewModel.updateBook(updatedBook)
                         }
@@ -173,13 +195,13 @@ struct ShelfView: View {
             }
             .alert("책을 삭제할까요?", isPresented: $isShowingDeleteAlert) {
                 Button("취소", role: .cancel) { }
-                
+
                 Button("삭제", role: .destructive) {
                     guard let selectedBookToDelete else { return }
-                    
+
                     Task {
                         let success = await viewModel.deleteBook(selectedBookToDelete)
-                        
+
                         if success {
                             self.selectedBookToDelete = nil
                         }
@@ -195,7 +217,7 @@ struct ShelfView: View {
                         selectedTab = tab
                         path = NavigationPath()
                     })
-                    
+
                 case .bookDetail(let bookId):
                     if let book = viewModel.books.first(where: { $0.id == bookId }) {
                         BookDetailView(viewModel: viewModel, book: book)

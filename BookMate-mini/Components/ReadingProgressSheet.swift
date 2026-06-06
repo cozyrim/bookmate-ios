@@ -162,8 +162,5 @@ struct ReadingProgressSheet: View {
 }
 
 #Preview {
-    ReadingProgressSheet(book: Book.dummyBooks[0]) { totalPages, currentPage in
-        print("전체 쪽수:", totalPages)
-        print("읽은 쪽수:", currentPage)
-    }
+    ReadingProgressSheet(book: Book.dummyBooks[0]) { _, _ in }
 }

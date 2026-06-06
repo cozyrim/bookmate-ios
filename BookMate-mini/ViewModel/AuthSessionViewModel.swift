@@ -54,7 +54,7 @@ final class AuthSessionViewModel: ObservableObject {
             await loadProfile()
         } catch {
             errorMessage = "로그인에 실패했습니다."
-            print("로그인 실패:", error)
+            DebugLogger.log("로그인 실패:", error)
         }
         
         isLoading = false
@@ -72,28 +72,19 @@ final class AuthSessionViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            print("카카오 로그인 시작")
+            let kakaoAccessToken = try await kakaoLoginService.login()
+            let response = try await authAPIService.loginWithKakao(
+                accessToken: kakaoAccessToken
+            )
 
-                    let kakaoAccessToken = try await kakaoLoginService.login()
-                    print("카카오 accessToken 받음")
-
-                    print("백엔드 카카오 로그인 요청 시작")
-                    let response = try await authAPIService.loginWithKakao(
-                        accessToken: kakaoAccessToken
-                    )
-                    print("백엔드 AuthResponse 받음:", response.user.nickname)
-
-                    tokenStore.save(response.accessToken)
-                    print("BookMate 토큰 Keychain 저장 완료")
-
-                    currentUser = response.user
-                    isLoggedIn = true
-                    print("isLoggedIn true 변경 완료")
+            tokenStore.save(response.accessToken)
+            currentUser = response.user
+            isLoggedIn = true
             
             await loadProfile()
         } catch {
             errorMessage = "카카오 로그인에 실패했습니다."
-            print("카카오 로그인 실패:", error)
+            DebugLogger.log("카카오 로그인 실패:", error)
         }
         isLoading = false
     }
@@ -125,7 +116,7 @@ final class AuthSessionViewModel: ObservableObject {
             tokenStore.clear()
             currentUser = nil
             isLoggedIn = false
-            print("로그인 세션 복구 실패:", error)
+            DebugLogger.log("로그인 세션 복구 실패:", error)
         }
         isCheckingSession = false
     }
@@ -160,7 +151,7 @@ final class AuthSessionViewModel: ObservableObject {
             await loadProfile()
         } catch {
             errorMessage = "회원가입에 실패했습니다."
-            print("회원가입 실패:", error)
+            DebugLogger.log("회원가입 실패:", error)
         }
         
         isLoading = false
@@ -176,7 +167,7 @@ final class AuthSessionViewModel: ObservableObject {
             currentUser = profile?.toAuthUser()
         } catch {
             errorMessage = "프로필 정보를 불러오지 못했습니다."
-            print("프로필 조회 실패:", error)
+            DebugLogger.log("프로필 조회 실패:", error)
         }
     }
     
@@ -202,7 +193,7 @@ final class AuthSessionViewModel: ObservableObject {
         } catch {
             errorMessage = "프로필 수정에 실패했습니다."
             isLoading = false
-            print("프로필 수정 실패:", error)
+            DebugLogger.log("프로필 수정 실패:", error)
             return false
         }
     }
@@ -225,7 +216,7 @@ final class AuthSessionViewModel: ObservableObject {
             isLoggedIn = false
         } catch {
             errorMessage = "회원 탈퇴에 실패했습니다."
-            print("회원 탈퇴 실패:", error)
+            DebugLogger.log("회원 탈퇴 실패:", error)
         }
          
         isLoading = false
@@ -241,7 +232,7 @@ final class AuthSessionViewModel: ObservableObject {
             return try await authAPIService.uploadProfileImage(token: token, imageData: imageData)
         } catch {
             errorMessage = "프로필 이미지 업로드에 실패했습니다."
-            print("프뢸 이미지 업로드 실패:", error)
+            DebugLogger.log("프뢸 이미지 업로드 실패:", error)
             return nil
         }
     }

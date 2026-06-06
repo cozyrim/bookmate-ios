@@ -196,12 +196,7 @@ struct SavedWordListCell: View {
         partOfSpeech: Word.sampleWords[0].partOfSpeech,
         meaning: Word.sampleWords[0].meaning,
         title: Book.dummyBooks[0].title,
-        onEdit: {
-            print("수정")
-        },
-        onDelete: {
-            print("삭제")
-        }) {
-            print("수정")
-        }
+        onEdit: {},
+        onDelete: {}
+    ) {}
 }

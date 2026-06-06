@@ -66,8 +66,6 @@ struct MoveWordBookSheet: View {
     MoveWordBookSheet(
         books: Book.dummyBooks,
                 currentBookId: Book.dummyBooks[0].id,
-                onSelect: { book in
-                    print("선택한 책:", book.title)
-                }
+                onSelect: { _ in }
     )
 }

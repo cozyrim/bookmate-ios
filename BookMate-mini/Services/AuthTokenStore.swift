@@ -51,7 +51,7 @@ final class KeychainTokenStore: AuthTokenStore {
         
         
         if status != errSecSuccess {
-            print("Keychain 토큰 저장 실패:", status)
+            DebugLogger.log("Keychain 토큰 저장 실패:", status)
         }
     }
     

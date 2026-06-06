@@ -35,7 +35,7 @@ private struct BookResponse: Decodable {
     let createdAt: String?
     let totalPages: Int?
     let currentPage: Int?
-    
+
     func toBook() -> Book {
         Book(
             id: id,
@@ -52,6 +52,7 @@ private struct BookResponse: Decodable {
 
 enum BookAPIError: Error {
     case invalidResponse
+    case unauthorized
     case badStatusCode(Int)
     case invalidRequestBody
 }
@@ -61,11 +62,11 @@ private let tokenStore: AuthTokenStore = KeychainTokenStore()
 private func makeRequest(url: URL, method: String = "GET") -> URLRequest {
     var request = URLRequest(url: url)
     request.httpMethod = method
-    
+
     if let token = tokenStore.load() {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
-    
+
     return request
 }
 
@@ -75,23 +76,23 @@ private func makeRequest(url: URL, method: String = "GET") -> URLRequest {
 struct BookAPIService {
     private let baseURL = URL(string: "http://127.0.0.1:8080")!
 
-    
+
     // 서버에서 전체 책 목록 가져오기
     // GET /api/books
     func fetchBooks() async throws -> [Book] {
         let url = baseURL
             .appendingPathComponent("api")
             .appendingPathComponent("books")
-        
+
         let request = makeRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
-        
+
         try validate(response)
-        
+
         let bookResponse = try JSONDecoder().decode([BookResponse].self, from: data)
         return bookResponse.map { $0.toBook() }
     }
-    
+
     // 서버에서 책 하나 가져오기
     // GET /api/books/{bookId}
     func fetchBook(id: UUID) async throws -> Book {
@@ -99,16 +100,16 @@ struct BookAPIService {
             .appendingPathComponent("api")
             .appendingPathComponent("books")
             .appendingPathComponent(id.uuidString)
-        
+
         let request = makeRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
-        
+
         try validate(response)
-        
+
         let bookResponse = try JSONDecoder().decode(BookResponse.self, from: data)
         return bookResponse.toBook()
     }
-    
+
     // 서버에 새 책 등록하기
     // POST /api/books
     func createBook(
@@ -123,7 +124,7 @@ struct BookAPIService {
         let url = baseURL
             .appendingPathComponent("api")
             .appendingPathComponent("books")
-        
+
         let requestBody = BookCreateRequest( // swift에서 서버로 보낼 json 모양
             title: title,
             author: author,
@@ -133,23 +134,23 @@ struct BookAPIService {
             totalPages: totalPages,
             currentPage: currentPage
         )
-        
+
         var request = makeRequest(url : url, method: "POST")
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(requestBody)
-        
+
         let (data, response) = try await URLSession.shared.data(for: request)
-        
+
         try validate(response)
-        
+
         // 서버에서 swift로 받는 json 모양
         let bookResponse = try JSONDecoder().decode(BookResponse.self, from: data)
         return bookResponse.toBook()
     }
-    
 
-    
+
+
     func updateBook(_ book: Book) async throws -> Book {
         let url = baseURL
             .appendingPathComponent("api")
@@ -163,13 +164,6 @@ struct BookAPIService {
             ? "카테고리 선택"
             : book.category.trimmingCharacters(in: .whitespacesAndNewlines)
         let safeProgress = book.progress.isFinite ? book.progress : 0.0
-
-        print("책 수정 요청 id:", book.id.uuidString)
-        print("title:", safeTitle)
-        print("author:", safeAuthor)
-        print("imageName:", safeImageName)
-        print("category:", safeCategory)
-        print("progress:", safeProgress)
 
         guard !safeTitle.isEmpty,
               !safeAuthor.isEmpty,
@@ -185,14 +179,10 @@ struct BookAPIService {
             progress: safeProgress
         )
 
-        let encodedBody = try JSONEncoder().encode(requestBody)
-
-        print("책 수정 JSON:", String(data: encodedBody, encoding: .utf8) ?? "JSON 확인 실패")
-
         var request = makeRequest(url: url, method: "PATCH")
         request.httpMethod = "PATCH"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = encodedBody
+        request.httpBody = try JSONEncoder().encode(requestBody)
 
         let (data, response) = try await URLSession.shared.data(for: request)
         try validate(response)
@@ -200,35 +190,40 @@ struct BookAPIService {
         let bookResponse = try JSONDecoder().decode(BookResponse.self, from: data)
         return bookResponse.toBook()
     }
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
     // 서버에 책 삭제하기
     func deleteBook(id: UUID) async throws {
         let url = baseURL
             .appendingPathComponent("api")
             .appendingPathComponent("books")
             .appendingPathComponent(id.uuidString)
-        
+
         var request = makeRequest(url: url, method: "DELETE")
         request.httpMethod = "DELETE"
-        
+
         let (_, response) = try await URLSession.shared.data(for: request)
         try validate(response)
     }
-    
-    
-    
-    
-    
+
+
+
+
+
     private func validate(_ response: URLResponse) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw BookAPIError.invalidResponse
         }
+
+        if httpResponse.statusCode == 401 {
+            throw BookAPIError.unauthorized
+        }
+
         guard (200..<300).contains(httpResponse.statusCode) else {
             throw BookAPIError.badStatusCode(httpResponse.statusCode)
         }

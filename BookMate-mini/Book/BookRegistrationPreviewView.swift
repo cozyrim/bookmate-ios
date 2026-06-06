@@ -138,7 +138,7 @@ struct BookRegistrationPreviewView: View {
                                 savedBook = try await viewModel.registerBook(draft: draft)
                             } catch {
                                 errorMessage = "책 등록에 실패했습니다."
-                                print("책 등록 실패:", error)
+                                DebugLogger.log("책 등록 실패:", error)
                             }
                             isSaving = false
                         }

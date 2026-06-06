@@ -127,7 +127,7 @@ struct ProfileEditView: View {
             try data.write(to: fileURL)
             return fileURL.absoluteString
         } catch {
-            print("프로필 이미지 저장 실패:", error)
+            DebugLogger.log("프로필 이미지 저장 실패:", error)
             return nil
         }
     }

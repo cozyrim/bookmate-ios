@@ -165,9 +165,6 @@ struct WordRecordEditSheet: View {
 #Preview {
     WordRecordEditSheet(
         word: Word.sampleWords[0],
-        onSave: { updatedWord in
-                    print("수정된 문장:", updatedWord.exampleSentence ?? "")
-                    return true
-                }
+        onSave: { _ in true }
     )
 }

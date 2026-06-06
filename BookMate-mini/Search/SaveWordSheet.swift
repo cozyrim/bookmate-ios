@@ -134,7 +134,7 @@ struct SaveWordSheet: View {
                 
                 SaveButton {
                     guard let selectedBookId else {
-                        print("책을 선택해 주세요.")
+                        viewModel.showToast("저장할 책을 선택해 주세요.", style: .error)
                         return
                     }
 
@@ -148,8 +148,6 @@ struct SaveWordSheet: View {
                             
                             dismiss()
                             onSaveComplete()
-                        } else{
-                            print(viewModel.operationErrorMessage ?? "단어 저장 실패")
                         }
                     }
                 }

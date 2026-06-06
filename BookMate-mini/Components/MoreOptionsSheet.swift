@@ -89,7 +89,7 @@ struct MoreOptionsSheet: View {
                     .padding(.leading, 24)
                 
 //                optionRow(title: "목록에서 숨기기", systemImage: "eye.slash", color: .black, action: {
-//                        print("숨기기")
+//                        DebugLogger.log("숨기기")
 //                    }
 //                )
             }
@@ -140,14 +140,8 @@ struct MoreOptionsSheet: View {
 
 #Preview {
     MoreOptionsSheet(
-        onEdit: {
-            print("수정")
-        },
-        onDelete: {
-            print("삭제")
-        },
-        onMove: {
-            print("다른 책으로 이동")
-        }
+        onEdit: {},
+        onDelete: {},
+        onMove: {}
         )
 }

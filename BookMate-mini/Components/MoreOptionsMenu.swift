@@ -90,11 +90,7 @@ struct MoreOptionsMenu: View {
 
 #Preview {
     MoreOptionsMenu(
-        onEdit: {
-                print("수정")
-            },
-            onDelete: {
-                print("삭제")
-            }
+        onEdit: {},
+        onDelete: {}
     )
 }

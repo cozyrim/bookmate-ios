@@ -64,11 +64,6 @@ struct AuthAPIService {
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-            print("백엔드 카카오 로그인 status:", statusCode)
-            print("백엔드 카카오 로그인 body:", String(data: data, encoding: .utf8) ?? "body 없음")
-
-        
         guard let httpResponse = response as? HTTPURLResponse,
               (200..<300).contains(httpResponse.statusCode) else {
             throw URLError(.badServerResponse)
@@ -146,11 +141,6 @@ struct AuthAPIService {
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-            print("프로필 수정 status:", statusCode)
-            print("프로필 수정 body:", String(data: data, encoding: .utf8) ?? "body 없음")
-        
-        
         guard let httpResponse = response as? HTTPURLResponse,
               (200..<300).contains(httpResponse.statusCode) else {
             throw URLError(.badServerResponse)
@@ -169,11 +159,7 @@ struct AuthAPIService {
         request.httpMethod = "DELETE"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-            print("회원 탈퇴 status:", statusCode)
-            print("회원 탈퇴 body:", String(data: data, encoding: .utf8) ?? "body 없음")
+        let (_, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse,
               (200..<300).contains(httpResponse.statusCode) else {

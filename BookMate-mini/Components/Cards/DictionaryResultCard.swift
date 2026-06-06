@@ -47,7 +47,6 @@ struct DictionaryResultCard: View {
                 .background(Color("SurfaceSoft").opacity(0.4))
             
             Button {
-                print("저장하기")
                 showingSheet.toggle()
             } label: {
                 HStack(spacing: 8) {

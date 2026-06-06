@@ -126,7 +126,6 @@ struct WordDetailsView: View {
             Spacer()
             
             Button {
-                print("북마크")
             } label: {
                 Image(systemName: "bookmark.fill")
                     .font(.system(size: 19, weight: .semibold))

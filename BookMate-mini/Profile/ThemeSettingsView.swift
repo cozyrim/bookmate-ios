@@ -128,7 +128,7 @@ struct ThemeSettingsView: View {
                                     await MainActor.run {
                                         imageSaveErrorMessage = "사진을 저장하지 못했습니다."
                                     }
-                                    print("배경 사진 저장 실패:", error)
+                                    DebugLogger.log("배경 사진 저장 실패:", error)
                                 }
                             }
                                 }

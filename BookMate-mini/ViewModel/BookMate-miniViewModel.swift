@@ -54,7 +54,7 @@ final class BookMateViewModel: ObservableObject {
 
     @Published var toast: AppToast?
     // toast 상태 추가
-    
+
     @Published var searchErrorMessage: String?
     // 사전 검색, 내 기록 검색처럼 검색 UI에 보여줄 에러.
 
@@ -63,7 +63,10 @@ final class BookMateViewModel: ObservableObject {
 
     @Published var operationErrorMessage: String?
     // 저장, 수정, 삭제처럼 사용자가 실행한 작업의 실패 에러.
-    
+
+    @Published var didReceiveUnauthorized = false
+
+
 
     private var recentSearchOwnerId: UUID?
 
@@ -183,8 +186,6 @@ final class BookMateViewModel: ObservableObject {
             return
         }
 
-        print("검색 시작:", trimmedSearchText)
-
         isLoading = true
         searchErrorMessage = nil
         dictionarySearchResult = nil
@@ -213,13 +214,7 @@ final class BookMateViewModel: ObservableObject {
                 return
             }
 
-            print("요청 URL 생성 완료:", url.host ?? "host 없음")
-
-
             let (data, _) = try await URLSession.shared.data(from: url)
-
-            print(String(data: data, encoding: .utf8) ?? "응답 확인 불가")
-
 
             let response = try JSONDecoder().decode(StdDictSearchResponse.self, from: data) // 여기서 표준국어대사전 서버가 보내준 json 데이터를 swift 구조체로 변환
 
@@ -249,7 +244,7 @@ final class BookMateViewModel: ObservableObject {
         } catch {
             searchErrorMessage = "검색 중 오류가 발생했습니다."
             isLoading = false
-            print(error)
+            DebugLogger.log(error)
         }
     }
 
@@ -287,12 +282,12 @@ final class BookMateViewModel: ObservableObject {
             let (data, response) = try await URLSession.shared.data(from: url)
 
             if let httpResponse = response as? HTTPURLResponse {
-                print("후보 검색 상태 코드:", httpResponse.statusCode)
+                DebugLogger.log("후보 검색 상태 코드:", httpResponse.statusCode)
             }
 
             guard !data.isEmpty else {
                 dictionarySuggestions = []
-                print("후보 검색 응답이 비어 있음")
+                DebugLogger.log("후보 검색 응답이 비어 있음")
                 return
             }
 
@@ -303,7 +298,7 @@ final class BookMateViewModel: ObservableObject {
             }
         } catch {
             dictionarySuggestions = []
-            print("사전 후보 검색 실패:", error)
+            DebugLogger.log("사전 후보 검색 실패:", error)
         }
 
     }
@@ -313,7 +308,11 @@ final class BookMateViewModel: ObservableObject {
     func saveDictionaryResult(to bookId: UUID, exampleSentence: String?) async -> Bool {
         // async 함수랑 MainActor 어떻게 작동하는지 공부하기
 
-        guard let dictionarySearchResult else { return false }
+        guard let dictionarySearchResult else {
+            operationErrorMessage = "저장할 단어를 찾지 못했습니다."
+            showToast("저장할 단어를 찾지 못했어요.", style: .error)
+            return false
+        }
 
         // 검색 결과가 있는지 확인
         let alreadySaved = savedWords.contains {
@@ -321,7 +320,11 @@ final class BookMateViewModel: ObservableObject {
             $0.targetCode == dictionarySearchResult.targetCode
         }
 
-        guard !alreadySaved else { return false } // true면 return
+        guard !alreadySaved else {
+            operationErrorMessage = nil
+            showToast("이미 이 책에 저장한 단어예요.", style: .info)
+            return false
+        } // true면 return
 
         do {
             let savedWord = try await wordAPIService.saveWord(
@@ -334,10 +337,14 @@ final class BookMateViewModel: ObservableObject {
             )
             savedWords.insert(savedWord, at: 0)
             operationErrorMessage = nil
+            showToast("단어를 저장했어요.", style: .success)
             return true
         } catch {
+            if handleUnauthorizedIfNeeded(error) { return false }
+
             operationErrorMessage = "단어 저장에 실패했습니다."
-            print("단어 저장 실패:", error)
+            showToast("단어 저장에 실패했어요.", style: .error)
+            DebugLogger.log("단어 저장 실패:", error)
             return false
         }
     }
@@ -354,8 +361,13 @@ final class BookMateViewModel: ObservableObject {
             savedWords = try await wordAPIService.fetchWords()
             loadErrorMessage = nil
         } catch {
+            if handleUnauthorizedIfNeeded(error) {
+                loadErrorMessage = nil
+                return
+            }
+
             loadErrorMessage = "저장한 단어를 불러오지 못했습니다."
-            print("저장 단어 조회 실패:", error)
+            DebugLogger.log("저장 단어 조회 실패:", error)
         }
     }
 
@@ -364,13 +376,17 @@ final class BookMateViewModel: ObservableObject {
         do {
             let fetchedBooks = try await bookAPIService.fetchBooks()
 
-            if !fetchedBooks.isEmpty {
                 books = fetchedBooks
-            }
+
             loadErrorMessage = nil
         } catch {
+            if handleUnauthorizedIfNeeded(error) {
+                loadErrorMessage = nil
+                return
+            }
+
             loadErrorMessage = "책 목록을 불러오지 못했습니다."
-            print("책 목록 조회 실패:", error)
+            DebugLogger.log("책 목록 조회 실패:", error)
         }
     }
 
@@ -391,21 +407,35 @@ final class BookMateViewModel: ObservableObject {
         } catch {
             bookSearchResults = []
             bookSearchErrorMessage = "책 검색에 실패했습니다."
+            DebugLogger.log("책 검색 실패:", error)
         }
         isBookSearchLoading = false
     }
 
     // 책 저장
     func registerBook(draft: BookRegistrationDraft) async throws -> Book {
-        let savedBook = try await bookAPIService.createBook(
-            title: draft.title,
-            author: draft.author,
-            imageName: draft.imageName,
-            category: draft.category,
-            progress: draft.progress
-        )
-        books.insert(savedBook, at: 0)
-        return savedBook
+        do {
+            let savedBook = try await bookAPIService.createBook(
+                title: draft.title,
+                author: draft.author,
+                imageName: draft.imageName,
+                category: draft.category,
+                progress: draft.progress
+            )
+            books.insert(savedBook, at: 0)
+            operationErrorMessage = nil
+            showToast("책을 등록했어요.", style: .success)
+            return savedBook
+        } catch {
+            if handleUnauthorizedIfNeeded(error) {
+                throw error
+            }
+
+            operationErrorMessage = "책 등록에 실패했습니다."
+            showToast("책 등록에 실패했어요.", style: .error)
+            DebugLogger.log("책 등록 실패:", error)
+            throw error
+        }
     }
 
     // 책 삭제
@@ -417,10 +447,14 @@ final class BookMateViewModel: ObservableObject {
             savedWords.removeAll { $0.bookId == book.id}
 
             operationErrorMessage = nil
+            showToast("책을 삭제했어요.", style: .success)
             return true
         } catch {
+            if handleUnauthorizedIfNeeded(error) { return false }
+
             operationErrorMessage = "책 삭제에 실패했습니다."
-            print("책 삭제 실패:", error)
+            showToast("책 삭제에 실패했어요.", style: .error)
+            DebugLogger.log("책 삭제 실패:", error)
             return false
         }
     }
@@ -434,24 +468,26 @@ final class BookMateViewModel: ObservableObject {
             savedWordSearchResults.removeAll { $0.id == word.id }
 
             operationErrorMessage = nil
+            showToast("단어를 삭제했어요.", style: .success)
             return true
         } catch {
+            if handleUnauthorizedIfNeeded(error) { return false }
+
             operationErrorMessage = "단어 삭제에 실패했습니다."
-            print("단어 삭제 실패:",  error)
+            showToast("단어 삭제에 실패했어요.", style: .error)
+            DebugLogger.log("단어 삭제 실패:",  error)
             return false
         }
     }
 
     // 책 수정
-    func updateBook(_ book: Book) async -> Bool {
-        print("ViewModel updateBook 받음:", book.id.uuidString, book.title, book.author, book.imageName, book.category)
-
-
+    func updateBook(_ book: Book, successMessage: String = "책 정보를 수정했어요.") async -> Bool {
         if isRunningForPreview {
                 if let index = books.firstIndex(where: { $0.id == book.id }) {
                 books[index] = book
             }
             operationErrorMessage = nil
+            showToast(successMessage, style: .success)
                 return true
             }
 
@@ -463,16 +499,20 @@ final class BookMateViewModel: ObservableObject {
             }
 
               operationErrorMessage = nil
+              showToast(successMessage, style: .success)
               return true
         } catch {
+            if handleUnauthorizedIfNeeded(error) { return false }
+
             operationErrorMessage = "책 수정에 실패했습니다."
-            print("책 수정 실패:", error)
+            showToast("책 수정에 실패했어요.", style: .error)
+            DebugLogger.log("책 수정 실패:", error)
             return false
         }
     }
 
     // 단어 수정
-    func updateWord(_ word: Word) async -> Bool {
+    func updateWord(_ word: Word, successMessage: String = "단어 기록을 수정했어요.") async -> Bool {
         do {
             let updateWord = try await wordAPIService.updateWord(word)
 
@@ -485,10 +525,14 @@ final class BookMateViewModel: ObservableObject {
             }
 
             operationErrorMessage = nil
+            showToast(successMessage, style: .success)
             return true
         } catch {
+                if handleUnauthorizedIfNeeded(error) { return false }
+
                 operationErrorMessage = "단어 수정에 실패했습니다."
-                print("단어 수정 실패:", error)
+                showToast("단어 수정에 실패했어요.", style: .error)
+                DebugLogger.log("단어 수정 실패:", error)
                 return false
         }
     }
@@ -505,7 +549,7 @@ final class BookMateViewModel: ObservableObject {
             bookId: book.id
         )
 
-        return await updateWord(movedWord)
+        return await updateWord(movedWord, successMessage: "단어를 다른 책으로 이동했어요.")
     }
 
 
@@ -552,5 +596,23 @@ final class BookMateViewModel: ObservableObject {
     func showToast(_ message: String, style: AppToast.Style = .info) {
         toast = AppToast(message: message, style: style)
     }
-    
+
+    private func handleUnauthorizedIfNeeded(_ error: Error) -> Bool {
+        if case BookAPIError.unauthorized = error {
+            didReceiveUnauthorized = true
+            showToast("로그인이 만료됐어요. 다시 로그인해 주세요.", style: .error)
+            return true
+        }
+
+        if case WordAPIError.unauthorized = error {
+            didReceiveUnauthorized = true
+            showToast("로그인이 만료됐어요. 다시 로그인해 주세요.", style: .error)
+            return true
+        }
+
+        return false
+    }
+
+
+
 }

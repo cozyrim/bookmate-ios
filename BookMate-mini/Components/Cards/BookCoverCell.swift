@@ -91,7 +91,7 @@ private struct RemoteBookCoverImage: View {
             loadedImage = image
         } catch {
             didFail = true
-            print("커버 이미지 로딩 실패:", url.absoluteString, error.localizedDescription)
+            DebugLogger.log("커버 이미지 로딩 실패:", url.absoluteString, error.localizedDescription)
         }
     }
 }

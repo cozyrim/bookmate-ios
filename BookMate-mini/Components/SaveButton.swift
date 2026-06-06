@@ -12,7 +12,6 @@ struct SaveButton: View {
     
     var body: some View {
         Button {
-            print("저장하기")
             action()
         } label: {
             HStack(spacing: 8) {
@@ -32,7 +31,5 @@ struct SaveButton: View {
 }
 
 #Preview {
-    SaveButton {
-        print("프리뷰 저장 버튼 탭")
-    }
+    SaveButton {}
 }
