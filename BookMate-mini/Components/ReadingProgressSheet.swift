@@ -48,9 +48,14 @@ struct ReadingProgressSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             Capsule()
-                .fill(Color.gray.opacity(0.25))
-                .frame(width: 46, height: 5)
-                .frame(maxWidth: .infinity)
+//                .fill(Color.gray.opacity(0.25))
+//                .frame(width: 46, height: 5)
+//                .frame(maxWidth: .infinity)
+                .fill(Color("TextSecondary").opacity(0.28))
+                        .frame(width: 44, height: 5)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 14)
+                        .padding(.bottom, 4)
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("읽은 쪽수 업데이트")
@@ -81,17 +86,31 @@ struct ReadingProgressSheet: View {
             }
             
             VStack(spacing: 14) {
-                pageInputField(
-                    title: "전체 쪽수",
-                    placeholder: "예: 320",
-                    text: $totalPagesText
-                )
                 
-                pageInputField(
-                    title: "읽은 쪽수",
-                    placeholder: "예: 120",
-                    text: $currentPageText
-                )
+                if let totalPages = book.totalPages {
+                    Text("전체 \(totalPages)쪽 중 어디까지 읽었나요?")
+                        .font(.caption)
+                        .foregroundStyle(Color("TextSecondary"))
+                    
+                    pageInputField(
+                        title: "읽은 쪽수",
+                        placeholder: "예: 120",
+                        text: $currentPageText
+                    )
+                } else {
+                    
+                    pageInputField(
+                        title: "전체 쪽수",
+                        placeholder: "예: 320",
+                        text: $totalPagesText
+                    )
+                    
+                    pageInputField(
+                        title: "읽은 쪽수",
+                        placeholder: "예: 120",
+                        text: $currentPageText
+                    )
+                }
             }
             
             if let totalPages,

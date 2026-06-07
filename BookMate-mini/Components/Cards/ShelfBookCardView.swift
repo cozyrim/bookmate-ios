@@ -13,6 +13,7 @@ struct ShelfBookCardView: View {
     let title: String
     let category: String
     let progress: Double
+    let wordCount: Int
     
     let onTap: () -> Void
     let onMoreTap: () -> Void
@@ -40,7 +41,7 @@ struct ShelfBookCardView: View {
                     
                     Spacer()
                     
-                        Text("12 단어")
+                        Text("\(wordCount) 단어")
                             .font(.caption2)
                             .foregroundStyle(Color("TextSecondary"))
                             .padding(.horizontal, 8)
@@ -117,6 +118,6 @@ struct ShelfBookCardView: View {
 }
 
 #Preview {
-    ShelfBookCardView(imageName: Book.dummyBooks[0].imageName, author:Book.dummyBooks[0].author , title: Book.dummyBooks[0].title, category: "소설", progress: 0.65, onTap: {},
+    ShelfBookCardView(imageName: Book.dummyBooks[0].imageName, author:Book.dummyBooks[0].author , title: Book.dummyBooks[0].title, category: "소설", progress: 0.65, wordCount: 12, onTap: {},
                       onMoreTap: {})
 }

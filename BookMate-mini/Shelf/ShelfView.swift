@@ -57,7 +57,7 @@ struct ShelfView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
 
-                    if let errorMessage = viewModel.loadErrorMessage {
+                    if let errorMessage = viewModel.bookLoadErrorMessage {
                         Spacer()
 
                         ContentStateView(
@@ -93,7 +93,7 @@ struct ShelfView: View {
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 16){
                                 ForEach(viewModel.books) { book in
-                                    ShelfBookCardView(imageName: book.imageName, author: book.author, title: book.title, category: book.category, progress: book.progress,
+                                    ShelfBookCardView(imageName: book.imageName, author: book.author, title: book.title, category: book.category, progress: book.progress, wordCount: viewModel.savedWords(for: book.id).count,
                                                       onTap: {
                                         path.append(ShelfRoute.bookDetail(book.id))
                                     },

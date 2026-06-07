@@ -17,6 +17,11 @@ struct BookRegistrationPreviewView: View {
     @State private var savedBook: Book?
     @State private var isSaving = false
     @State private var errorMessage: String?
+    @State private var aladinDescription: String?
+    @State private var isDescriptionExpanded = false
+    
+    private let aladinBookLookupService = AladinBookLookupService()
+    
     
     let onFinishRegistration: (Int) -> Void
     
@@ -59,7 +64,18 @@ struct BookRegistrationPreviewView: View {
         }
     }
     
-    
+    private var bestDescriptionText: String {
+        let kakaoText = draft.contents.trimmingCharacters(in: .whitespacesAndNewlines)
+        let aladinText = aladinDescription?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        let bestText = aladinText.count > kakaoText.count ? aladinText : kakaoText
+
+        return bestText.isEmpty ? "책 소개가 제공되지 않습니다." : bestText
+    }
+
+    private var shouldShowDescriptionMoreButton: Bool {
+        bestDescriptionText.count > 120
+    }
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -86,14 +102,8 @@ struct BookRegistrationPreviewView: View {
                     
                     Color.clear
                         .frame(width: 44, height: 44)
-//                    Button {
-//                                            
-//                                        } label: {
-//                                            Text("수정")
-//                                                .fontWeight(.semibold)
-//                                                .foregroundStyle(Color("PrimaryDeep"))
-//                                        }
                 }
+
                 .padding(.horizontal, 24)
                 .frame(height: 90)
                 .background(Color("AppBackground"))
@@ -116,17 +126,41 @@ struct BookRegistrationPreviewView: View {
                                 .font(.callout)
                                 .foregroundStyle(Color("TextSecondary"))
                         
-                        VStack{
-                            Text(draft.contents.isEmpty ? "책 소개가 제공되지 않습니다.": draft.contents)
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("책 소개")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(Color("TextMuted"))
+
+                            
+                            Text(bestDescriptionText)
+                                .font(.callout)
+                                .foregroundStyle(Color("TextSecondary").opacity(0.9))
+                                .lineSpacing(4)
+                                .lineLimit(isDescriptionExpanded ? nil : 6)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .layoutPriority(1)
+                            
+                            if shouldShowDescriptionMoreButton {
+                                Button {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        isDescriptionExpanded.toggle()
+                                    }
+                                } label: {
+                                    Text(isDescriptionExpanded ? "접기" : "더보기")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(Color("Primary"))
+                                }
+                            }
                         }
-                        .font(.callout)
-                        .foregroundStyle(Color("TextSecondary").opacity(0.9))
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(24)
                         .background(Color("Surface"))
                         .clipShape(RoundedRectangle(cornerRadius: 30))
                         .shadow(color: Color("Primary").opacity(0.1), radius: 4, x: 0, y: 2)
-                        .padding()
+                        .padding(.horizontal, 24)
+                        .padding(.top, 16)
                     }
                     .padding()
 
@@ -178,13 +212,20 @@ struct BookRegistrationPreviewView: View {
                         }
                     )
                 }
-                .padding(.top,)
                 .padding()
             }
             
         }
-        
         .navigationBarBackButtonHidden(true)
+        .task {
+            guard !draft.isbn.isEmpty else { return }
+
+            if let metadata = await aladinBookLookupService.fetchMetadata(isbn: draft.isbn),
+               let description = metadata.description,
+               !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                aladinDescription = description
+            }
+        }
         
     }
 }

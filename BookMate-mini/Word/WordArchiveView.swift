@@ -38,7 +38,7 @@ struct WordArchiveView: View {
 
 
 
-                if let errorMessage = viewModel.loadErrorMessage {
+                if let errorMessage = viewModel.wordLoadErrorMessage {
                     ContentStateView(
                         type: .error,
                         iconName: "exclamationmark.triangle",
@@ -98,30 +98,44 @@ struct WordArchiveView: View {
                             .padding(.top, 18)
 
 
-                            ForEach(filteredWords) { word in
-                                let book = viewModel.books.first { $0.id == word.bookId }
-
-                                NavigationLink {
-                                    WordDetailsView(viewModel: viewModel, word: word)
-                                } label: {
-                                    SavedWordListCell(
-                                        text: word.text,
-                                        partOfSpeech: word.partOfSpeech,
-                                        meaning: word.meaning,
-                                        title: book?.title ?? "책 정보 없음",
-                                        onEdit: {
-                                            selectedWordToEdit = word
-                                        },
-                                        onDelete: {
-                                            selectedWordToDelete = word
-                                            isShowingDeleteAlert = true
-                                        },
-                                        onMove: {
-                                            selectedWordToMove = word
-                                        }
-                                    )
+                            if filteredWords.isEmpty {
+                                ContentStateView(
+                                    type: .empty,
+                                    iconName: "magnifyingglass",
+                                    title: "검색 결과가 없어요.",
+                                    message: "저장한 단어 중 일치하는 단어를 찾지 못했어요.",
+                                    buttonTitle: nil,
+                                    buttonIconName: nil,
+                                    buttonAction: nil
+                                )
+                                .padding(.horizontal, 24)
+                                .padding(.top, 40)
+                            } else {
+                                ForEach(filteredWords) { word in
+                                    let book = viewModel.books.first { $0.id == word.bookId }
+                                    
+                                    NavigationLink {
+                                        WordDetailsView(viewModel: viewModel, word: word)
+                                    } label: {
+                                        SavedWordListCell(
+                                            text: word.text,
+                                            partOfSpeech: word.partOfSpeech,
+                                            meaning: word.meaning,
+                                            title: book?.title ?? "책 정보 없음",
+                                            onEdit: {
+                                                selectedWordToEdit = word
+                                            },
+                                            onDelete: {
+                                                selectedWordToDelete = word
+                                                isShowingDeleteAlert = true
+                                            },
+                                            onMove: {
+                                                selectedWordToMove = word
+                                            }
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.vertical)

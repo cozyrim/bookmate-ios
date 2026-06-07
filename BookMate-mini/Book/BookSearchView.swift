@@ -109,15 +109,31 @@ struct BookSearchView: View {
         private var resultArea: some View {
             ScrollView {
                 LazyVStack(spacing: 10){// bookSearchResults는 @Published라서 SwiftUI가 변화를 감지
-                    ForEach(viewModel.bookSearchResults) { kakaoBook in
-                        let draft = BookRegistrationDraft(kakaoBook: kakaoBook)
+                    if viewModel.isBookSearchLoading {
+                        ProgressView("책 검색 중...")
+                            .padding(.top, 40)
+                    } else if let errorMessage = viewModel.bookSearchErrorMessage {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundStyle(Color("Error"))
+                            .padding(.top, 40)
+                    } else if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, viewModel.bookSearchResults.isEmpty {
+                        Text("검색 결과가 없어요.")
+                            .font(.callout)
+                            .foregroundStyle(Color("TextSecondary"))
+                            .padding(.top, 40)
                         
-                        NavigationLink {
-                            BookManualEntryView(viewModel: viewModel, initialDraft: draft, selectedTab: $selectedTab, onFinishRegistration: finishRegistration)
-                        } label: {
-                            BookSearchResultRow(imageName: draft.imageName, title: draft.title, author: draft.author)
+                    } else {
+                        ForEach(viewModel.bookSearchResults) { kakaoBook in
+                            let draft = BookRegistrationDraft(kakaoBook: kakaoBook)
+                            
+                            NavigationLink {
+                                BookManualEntryView(viewModel: viewModel, initialDraft: draft, selectedTab: $selectedTab, onFinishRegistration: finishRegistration)
+                            } label: {
+                                BookSearchResultRow(imageName: draft.imageName, title: draft.title, author: draft.author)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, 24)

@@ -16,6 +16,8 @@ struct BookRegistrationDraft: Identifiable, Hashable {
     var imageName: String
     var category: String
     var progress: Double = 0.0
+    var isbn: String
+    var totalPages: Int?
     
     
     // init = 처음 만들 때 값 넣는 함수
@@ -30,7 +32,9 @@ struct BookRegistrationDraft: Identifiable, Hashable {
         contents: String = "",
         imageName: String = "책기본이미지",
         category: String = "카테고리 선택",
-        progress: Double = 0.0
+        progress: Double = 0.0,
+        isbn: String = "",
+        totalPages: Int? = nil
     ) {
         self.id = id
         self.title = title
@@ -40,6 +44,8 @@ struct BookRegistrationDraft: Identifiable, Hashable {
         self.imageName = imageName
         self.category = category
         self.progress = progress
+        self.isbn = isbn
+        self.totalPages = totalPages
     }
     
     
@@ -54,5 +60,7 @@ struct BookRegistrationDraft: Identifiable, Hashable {
         self.imageName = kakaoBook.thumbnail.isEmpty ? "책기본이미지" : kakaoBook.thumbnail
         self.category = "카테고리 선택"
         self.progress = 0.0
+        self.isbn = kakaoBook.isbn
+        self.totalPages = nil
     }
 }

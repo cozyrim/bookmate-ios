@@ -58,18 +58,21 @@ final class BookMateViewModel: ObservableObject {
     @Published var searchErrorMessage: String?
     // 사전 검색, 내 기록 검색처럼 검색 UI에 보여줄 에러.
 
-    @Published var loadErrorMessage: String?
-    // 저장한 책/단어를 서버에서 불러올 때 생긴 에러.
+    @Published var wordLoadErrorMessage: String?
+    // 저장한 단어를 서버에서 불러올 때 생긴 에러.
+
+    @Published var bookLoadErrorMessage: String?
+    // 저장한 책을 서버에서 불러올 때 생긴 에러.
 
     @Published var operationErrorMessage: String?
     // 저장, 수정, 삭제처럼 사용자가 실행한 작업의 실패 에러.
 
     @Published var didReceiveUnauthorized = false
 
-
-
     private var recentSearchOwnerId: UUID?
-
+    private let bookPageLookupService = BookPageLookupService()
+    
+    
     private var recentSearchsKey: String {
         if let recentSearchOwnerId {
             return "recentDictionarySearches.\(recentSearchOwnerId.uuidString)"
@@ -90,6 +93,7 @@ final class BookMateViewModel: ObservableObject {
     private let kakaoBookSearchService = KakaoBookSearchService()
     private let bookAPIService = BookAPIService()
     private let wordAPIService = WordAPIService()
+    private let dictionaryExampleLookupService = DictionaryExampleLookupService()
 
     private var isRunningForPreview: Bool {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
@@ -229,11 +233,17 @@ final class BookMateViewModel: ObservableObject {
                 return
             }
 
+            let exampleSentence = await dictionaryExampleLookupService.fetchExample(
+                word: firstItem.word,
+                targetCode: firstItem.targetCode
+            )
+            
+            
             dictionarySearchResult = DictionaryEntry(
                 text: firstItem.word.trimmingCharacters(in: .whitespacesAndNewlines),
                 meaning: firstItem.sense.definition.trimmingCharacters(in: .whitespacesAndNewlines),
                 partOfSpeech: firstItem.pos,
-                exampleSentence: nil,
+                exampleSentence: exampleSentence,
                 targetCode: firstItem.targetCode
             )
 
@@ -359,14 +369,14 @@ final class BookMateViewModel: ObservableObject {
     func loadSavedWords() async {
         do {
             savedWords = try await wordAPIService.fetchWords()
-            loadErrorMessage = nil
+            wordLoadErrorMessage = nil
         } catch {
             if handleUnauthorizedIfNeeded(error) {
-                loadErrorMessage = nil
+                wordLoadErrorMessage = nil
                 return
             }
 
-            loadErrorMessage = "저장한 단어를 불러오지 못했습니다."
+            wordLoadErrorMessage = "저장한 단어를 불러오지 못했습니다."
             DebugLogger.log("저장 단어 조회 실패:", error)
         }
     }
@@ -378,14 +388,14 @@ final class BookMateViewModel: ObservableObject {
 
                 books = fetchedBooks
 
-            loadErrorMessage = nil
+            bookLoadErrorMessage = nil
         } catch {
             if handleUnauthorizedIfNeeded(error) {
-                loadErrorMessage = nil
+                bookLoadErrorMessage = nil
                 return
             }
 
-            loadErrorMessage = "책 목록을 불러오지 못했습니다."
+            bookLoadErrorMessage = "책 목록을 불러오지 못했습니다."
             DebugLogger.log("책 목록 조회 실패:", error)
         }
     }
@@ -414,13 +424,26 @@ final class BookMateViewModel: ObservableObject {
 
     // 책 저장
     func registerBook(draft: BookRegistrationDraft) async throws -> Book {
+       
         do {
+            let totalPages: Int?
+            if let draftTotalPages = draft.totalPages {
+                totalPages = draftTotalPages
+            } else {
+                totalPages = await bookPageLookupService.fetchPageCount(isbn: draft.isbn)
+            }
+            
+            print("책 등록 draft isbn:", draft.isbn)
+            print("책 등록 totalPages:", totalPages as Any)
+            
             let savedBook = try await bookAPIService.createBook(
                 title: draft.title,
                 author: draft.author,
                 imageName: draft.imageName,
                 category: draft.category,
-                progress: draft.progress
+                progress: draft.progress,
+                totalPages: totalPages,
+                currentPage: totalPages == nil ? nil : 0
             )
             books.insert(savedBook, at: 0)
             operationErrorMessage = nil
@@ -613,6 +636,10 @@ final class BookMateViewModel: ObservableObject {
         return false
     }
 
+    func lookupBookPageCount(isbn: String) async -> Int? {
+        await bookPageLookupService.fetchPageCount(isbn: isbn)
+    } // 페이지 자동 채우기
+    
 
 
 }

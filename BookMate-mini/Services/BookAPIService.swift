@@ -23,6 +23,8 @@ private struct BookUpdateRequest: Encodable {
     let imageName: String
     let category: String
     let progress: Double
+    let totalPages: Int?
+    let currentPage: Int?
 }
 
 private struct BookResponse: Decodable {
@@ -176,7 +178,9 @@ struct BookAPIService {
             author: safeAuthor,
             imageName: safeImageName,
             category: safeCategory,
-            progress: safeProgress
+            progress: safeProgress,
+            totalPages: book.totalPages,
+            currentPage: book.currentPage
         )
 
         var request = makeRequest(url: url, method: "PATCH")

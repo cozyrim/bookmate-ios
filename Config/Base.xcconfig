@@ -1,3 +1,4 @@
 STDICT_API_KEY =
 KAKAO_REST_API_KEY =
+ALADIN_TTB_KEY =
 #include? "../.local/Secrets.xcconfig"
