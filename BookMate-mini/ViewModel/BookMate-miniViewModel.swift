@@ -16,6 +16,17 @@ final class BookMateViewModel: ObservableObject {
         case savedWords
     }
 
+    enum ArchiveSortOrder: String, CaseIterable {
+        case latest = "최신순"
+        case oldest = "오래된 순"
+        case alphabetical = "가나다순"
+    }
+    
+    @Published var archiveSelectedCategory: String? = nil // nil 이면 전체, 단어장에서 선택된 카테고리
+    @Published var archiveSelectedBookId: UUID? = nil // nil 이면 전체 책, 단어장에서 선택된 책 아이디
+    @Published var archiveSortOrder: ArchiveSortOrder = .latest
+    
+    
     @Published var books: [Book] = []
     // 앱에서 보여줄 책 목록. 지금은 더미 데이터지만, 나중에는 서버에서 받아온 책 목록으로 바뀔 수 있음.
 
@@ -69,9 +80,51 @@ final class BookMateViewModel: ObservableObject {
 
     @Published var didReceiveUnauthorized = false
 
+    @Published var quotes: [Quote] = []
+    // 현재 열람 중인 책의 구절 목록
+
+    @Published var quoteLoadErrorMessage: String?
+
     private var recentSearchOwnerId: UUID?
     private let bookPageLookupService = BookPageLookupService()
     
+    
+    //  아카이브 필터 적용된 단어 목록(단어를 필터하는 코드)
+    var archiveFilteredWords: [Word] {
+        var result = savedWords
+        
+        // 1. 카테고리 필터, if let은 값이 있는지 확인하고, 있으면 꺼내서 써도 안전해
+            if let category = archiveSelectedCategory {
+                let bookIdsInCategory = books
+                    .filter { $0.category == category }
+                    .map { $0.id }
+                result = result.filter { bookIdsInCategory.contains($0.bookId) }
+            }
+        
+        // 2. 책 필터
+            if let bookId = archiveSelectedBookId {
+                result = result.filter { $0.bookId == bookId }
+            }
+        
+        // 3. 정렬
+            switch archiveSortOrder {
+            case .latest:
+                break // savedWords가 이미 최신순 (서버 응답 기준)
+            case .oldest:
+                result = result.reversed()
+            case .alphabetical:
+                result = result.sorted { $0.text < $1.text }
+            }
+            return result
+    }
+    
+    // 현재 선택된 카테고리에 속한 책 목록 (바텀 시트용)
+    var booksInSelectedCategory: [Book] {
+        guard let category = archiveSelectedCategory else {
+            return books // 전체 카테고리면 전체 책
+        }
+        return books.filter { $0.category == category }
+    }
     
     private var recentSearchsKey: String {
         if let recentSearchOwnerId {
@@ -93,6 +146,7 @@ final class BookMateViewModel: ObservableObject {
     private let kakaoBookSearchService = KakaoBookSearchService()
     private let bookAPIService = BookAPIService()
     private let wordAPIService = WordAPIService()
+    private let quoteAPIService = QuoteAPIService()
     private let dictionaryExampleLookupService = DictionaryExampleLookupService()
 
     private var isRunningForPreview: Bool {
@@ -621,13 +675,7 @@ final class BookMateViewModel: ObservableObject {
     }
 
     private func handleUnauthorizedIfNeeded(_ error: Error) -> Bool {
-        if case BookAPIError.unauthorized = error {
-            didReceiveUnauthorized = true
-            showToast("로그인이 만료됐어요. 다시 로그인해 주세요.", style: .error)
-            return true
-        }
-
-        if case WordAPIError.unauthorized = error {
+        if case APIError.unauthorized = error {
             didReceiveUnauthorized = true
             showToast("로그인이 만료됐어요. 다시 로그인해 주세요.", style: .error)
             return true
@@ -639,7 +687,106 @@ final class BookMateViewModel: ObservableObject {
     func lookupBookPageCount(isbn: String) async -> Int? {
         await bookPageLookupService.fetchPageCount(isbn: isbn)
     } // 페이지 자동 채우기
-    
 
+
+    // MARK: - 구절(Quote) CRUD
+
+    // 특정 책의 구절 불러오기 (서버에서 데이터 가져옴)
+    func loadQuotes(bookId: UUID) async {
+        do {
+            quotes = try await quoteAPIService.fetchQuotes(bookId: bookId)
+            quoteLoadErrorMessage = nil
+        } catch {
+            if handleUnauthorizedIfNeeded(error) {
+                quoteLoadErrorMessage = nil
+                return
+            }
+            quoteLoadErrorMessage = "구절을 불러오지 못했습니다."
+            DebugLogger.log("구절 조회 실패:", error)
+        }
+    }
+
+    // 특정 책의 구절만 골라내는 함수 (로컬 메모리, 데이터 필터링)
+    func savedQuotes(for bookId: UUID) -> [Quote] {
+        quotes.filter { $0.bookId == bookId }
+    }
+
+    // 구절 저장
+    func saveQuote(bookId: UUID, text: String, page: Int?, memo: String?) async -> Bool {
+        do {
+            let savedQuote = try await quoteAPIService.saveQuote(
+                bookId: bookId,
+                text: text,
+                page: page,
+                memo: memo
+            )
+            quotes.insert(savedQuote, at: 0)
+            operationErrorMessage = nil
+            showToast("구절을 저장했어요.", style: .success)
+            return true
+        } catch {
+            if handleUnauthorizedIfNeeded(error) { return false }
+            operationErrorMessage = "구절 저장에 실패했습니다."
+            showToast("구절 저장에 실패했어요.", style: .error)
+            DebugLogger.log("구절 저장 실패:", error)
+            return false
+        }
+    }
+
+    // 구절 수정
+    func updateQuote(_ quote: Quote) async -> Bool {
+        do {
+            let updatedQuote = try await quoteAPIService.updateQuote(quote)
+            if let index = quotes.firstIndex(where: { $0.id == updatedQuote.id }) {
+                quotes[index] = updatedQuote
+            }
+            operationErrorMessage = nil
+            showToast("구절을 수정했어요.", style: .success)
+            return true
+        } catch {
+            if handleUnauthorizedIfNeeded(error) { return false }
+            operationErrorMessage = "구절 수정에 실패했습니다."
+            showToast("구절 수정에 실패했어요.", style: .error)
+            DebugLogger.log("구절 수정 실패:", error)
+            return false
+        }
+    }
+
+    // 구절 삭제
+    func deleteQuote(_ quote: Quote) async -> Bool {
+        do {
+            try await quoteAPIService.deleteQuote(id: quote.id)
+            quotes.removeAll { $0.id == quote.id }
+            operationErrorMessage = nil
+            showToast("구절을 삭제했어요.", style: .success)
+            return true
+        } catch {
+            if handleUnauthorizedIfNeeded(error) { return false }
+            operationErrorMessage = "구절 삭제에 실패했습니다."
+            showToast("구절 삭제에 실패했어요.", style: .error)
+            DebugLogger.log("구절 삭제 실패:", error)
+            return false
+        }
+    }
+
+
+    // MARK: - 별점 / 리뷰 저장
+
+    // 별점과 감상평 저장 (기존 updateBook 활용)
+    func saveRatingAndReview(book: Book, rating: Int?, review: String?) async -> Bool {
+        let updatedBook = Book(
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            imageName: book.imageName,
+            category: book.category,
+            progress: book.progress,
+            totalPages: book.totalPages,
+            currentPage: book.currentPage,
+            rating: rating,
+            review: review
+        )
+        return await updateBook(updatedBook, successMessage: "리뷰를 저장했어요.")
+    }
 
 }

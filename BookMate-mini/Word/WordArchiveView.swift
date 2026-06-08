@@ -14,22 +14,31 @@ struct WordArchiveView: View {
     @State private var selectedWordToMove: Word?
     @State private var isShowingDeleteAlert = false
     @State private var archiveSearchText = ""
+    @State private var isShowingBookFilter = false    // 책 바텀 시트
+    @State private var isShowingSortOrder = false     // 정렬 바텀 시트
     @Binding var selectedTab: Int
 
     private var filteredWords: [Word] {
         let trimmed = archiveSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmed.isEmpty else {
-            return viewModel.savedWords
+            return viewModel.archiveFilteredWords
         }
 
-        return viewModel.savedWords.filter { word in
+        return viewModel.archiveFilteredWords.filter { word in
             word.text.localizedCaseInsensitiveContains(trimmed)
                 || word.meaning.localizedCaseInsensitiveContains(trimmed)
                 || word.partOfSpeech.localizedCaseInsensitiveContains(trimmed)
         }
     }
 
+    // 등록된 책에서 중복 없이 카테고리 목록 추출
+    private var availableCategories: [String] {
+        let all = viewModel.books.map { $0.category }
+        return Array(Set(all)).sorted()  // 중복 제거 + 가나다순
+    }
+    
+    
 
     var body: some View {
         NavigationStack {
@@ -97,6 +106,14 @@ struct WordArchiveView: View {
                             .padding(.horizontal, 24)
                             .padding(.top, 18)
 
+                            categoryChips
+                                .padding(.top, 12)
+                            
+                            filterAndSortBar
+                                .padding(.top, 8)
+                            
+                            
+                            
 
                             if filteredWords.isEmpty {
                                 ContentStateView(
@@ -168,6 +185,27 @@ struct WordArchiveView: View {
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
             }
+            .sheet(isPresented: $isShowingBookFilter) {
+                BookFilterSheet(
+                    books: viewModel.booksInSelectedCategory,
+                    selectedBookId: viewModel.archiveSelectedBookId,
+                    onSelect: { selectedId in
+                        viewModel.archiveSelectedBookId = selectedId
+                    }
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $isShowingSortOrder) {
+                SortOrderSheet(
+                    currentOrder: viewModel.archiveSortOrder,
+                    onSelect: { selectedOrder in
+                        viewModel.archiveSortOrder = selectedOrder
+                    }
+                )
+                .presentationDetents([.height(280)])
+                .presentationDragIndicator(.visible)
+            }
             .alert("단어를 삭제할까요?", isPresented: $isShowingDeleteAlert) {
                 Button("취소", role: .cancel) { }
 
@@ -187,6 +225,128 @@ struct WordArchiveView: View {
             }
         }
     }
+    
+    private var categoryChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                // "전체" 칩
+                Button {
+                    viewModel.archiveSelectedCategory = nil
+                    viewModel.archiveSelectedBookId = nil  // 카테고리 바뀌면 책 선택도 초기화
+                } label: {
+                    Text("전체")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(viewModel.archiveSelectedCategory == nil ? .white : Color("TextPrimary"))
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(
+                            Capsule()
+                                .fill(viewModel.archiveSelectedCategory == nil ? Color("Primary") : Color("SurfaceElevated").opacity(0.96))
+                        )
+                        .overlay(
+                            Capsule()
+                                .stroke(Color("Border").opacity(0.5), lineWidth: viewModel.archiveSelectedCategory == nil ? 0 : 1)
+                        )
+                }
+                .buttonStyle(.plain)
+                // 카테고리별 칩
+                ForEach(availableCategories, id: \.self) { category in
+                    let isSelected = viewModel.archiveSelectedCategory == category
+                    Button {
+                        viewModel.archiveSelectedCategory = isSelected ? nil : category
+                        viewModel.archiveSelectedBookId = nil  // 카테고리 바뀌면 책 선택 초기화
+                    } label: {
+                        Text(category)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(isSelected ? .white : Color("TextPrimary"))
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
+                            .background(
+                                Capsule()
+                                    .fill(isSelected ? Color("Primary") : Color("SurfaceElevated").opacity(0.96))
+                            )
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color("Border").opacity(0.5), lineWidth: isSelected ? 0 : 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 24)
+        }
+    }
+    
+    private var filterAndSortBar: some View {
+        HStack {
+            // 책 선택 버튼
+            Button {
+                isShowingBookFilter = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "books.vertical")
+                        .font(.caption)
+
+                    // 선택된 책 이름 표시, 없으면 "전체 책"
+                    Text(viewModel.books.first(where: { $0.id == viewModel.archiveSelectedBookId })?.title ?? "전체 책")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .lineLimit(1)
+
+                    Image(systemName: "chevron.down")
+                        .font(.caption2)
+                }
+                .foregroundStyle(viewModel.archiveSelectedBookId == nil ? Color("TextSecondary") : Color("Primary"))
+                .padding(.vertical, 8)
+                .padding(.horizontal, 14)
+                .background(Color("SurfaceElevated").opacity(0.96))
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(viewModel.archiveSelectedBookId == nil ? Color("Border").opacity(0.5) : Color("Primary").opacity(0.5), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            // 정렬 버튼
+            Button {
+                isShowingSortOrder = true
+            } label: {
+                HStack(spacing: 6) {
+                    Text(viewModel.archiveSortOrder.rawValue)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+
+                    Image(systemName: "chevron.down")
+                        .font(.caption2)
+                }
+                .foregroundStyle(Color("TextSecondary"))
+                .padding(.vertical, 8)
+                .padding(.horizontal, 14)
+                .background(Color("SurfaceElevated").opacity(0.96))
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(Color("Border").opacity(0.5), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 24)
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
 }
 
 #Preview {

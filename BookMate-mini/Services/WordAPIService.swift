@@ -25,7 +25,6 @@ private struct WordUpdateRequest: Encodable {
     let targetCode: String
 }
 
-
 private struct WordResponse: Decodable {
     let id: UUID
     let bookId: UUID
@@ -49,29 +48,9 @@ private struct WordResponse: Decodable {
     }
 }
 
-enum WordAPIError: Error {
-    case invalidResponse
-    case unauthorized
-    case badStatusCode(Int)
-}
-
-private let tokenStore: AuthTokenStore = KeychainTokenStore()
-
-private func makeRequest(url: URL, method: String = "GET") -> URLRequest {
-    var request = URLRequest(url: url)
-    request.httpMethod = method
-
-    if let token = tokenStore.load() {
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-    }
-
-    return request
-}
-
-
-
 struct WordAPIService {
     private let baseURL = URL(string: "http://127.0.0.1:8080")!
+    private let client = APIClient() // ← 공통 네트워크 헬퍼
 
     // 서버에서 전체 저장 단어 목록 가져오기
     // GET /api/words
@@ -80,15 +59,13 @@ struct WordAPIService {
             .appendingPathComponent("api")
             .appendingPathComponent("words")
 
-        let request = makeRequest(url: url)
+        let request = client.makeRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
-
-        try validate(response)
+        try client.validate(response)
 
         let wordResponses = try JSONDecoder().decode([WordResponse].self, from: data)
         return wordResponses.map { $0.toWord() }
     }
-
 
     // 특정 책에 저장된 단어만 가져오기
     // GET /api/books/{bookId}/words
@@ -99,10 +76,9 @@ struct WordAPIService {
             .appendingPathComponent(bookId.uuidString)
             .appendingPathComponent("words")
 
-        let request = makeRequest(url: url)
+        let request = client.makeRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
-
-        try validate(response)
+        try client.validate(response)
 
         let wordResponses = try JSONDecoder().decode([WordResponse].self, from: data)
         return wordResponses.map { $0.toWord() }
@@ -131,20 +107,19 @@ struct WordAPIService {
             targetCode: targetCode
         )
 
-        var request = makeRequest(url: url, method: "POST")
-        request.httpMethod = "POST"
+        var request = client.makeRequest(url: url, method: "POST")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(requestBody)
 
         let (data, response) = try await URLSession.shared.data(for: request)
-
-        try validate(response)
+        try client.validate(response)
 
         let wordResponse = try JSONDecoder().decode(WordResponse.self, from: data)
         return wordResponse.toWord()
     }
 
     // 서버에 단어 수정하기
+    // PATCH /api/words/{wordId}
     func updateWord(_ word: Word) async throws -> Word {
         let url = baseURL
             .appendingPathComponent("api")
@@ -160,50 +135,27 @@ struct WordAPIService {
             targetCode: word.targetCode
         )
 
-        var request = makeRequest(url: url, method: "PATCH")
-        request.httpMethod = "PATCH"
+        var request = client.makeRequest(url: url, method: "PATCH")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(requestBody)
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        try validate(response)
+        try client.validate(response)
 
         let wordResponse = try JSONDecoder().decode(WordResponse.self, from: data)
         return wordResponse.toWord()
     }
 
     // 서버에 단어 삭제하기
+    // DELETE /api/words/{wordId}
     func deleteWord(id: UUID) async throws {
         let url = baseURL
             .appendingPathComponent("api")
             .appendingPathComponent("words")
             .appendingPathComponent(id.uuidString)
 
-        var request = makeRequest(url: url, method: "DELETE")
-        request.httpMethod = "DELETE"
-
+        let request = client.makeRequest(url: url, method: "DELETE")
         let (_, response) = try await URLSession.shared.data(for: request)
-        try validate(response)
-
-    }
-
-
-
-
-
-
-    // 서버 응답이 성공인지 확인하기
-    private func validate(_ response: URLResponse) throws {
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw WordAPIError.invalidResponse
-        }
-
-        if httpResponse.statusCode == 401 {
-            throw WordAPIError.unauthorized
-        }
-
-        guard (200..<300).contains(httpResponse.statusCode) else {
-            throw WordAPIError.badStatusCode(httpResponse.statusCode)
-        }
+        try client.validate(response)
     }
 }

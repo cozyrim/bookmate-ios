@@ -191,6 +191,8 @@ final class AuthSessionViewModel: ObservableObject {
             isLoading = false
             return true
         } catch {
+            if handleUnauthorizedIfNeeded(error) { return false }
+            
             errorMessage = "프로필 수정에 실패했습니다."
             isLoading = false
             DebugLogger.log("프로필 수정 실패:", error)
@@ -215,6 +217,8 @@ final class AuthSessionViewModel: ObservableObject {
             profile = nil
             isLoggedIn = false
         } catch {
+            if handleUnauthorizedIfNeeded(error) { return }
+            
             errorMessage = "회원 탈퇴에 실패했습니다."
             DebugLogger.log("회원 탈퇴 실패:", error)
         }
@@ -231,10 +235,22 @@ final class AuthSessionViewModel: ObservableObject {
         do {
             return try await authAPIService.uploadProfileImage(token: token, imageData: imageData)
         } catch {
+            if handleUnauthorizedIfNeeded(error) { return nil }
+            
             errorMessage = "프로필 이미지 업로드에 실패했습니다."
             DebugLogger.log("프뢸 이미지 업로드 실패:", error)
             return nil
         }
     }
+    
+    // 401 에러면 바로 로그아웃
+    private func handleUnauthorizedIfNeeded(_ error: Error) -> Bool {
+        if case APIError.unauthorized = error {
+            logout() // AuthSessionViewModel 안에 있으니까 직접 호출 가능
+            return true
+        }
+        return false
+    }
+    
     
 }
