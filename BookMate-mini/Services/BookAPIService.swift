@@ -27,6 +27,9 @@ private struct BookUpdateRequest: Encodable {
     let currentPage: Int?
     let rating: Int?
     let review: String?
+    let readingStatus: String?   // 서버에 전송할 때는 rawValue(String)으로
+    let startDate: String?
+    let endDate: String?
 }
 
 private struct BookResponse: Decodable {
@@ -41,6 +44,9 @@ private struct BookResponse: Decodable {
     let currentPage: Int?
     let rating: Int?
     let review: String?
+    let readingStatus: String?   // 서버는 String으로 내려줌
+    let startDate: String?
+    let endDate: String?
 
     func toBook() -> Book {
         Book(
@@ -53,7 +59,10 @@ private struct BookResponse: Decodable {
             totalPages: totalPages,
             currentPage: currentPage,
             rating: rating,
-            review: review
+            review: review,
+            readingStatus: readingStatus.flatMap { ReadingStatus(rawValue: $0) },
+            startDate: startDate,
+            endDate: endDate
         )
     }
 }
@@ -163,7 +172,10 @@ struct BookAPIService {
             totalPages: book.totalPages,
             currentPage: book.currentPage,
             rating: book.rating,
-            review: book.review
+            review: book.review,
+            readingStatus: book.readingStatus?.rawValue,
+            startDate: book.startDate, 
+            endDate: book.endDate
         )
 
         var request = client.makeRequest(url: url, method: "PATCH")

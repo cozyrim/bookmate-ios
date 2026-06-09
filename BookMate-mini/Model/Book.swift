@@ -7,6 +7,21 @@
 
 import Foundation
 
+// 독서 상태
+enum ReadingStatus: String, Codable, CaseIterable, Hashable {
+    case wantToRead = "wantToRead"
+    case reading    = "reading"
+    case finished   = "finished"
+
+    var displayName: String {
+        switch self {
+        case .wantToRead: return "읽고 싶어요"
+        case .reading:    return "읽는 중"
+        case .finished:   return "완독"
+        }
+    }
+}
+
 struct Book: Identifiable, Hashable {
     let id: UUID
     let title: String
@@ -18,6 +33,10 @@ struct Book: Identifiable, Hashable {
     let currentPage: Int?
     let rating: Int?
     let review: String?
+    let readingStatus: ReadingStatus?
+    
+    let startDate: String?
+    let endDate: String?
     
     init(
         id: UUID = UUID(),
@@ -29,7 +48,10 @@ struct Book: Identifiable, Hashable {
         totalPages: Int? = nil,
         currentPage: Int? = nil,
         rating: Int? = nil,
-        review: String? = nil
+        review: String? = nil,
+        readingStatus: ReadingStatus? = nil,
+        startDate: String? = nil,
+        endDate: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -41,6 +63,9 @@ struct Book: Identifiable, Hashable {
         self.currentPage = currentPage
         self.rating = rating
         self.review = review
+        self.readingStatus = readingStatus
+        self.startDate = startDate
+        self.endDate = endDate
     }
 }
 

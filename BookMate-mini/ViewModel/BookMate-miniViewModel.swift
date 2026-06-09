@@ -83,10 +83,18 @@ final class BookMateViewModel: ObservableObject {
     @Published var quotes: [Quote] = []
     // 현재 열람 중인 책의 구절 목록
 
+    @Published var readingMemos: [ReadingMemo] = []
+    
     @Published var quoteLoadErrorMessage: String?
 
     private var recentSearchOwnerId: UUID?
     private let bookPageLookupService = BookPageLookupService()
+    private let kakaoBookSearchService = KakaoBookSearchService()
+    private let bookAPIService = BookAPIService()
+    private let wordAPIService = WordAPIService()
+    private let quoteAPIService = QuoteAPIService()
+    private let dictionaryExampleLookupService = DictionaryExampleLookupService()
+    private let memoAPIService = ReadingMemoAPIService()
     
     
     //  아카이브 필터 적용된 단어 목록(단어를 필터하는 코드)
@@ -143,12 +151,7 @@ final class BookMateViewModel: ObservableObject {
     }
 
 
-    private let kakaoBookSearchService = KakaoBookSearchService()
-    private let bookAPIService = BookAPIService()
-    private let wordAPIService = WordAPIService()
-    private let quoteAPIService = QuoteAPIService()
-    private let dictionaryExampleLookupService = DictionaryExampleLookupService()
-
+    
     private var isRunningForPreview: Bool {
         ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     }
@@ -773,7 +776,8 @@ final class BookMateViewModel: ObservableObject {
     // MARK: - 별점 / 리뷰 저장
 
     // 별점과 감상평 저장 (기존 updateBook 활용)
-    func saveRatingAndReview(book: Book, rating: Int?, review: String?) async -> Bool {
+    func saveRatingAndReview(book: Book, rating: Int?, review: String?, readingStatus: ReadingStatus?, startDate: String?, // 추가됨
+                             endDate: String?) async -> Bool {
         let updatedBook = Book(
             id: book.id,
             title: book.title,
@@ -784,9 +788,72 @@ final class BookMateViewModel: ObservableObject {
             totalPages: book.totalPages,
             currentPage: book.currentPage,
             rating: rating,
-            review: review
+            review: review,
+            readingStatus: readingStatus,
+            startDate: startDate,
+            endDate: endDate
         )
         return await updateBook(updatedBook, successMessage: "리뷰를 저장했어요.")
     }
 
+    
+    // MARK: - 독서 메모 로직 (추후 API 연결을 위해 임시로 로컬 처리)
+    func savedMemos(for bookId: UUID) -> [ReadingMemo] {
+        return readingMemos.filter { $0.bookId == bookId }
+    }
+    
+    func loadReadingMemos(bookId: UUID) async {
+            do {
+                readingMemos = try await memoAPIService.fetchMemos(bookId: bookId)
+            } catch {
+                if handleUnauthorizedIfNeeded(error) { return }
+                DebugLogger.log("메모 불러오기 실패:", error)
+            }
+        }
+    
+    func saveReadingMemo(bookId: UUID, date: String, page: Int?, text: String) async -> Bool {
+            do {
+                let savedMemo = try await memoAPIService.saveMemo(bookId: bookId, date: date, page: page, text: text)
+                readingMemos.append(savedMemo)
+                readingMemos.sort { $0.date < $1.date } // 날짜순 정렬
+                showToast("메모를 기록했어요.", style: .success)
+                return true
+            } catch {
+                if handleUnauthorizedIfNeeded(error) { return false }
+                showToast("메모 저장에 실패했어요.", style: .error)
+                DebugLogger.log("메모 저장 실패:", error)
+                return false
+            }
+        }
+    
+    func updateReadingMemo(_ memo: ReadingMemo) async -> Bool {
+            do {
+                let updatedMemo = try await memoAPIService.updateMemo(memo)
+                if let index = readingMemos.firstIndex(where: { $0.id == memo.id }) {
+                    readingMemos[index] = updatedMemo
+                    readingMemos.sort { $0.date < $1.date } // 날짜순 정렬
+                }
+                showToast("메모가 수정되었어요.", style: .success)
+                return true
+            } catch {
+                if handleUnauthorizedIfNeeded(error) { return false }
+                showToast("메모 수정에 실패했어요.", style: .error)
+                DebugLogger.log("메모 수정 실패:", error)
+                return false
+            }
+        }
+    
+    func deleteReadingMemo(_ memo: ReadingMemo) async {
+            do {
+                try await memoAPIService.deleteMemo(id: memo.id)
+                readingMemos.removeAll { $0.id == memo.id }
+                showToast("메모가 삭제되었어요.", style: .success)
+            } catch {
+                if handleUnauthorizedIfNeeded(error) { return }
+                showToast("메모 삭제에 실패했어요.", style: .error)
+                DebugLogger.log("메모 삭제 실패:", error)
+            }
+        }
+    
+    
 }
