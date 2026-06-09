@@ -16,6 +16,7 @@ struct ProfileEditView: View {
         @State private var selectedPhotoItem: PhotosPickerItem?
         @State private var selectedProfileImage: UIImage?
         @State private var profileImageUrlToSave: String?
+    @State private var isPublicToSave: Bool = true
 
     
     private var currentNickname: String {
@@ -76,9 +77,17 @@ struct ProfileEditView: View {
                                                             .background(Color("Surface").opacity(0.88))
                                                             .clipShape(RoundedRectangle(cornerRadius: 18))
                                                     }
+                                
+                                Toggle("내 책장 공개 여부", isOn: $isPublicToSave)
+                                            .font(.callout)
+                                            .fontWeight(.semibold)
+                                            .tint(Color("Primary"))
+                                            .padding(.vertical, 8)
                                                 }
                             .padding(.horizontal, 28)
 
+                
+                
                                             Spacer()
 
                                             SettingsPrimaryButton(title: authViewModel.isLoading ? "저장 중..." : "저장하기") {
@@ -94,6 +103,7 @@ struct ProfileEditView: View {
                 .onAppear {
                     nickname = currentNickname
                     profileImageUrlToSave = currentProfileImageUrl
+                    isPublicToSave = authViewModel.profile?.isPublic ?? true
                 }
             }
     
@@ -102,7 +112,7 @@ struct ProfileEditView: View {
         guard !trimmedNickname.isEmpty else { return }
             
         Task {
-            let success = await authViewModel.updateProfile(nickname: trimmedNickname, profileImageUrl: profileImageUrlToSave)
+            let success = await authViewModel.updateProfile(nickname: trimmedNickname, profileImageUrl: profileImageUrlToSave, isPublic: isPublicToSave)
             
             if success {
                 dismiss()

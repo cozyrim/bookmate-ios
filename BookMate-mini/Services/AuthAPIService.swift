@@ -16,6 +16,7 @@ struct AuthAPIService {
     private struct ProfileUpdateBody: Encodable {
         let nickname: String
         let profileImageUrl: String?
+        let isPublic: Bool
     }
     
     private struct KakaoLoginBody: Encodable {
@@ -119,14 +120,15 @@ struct AuthAPIService {
     func updateProfile(
         token: String,
         nickname: String,
-        profileImageUrl: String?
+        profileImageUrl: String?,
+        isPublic: Bool
     ) async throws -> ProfileResponse {
         let url = baseURL
             .appendingPathComponent("api")
             .appendingPathComponent("me")
 
         
-        let body = ProfileUpdateBody(nickname: nickname, profileImageUrl: profileImageUrl)
+        let body = ProfileUpdateBody(nickname: nickname, profileImageUrl: profileImageUrl, isPublic: isPublic)
         
         var request = URLRequest(url: url)
         request.httpMethod = "PATCH"

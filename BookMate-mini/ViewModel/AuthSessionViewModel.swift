@@ -171,7 +171,7 @@ final class AuthSessionViewModel: ObservableObject {
         }
     }
     
-    func updateProfile(nickname: String, profileImageUrl: String?) async -> Bool {
+    func updateProfile(nickname: String, profileImageUrl: String?, isPublic: Bool) async -> Bool {
         guard let token = tokenStore.load() else {
             errorMessage = "로그인이 필요합니다."
             return false
@@ -181,7 +181,7 @@ final class AuthSessionViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            let updatedProfile = try await authAPIService.updateProfile(token: token, nickname: nickname, profileImageUrl: profileImageUrl)
+            let updatedProfile = try await authAPIService.updateProfile(token: token, nickname: nickname, profileImageUrl: profileImageUrl, isPublic: isPublic)
             
             profile = updatedProfile
             currentUser = updatedProfile.toAuthUser()
