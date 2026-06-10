@@ -36,12 +36,20 @@ struct MainTabView: View {
                 }
                 .tag(2)
 
+            RoomTabView(viewModel: viewModel)
+                .tabItem {
+                    Image(systemName: "magnifyingglass")
+                    Text("방 구경")
+                }
+                .tag(3)
+
+
             ProfileView(authViewModel: authViewModel)
                 .tabItem{
                     Image(systemName: "person.crop.circle.fill")
                     Text("프로필")
                 }
-                .tag(3)
+                .tag(4)
 
         }
         .tint(Color("Primary"))

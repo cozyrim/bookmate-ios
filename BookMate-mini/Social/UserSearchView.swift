@@ -15,7 +15,6 @@ struct UserSearchView: View {
     private let tokenStore = KeychainTokenStore()
         
     var body: some View {
-        NavigationStack {
                     ZStack {
                         Color("AppBackground").ignoresSafeArea()
                         
@@ -29,10 +28,9 @@ struct UserSearchView: View {
                                             ProfileImageView(
                                                 imageName: "profileImage",
                                                 imageURLString: user.profileImageUrl,
-                                                selectedImage: nil,
-                                                showsEditIcon: false
+                                                showsEditIcon: false,
+                                                size: 40 // 👉 크기 지정
                                             )
-                                            .frame(width: 40, height: 40)
                                             
                                             Text(user.nickname)
                                                 .font(.body)
@@ -46,15 +44,14 @@ struct UserSearchView: View {
                     }
                     .navigationTitle("유저 검색")
                     .searchable(text: $searchText, prompt: "닉네임을 검색하세요")
-                    .onSubmit(of: .search) {
+                    .onChange(of: searchText) { _, newValue in
                         Task {
                             await performSearch()
                         }
                     }
-                }
-            }
+    }
             
-            private func performSearch() async {
+    private func performSearch() async {
                 guard let token = tokenStore.load(), !searchText.isEmpty else { return }
                 do {
                     searchResults = try await socialService.searchUsers(token: token, nickname: searchText)

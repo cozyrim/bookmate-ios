@@ -13,6 +13,7 @@ struct ProfileImageView: View {
     var imageURLString: String? = nil
     var selectedImage: UIImage? = nil
     var showsEditIcon: Bool = true
+    var size: CGFloat = 112 // 👉 크기 파라미터 추가! 기본값은 112
     var onTap: (() -> Void)? = nil
     
     var body: some View {
@@ -31,11 +32,11 @@ struct ProfileImageView: View {
     private var imageContent: some View {
         ZStack(alignment: .bottomTrailing) {
             profileImage
-                .frame(width: 112, height: 112)
-                .clipShape(RoundedRectangle(cornerRadius: 28))
+                .frame(width: size, height: size) // 👉 고정된 112 대신 size 변수 사용
+                .clipShape(RoundedRectangle(cornerRadius: size / 4))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 28)
-                                            .stroke(Color("Surface"), lineWidth: 5)
+                    RoundedRectangle(cornerRadius: size / 4)
+                        .stroke(Color("Surface"), lineWidth: size > 60 ? 5 : 2) // 작을 땐 테두리도 얇게
                 }
                 .shadow(color: Color("Shadow").opacity(0.08), radius: 12, x: 0, y: 6)
             

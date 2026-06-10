@@ -8,10 +8,11 @@
 import Foundation
 
 // 검색 결과로 받을 유저 정보를 담을 모델
-struct PublicUserResponse: Decodable, Identifiable {
+struct PublicUserResponse: Decodable, Identifiable, Hashable {
     let id: UUID
     let nickname: String
     let profileImageUrl: String?
+    let roomTheme: String
 }
 
 struct PublicBookResponse: Decodable {
@@ -47,4 +48,19 @@ struct PublicBookResponse: Decodable {
             endDate: endDate
         )
     }
+}
+
+// 방명록 메시지 모델 추가
+struct GuestbookMessageResponse: Decodable, Identifiable {
+    let id: UUID
+    let writerId: UUID
+    let writerNickname: String
+    let writerProfileImageUrl: String?
+    let content: String
+    let createdAt: String
+}
+
+// 방명록 작성 요청용 모델
+struct GuestbookWriteRequest: Encodable {
+    let content: String
 }

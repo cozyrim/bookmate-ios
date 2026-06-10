@@ -18,9 +18,11 @@ struct ShelfView: View {
 
     @State private var activeBookSheet: BookActionSheet?
 
-    private enum ShelfRoute: Hashable {
+    enum ShelfRoute: Hashable {
         case bookSearch
         case bookDetail(UUID)
+        case publicRoom(PublicUserResponse)
+        case searchUsers
     } // 책장 화면에서 이동할 수 있는 목적지 목록
 //    버튼 클릭
 //    ↓
@@ -224,6 +226,12 @@ struct ShelfView: View {
                     } else {
                         Text("책 정보를 찾을 수 없습니다.")
                     }
+                    
+                case .publicRoom(let user):
+                    PublicBookshelfView(targetUser: user)
+                    
+                case .searchUsers:
+                    UserSearchView()
                 }
             }
         }

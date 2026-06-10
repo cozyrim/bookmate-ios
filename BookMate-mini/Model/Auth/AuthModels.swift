@@ -15,6 +15,7 @@ struct AuthUser: Decodable, Identifiable { // 서버에서 로그인 성공 후 
     let profileImageUrl: String?
     let createdAt: String?
     let isPublic: Bool?
+    let roomTheme: String?
 }
 
 struct AuthResponse: Decodable {
@@ -34,6 +35,7 @@ struct ProfileResponse: Decodable {
     let savedWordCount: Int
     let readBookCount: Int
     let isPublic: Bool
+    let roomTheme: String?
 }
 
 extension ProfileResponse {
@@ -45,7 +47,8 @@ extension ProfileResponse {
             nickname: nickname,
             profileImageUrl: profileImageUrl,
             createdAt: createdAt,
-            isPublic: isPublic
+            isPublic: isPublic,
+            roomTheme: roomTheme
         )
     }
 }

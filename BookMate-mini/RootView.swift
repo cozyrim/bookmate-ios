@@ -34,6 +34,7 @@ struct RootView: View {
             }
         } else if authViewModel.isLoggedIn {
             MainTabView(authViewModel: authViewModel)
+                .environmentObject(authViewModel)
         } else {
             LoginView(authViewModel: authViewModel)
         }
