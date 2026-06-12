@@ -51,7 +51,7 @@ struct SaveWordSheet: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(Color("TextPrimary").opacity(0.72))
                 
-                if viewModel.books.isEmpty {
+                if viewModel.booksOnShelf.isEmpty {
                     Text("먼저 책을 등록해 주세요.")
                         .font(.caption)
                         .foregroundStyle(Color("Error"))
@@ -59,7 +59,7 @@ struct SaveWordSheet: View {
                 } else {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 14) {
-                            ForEach(viewModel.books) { book in
+                            ForEach(viewModel.booksOnShelf) { book in
                                 Button {
                                     selectedBookId = selectedBookId == book.id ? nil : book.id
                                     
@@ -159,7 +159,7 @@ struct SaveWordSheet: View {
             guard remembersLastSelectedBook,
                   selectedBookId == nil,
                   let lastBookUUID = UUID(uuidString: lastSelectedBookId),
-                  viewModel.books.contains(where: {$0.id == lastBookUUID}) else {
+                  viewModel.booksOnShelf.contains(where: {$0.id == lastBookUUID}) else {
                 return
             }
             

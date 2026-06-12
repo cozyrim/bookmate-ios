@@ -81,7 +81,7 @@ struct ShelfView: View {
 
 
 
-                    } else if viewModel.books.isEmpty {
+                    } else if viewModel.shelfBooks.isEmpty {
                         Spacer()
 
                         ContentStateView(type: .empty, iconName: "book", title: "아직 등록한 책이 없어요.", message: "읽고 있는 책을 등록하면\n내 책장에서 관리할 수 있어요.", buttonTitle: "책 등록하기", buttonIconName: "plus", buttonAction: {
@@ -94,15 +94,17 @@ struct ShelfView: View {
                     } else {
                         ScrollView(showsIndicators: false) {
                             VStack(spacing: 16){
-                                ForEach(viewModel.books) { book in
-                                    ShelfBookCardView(imageName: book.imageName, author: book.author, title: book.title, category: book.category, progress: book.progress, wordCount: viewModel.savedWords(for: book.id).count,
-                                                      onTap: {
-                                        path.append(ShelfRoute.bookDetail(book.id))
-                                    },
-                                                      onMoreTap: {
-                                        activeBookSheet = .options(book)
-                                    })
-                                    .buttonStyle(.plain)
+                                ForEach(viewModel.shelfBooks) { shelfBook in
+                                    if let book = viewModel.book(for: shelfBook) {
+                                        ShelfBookCardView(imageName: book.imageName, author: book.author, title: book.title, category: book.category, progress: shelfBook.progress, wordCount: viewModel.savedWords(for: book.id).count,
+                                                          onTap: {
+                                            path.append(ShelfRoute.bookDetail(book.id))
+                                        },
+                                                          onMoreTap: {
+                                            activeBookSheet = .options(book)
+                                        })
+                                        .buttonStyle(.plain)
+                                    }
                                 }
                             }
                             .padding(.horizontal, 24)
@@ -221,7 +223,7 @@ struct ShelfView: View {
                     })
 
                 case .bookDetail(let bookId):
-                    if let book = viewModel.books.first(where: { $0.id == bookId }) {
+                    if let book = viewModel.book(for: bookId){
                         BookDetailView(viewModel: viewModel, book: book)
                     } else {
                         Text("책 정보를 찾을 수 없습니다.")

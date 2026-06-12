@@ -34,7 +34,7 @@ struct WordArchiveView: View {
 
     // 등록된 책에서 중복 없이 카테고리 목록 추출
     private var availableCategories: [String] {
-        let all = viewModel.books.map { $0.category }
+        let all = viewModel.booksOnShelf.map { $0.category }
         return Array(Set(all)).sorted()  // 중복 제거 + 가나다순
     }
     
@@ -129,7 +129,7 @@ struct WordArchiveView: View {
                                 .padding(.top, 40)
                             } else {
                                 ForEach(filteredWords) { word in
-                                    let book = viewModel.books.first { $0.id == word.bookId }
+                                    let book = viewModel.book(for: word.bookId)
                                     
                                     NavigationLink {
                                         WordDetailsView(viewModel: viewModel, word: word)
@@ -174,7 +174,7 @@ struct WordArchiveView: View {
                 let currentWord = viewModel.savedWords.first { $0.id == word.id } ?? word
 
                 MoveWordBookSheet(
-                    books: viewModel.books,
+                    books: viewModel.booksOnShelf,
                     currentBookId: currentWord.bookId,
                     onSelect: { selectedBook in
                         Task {
@@ -290,7 +290,7 @@ struct WordArchiveView: View {
                         .font(.caption)
 
                     // 선택된 책 이름 표시, 없으면 "전체 책"
-                    Text(viewModel.books.first(where: { $0.id == viewModel.archiveSelectedBookId })?.title ?? "전체 책")
+                    Text(viewModel.archiveSelectedBookId.flatMap { viewModel.book(for: $0)?.title } ?? "전체 책")
                         .font(.caption)
                         .fontWeight(.semibold)
                         .lineLimit(1)

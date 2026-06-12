@@ -42,6 +42,7 @@ struct BookDetailView: View {
     @State private var editingQuote: Quote? = nil
     @State private var isShowingQuoteAddSheet = false // 새 구절 시트 띄우기용
     
+    @State private var isReviewPublic: Bool = false
     
     // MARK: - Computed Properties
     
@@ -64,6 +65,16 @@ struct BookDetailView: View {
     private var  savedQuotesForBook: [Quote] {
         viewModel.savedQuotes(for: book.id)
     }
+    
+    private func applyMyReviewToForm() {
+        let myReview = viewModel.myReview(for: book.id)
+
+        rating = myReview?.rating ?? book.rating ?? 0
+        reviewText = myReview?.content ?? book.review ?? ""
+        isReviewPublic = myReview?.isPublic ?? false
+    }
+    
+    
     
     // MARK: - Body
     
@@ -108,14 +119,15 @@ struct BookDetailView: View {
         .navigationBarBackButtonHidden(true)
         .onAppear {
             // 다이어리 탭의 초기값 세팅
-            self.rating = book.rating ?? 0
-            self.reviewText = book.review ?? ""
+            applyMyReviewToForm()
             self.readingStatus = book.readingStatus
             self.startDateText = book.startDate ?? ""
             self.endDateText = book.endDate ?? ""
             
             // 진입 시 이 책의 구절 데이터 로드
             Task {
+                await viewModel.loadMyReview(bookId: book.id)
+                applyMyReviewToForm()
                 await viewModel.loadQuotes(bookId: book.id)
                 await viewModel.loadReadingMemos(bookId: book.id)
             }
@@ -458,10 +470,32 @@ struct BookDetailView: View {
                                 .stroke(Color("TextMuted").opacity(0.15), lineWidth: 1)
                         )
                 }
+                Toggle(isOn: $isReviewPublic) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("리뷰 공개")
+                            .font(.headline)
+                            .foregroundStyle(Color("TextMuted"))
+
+                        Text("공개하면 다른 사용자가 이 책의 리뷰를 볼 수 있어요.")
+                            .font(.caption)
+                            .foregroundStyle(Color("TextMuted"))
+                    }
+                }
+                .toggleStyle(SwitchToggleStyle(tint: Color("Primary")))
+                .padding(16)
+                .background(Color("Surface"))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                
                 // 1-5. 다이어리 폼 전체 저장 버튼
                 Button {
                     isReviewFocused = false // 키보드 내리기
                     Task {
+                        _ = await viewModel.saveReview(
+                            bookId: book.id,
+                            rating: rating,
+                            content: reviewText,
+                            isPublic: isReviewPublic
+                        )
                         _ = await viewModel.saveRatingAndReview(
                             book: book,
                             rating: rating,

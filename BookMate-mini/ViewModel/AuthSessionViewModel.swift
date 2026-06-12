@@ -7,70 +7,66 @@
 
 import SwiftUI
 import Combine
+
 @MainActor
 final class AuthSessionViewModel: ObservableObject {
+    // MARK: - Session State
+
+    // 현재 로그인한 사용자와 로그인 여부를 관리한다.
     @Published var currentUser: AuthUser?
     @Published var isLoggedIn = false
+
+    // 인증 요청 중 화면 상태를 제어한다.
     @Published var isLoading = false
     @Published var isCheckingSession = true
     @Published var errorMessage: String?
+
+    // 프로필 화면에서 보여줄 사용자 상세 정보를 저장한다.
     @Published var profile: ProfileResponse?
 
-    
+    // MARK: - Services
+
     private let authAPIService = AuthAPIService()
     private let tokenStore: AuthTokenStore = KeychainTokenStore()
     private let kakaoLoginService = KakaoLoginService()
-    
-    // AuthSessionViewModel이 처음 만들어지는 순간,
-    //    비동기 작업을 하나 시작해서,
-    //    이전에 로그인했던 세션이 있는지 확인해라.
+
+    // MARK: - Lifecycle
+
+    // ViewModel이 만들어지면 저장된 토큰으로 로그인 세션을 복구한다.
     init() {
         Task {
             await restoreSession()
         }
     }
-    
-    //    로그인 성공
-    //    → 토큰 저장
-    //    → currentUser 저장
-    //    → /api/me로 프로필 상세 정보 조회
-    //    → profile에 저장
-    //    → ProfileView가 이 값을 보여줌
-    
+
+    // MARK: - Login
+
+    // 이메일과 비밀번호로 로그인하고 토큰과 사용자 정보를 저장한다.
     func login(email: String, password: String) async {
-        
         isLoading = true
         errorMessage = nil
-        
-        do { // 로그인 성공 토큰 저장 → 서버에서 accessToken 받음 → KeychainTokenStore에 저장 → 로그인 상태 true
+
+        do {
             let response = try await authAPIService.login(email: email, password: password)
-            
-            // 여기서 토큰 저장
+
             tokenStore.save(response.accessToken)
-            
             currentUser = response.user
             isLoggedIn = true
-            
+
             await loadProfile()
         } catch {
             errorMessage = "로그인에 실패했습니다."
             DebugLogger.log("로그인 실패:", error)
         }
-        
+
         isLoading = false
     }
-    
-    
-//    loginWithKakao()
-//    → KakaoLoginService에서 카카오 accessToken 받음
-//    → AuthAPIService가 백엔드 /api/auth/kakao 호출
-//    → 백엔드가 우리 앱 accessToken 발급
-//    → Keychain 저장
-//    → 로그인 상태 true
+
+    // 카카오 accessToken을 백엔드 토큰으로 교환하고 로그인 상태를 저장한다.
     func loginWithKakao() async {
         isLoading = true
         errorMessage = nil
-        
+
         do {
             let kakaoAccessToken = try await kakaoLoginService.login()
             let response = try await authAPIService.loginWithKakao(
@@ -80,35 +76,52 @@ final class AuthSessionViewModel: ObservableObject {
             tokenStore.save(response.accessToken)
             currentUser = response.user
             isLoggedIn = true
-            
+
             await loadProfile()
         } catch {
             errorMessage = "카카오 로그인에 실패했습니다."
             DebugLogger.log("카카오 로그인 실패:", error)
         }
+
         isLoading = false
     }
-    
-    
-    
-    
-    // 1. Keychain에서 저장된 accessToken을 꺼낸다.
-    //   2. 토큰이 없으면 로그인 안 된 상태로 둔다.
-    //   3. 토큰이 있으면 서버에 /api/me 요청을 보낸다.
-    //   4. 서버가 사용자 정보를 정상 응답하면 로그인 상태로 복구한다.
-    //   5. 서버가 거절하면 토큰을 지우고 로그인 화면으로 보낸다.
-    
-    // 저장된 토큰을 이용해서 로그인 상태를 복구한다
+
+    // 회원가입 후 받은 토큰으로 바로 로그인 상태를 만든다.
+    func signup(email: String, password: String, nickname: String) async {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let response = try await authAPIService.signup(
+                email: email,
+                password: password,
+                nickname: nickname
+            )
+
+            tokenStore.save(response.accessToken)
+            currentUser = response.user
+            isLoggedIn = true
+
+            await loadProfile()
+        } catch {
+            errorMessage = "회원가입에 실패했습니다."
+            DebugLogger.log("회원가입 실패:", error)
+        }
+
+        isLoading = false
+    }
+
+    // Keychain에 저장된 토큰으로 앱 재실행 후 로그인 상태를 복구한다.
     func restoreSession() async {
         guard let token = tokenStore.load() else {
             isCheckingSession = false
             isLoggedIn = false
             return
         }
-        
-        do { // 서버에 “이 토큰 유효해? 이 사용자 정보 줘”라고 물어봄
+
+        do {
             let profile = try await authAPIService.fetchProfile(token: token)
-            
+
             self.profile = profile
             currentUser = profile.toAuthUser()
             isLoggedIn = true
@@ -118,139 +131,127 @@ final class AuthSessionViewModel: ObservableObject {
             isLoggedIn = false
             DebugLogger.log("로그인 세션 복구 실패:", error)
         }
+
         isCheckingSession = false
     }
-    
+
+    // 저장된 토큰과 사용자 상태를 지우고 로그아웃 상태로 전환한다.
     func logout() {
         tokenStore.clear()
         currentUser = nil
         isLoggedIn = false
         profile = nil
     }
-    
-    //    회원가입 요청 시작
-    //    → isLoading = true
-    //    → 버튼 문구를 "가입 중..."으로 바꿈
-    //    → 버튼 중복 클릭 막음
-    //    → 서버 응답 기다림
-    //    → 응답 끝남
-    //    → isLoading = false
-    
-    func signup(email: String, password: String, nickname: String) async {
-        isLoading = true // 회원가입 요청 중이라는 상태 표시
-        errorMessage = nil
-        
-        do {
-            let response = try await authAPIService.signup(email: email, password: password, nickname: nickname)
-            
-            tokenStore.save(response.accessToken)
-            
-            currentUser = response.user
-            isLoggedIn = true
-            
-            await loadProfile()
-        } catch {
-            errorMessage = "회원가입에 실패했습니다."
-            DebugLogger.log("회원가입 실패:", error)
+
+    // 회원 탈퇴 요청이 성공하면 로컬 로그인 상태도 함께 정리한다.
+    func withdraw() async {
+        guard let token = tokenStore.load() else {
+            errorMessage = "로그인이 필요합니다."
+            return
         }
-        
+
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            try await authAPIService.withdraw(token: token)
+
+            tokenStore.clear()
+            currentUser = nil
+            profile = nil
+            isLoggedIn = false
+        } catch {
+            if handleUnauthorizedIfNeeded(error) {
+                isLoading = false
+                return
+            }
+
+            errorMessage = "회원 탈퇴에 실패했습니다."
+            DebugLogger.log("회원 탈퇴 실패:", error)
+        }
+
         isLoading = false
     }
 
+    // MARK: - Profile
+
+    // 서버에서 내 프로필 정보를 다시 불러온다.
     func loadProfile() async {
         guard let token = tokenStore.load() else { return }
-        
+
         do {
-            profile = try await authAPIService.fetchProfile(token: token)
-            
+            let profile = try await authAPIService.fetchProfile(token: token)
+
             self.profile = profile
-            currentUser = profile?.toAuthUser()
+            currentUser = profile.toAuthUser()
         } catch {
             errorMessage = "프로필 정보를 불러오지 못했습니다."
             DebugLogger.log("프로필 조회 실패:", error)
         }
     }
-    
+
+    // 닉네임, 프로필 이미지, 공개 여부를 수정한다.
     func updateProfile(nickname: String, profileImageUrl: String?, isPublic: Bool) async -> Bool {
         guard let token = tokenStore.load() else {
             errorMessage = "로그인이 필요합니다."
             return false
         }
-        
+
         isLoading = true
         errorMessage = nil
-        
+
         do {
-            let updatedProfile = try await authAPIService.updateProfile(token: token, nickname: nickname, profileImageUrl: profileImageUrl, isPublic: isPublic)
-            
+            let updatedProfile = try await authAPIService.updateProfile(
+                token: token,
+                nickname: nickname,
+                profileImageUrl: profileImageUrl,
+                isPublic: isPublic
+            )
+
             profile = updatedProfile
             currentUser = updatedProfile.toAuthUser()
-            
-//            await loadProfile()
-            
             isLoading = false
             return true
         } catch {
-            if handleUnauthorizedIfNeeded(error) { return false }
-            
+            if handleUnauthorizedIfNeeded(error) {
+                isLoading = false
+                return false
+            }
+
             errorMessage = "프로필 수정에 실패했습니다."
             isLoading = false
             DebugLogger.log("프로필 수정 실패:", error)
             return false
         }
     }
-    
-    func withdraw() async {
-        guard let token = tokenStore.load() else {
-            errorMessage = "로그인이 필요합니다."
-            return
-        }
-        
-        isLoading = true
-        errorMessage = nil
-        
-        do {
-            try await authAPIService.withdraw(token: token)
-            
-            tokenStore.clear()
-            currentUser = nil
-            profile = nil
-            isLoggedIn = false
-        } catch {
-            if handleUnauthorizedIfNeeded(error) { return }
-            
-            errorMessage = "회원 탈퇴에 실패했습니다."
-            DebugLogger.log("회원 탈퇴 실패:", error)
-        }
-         
-        isLoading = false
-    }
-    
+
+    // 선택한 프로필 이미지를 서버에 업로드하고 이미지 URL을 반환한다.
     func uploadProfileImage(imageData: Data) async -> String? {
         guard let token = tokenStore.load() else {
             errorMessage = "로그인이 필요합니다."
             return nil
         }
-        
+
         do {
             return try await authAPIService.uploadProfileImage(token: token, imageData: imageData)
         } catch {
             if handleUnauthorizedIfNeeded(error) { return nil }
-            
+
             errorMessage = "프로필 이미지 업로드에 실패했습니다."
-            DebugLogger.log("프뢸 이미지 업로드 실패:", error)
+            DebugLogger.log("프로필 이미지 업로드 실패:", error)
             return nil
         }
     }
-    
-    // 401 에러면 바로 로그아웃
+
+    // MARK: - Helpers
+
+    // 401 응답이면 토큰이 만료된 상태로 보고 로그아웃 처리한다.
     private func handleUnauthorizedIfNeeded(_ error: Error) -> Bool {
         if case APIError.unauthorized = error {
-            logout() // AuthSessionViewModel 안에 있으니까 직접 호출 가능
+            logout()
             return true
         }
+
         return false
     }
-    
-    
 }

@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E282F6702FDC10C300709518 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E282F66F2FDC10C300709518 /* GoogleService-Info.plist */; };
+		E282F6732FDC115500709518 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = E282F6722FDC115500709518 /* FirebaseCore */; };
+		E282F6752FDC115500709518 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = E282F6742FDC115500709518 /* FirebaseFirestore */; };
 		E29F41A52FCF592500021309 /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = E29F41A42FCF592500021309 /* KakaoSDKAuth */; };
 		E29F41A72FCF592500021309 /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = E29F41A62FCF592500021309 /* KakaoSDKCommon */; };
 		E29F41A92FCF592500021309 /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = E29F41A82FCF592500021309 /* KakaoSDKUser */; };
@@ -31,6 +34,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		E282F66F2FDC10C300709518 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		E286E4852FB1B48400F1715A /* BookMate-mini.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BookMate-mini.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E286E4942FB1B48600F1715A /* BookMate-miniTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "BookMate-miniTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E286E49E2FB1B48600F1715A /* BookMate-miniUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "BookMate-miniUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -64,6 +68,8 @@
 			files = (
 				E29F41A72FCF592500021309 /* KakaoSDKCommon in Frameworks */,
 				E29F41A52FCF592500021309 /* KakaoSDKAuth in Frameworks */,
+				E282F6732FDC115500709518 /* FirebaseCore in Frameworks */,
+				E282F6752FDC115500709518 /* FirebaseFirestore in Frameworks */,
 				E29F41A92FCF592500021309 /* KakaoSDKUser in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -94,6 +100,7 @@
 				E2B000022FB5000000000002 /* Config */,
 				E286E4862FB1B48400F1715A /* Products */,
 				E2A46C952FB1D7640094CD4E /* Assets.xcassets */,
+				E282F66F2FDC10C300709518 /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -139,6 +146,8 @@
 				E29F41A42FCF592500021309 /* KakaoSDKAuth */,
 				E29F41A62FCF592500021309 /* KakaoSDKCommon */,
 				E29F41A82FCF592500021309 /* KakaoSDKUser */,
+				E282F6722FDC115500709518 /* FirebaseCore */,
+				E282F6742FDC115500709518 /* FirebaseFirestore */,
 			);
 			productName = "BookMate-mini";
 			productReference = E286E4852FB1B48400F1715A /* BookMate-mini.app */;
@@ -224,6 +233,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				E29F41A32FCF592500021309 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */,
+				E282F6712FDC115500709518 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E286E4862FB1B48400F1715A /* Products */;
@@ -242,6 +252,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E282F6702FDC10C300709518 /* GoogleService-Info.plist in Resources */,
 				E2A46C992FB1D7640094CD4E /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -642,6 +653,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		E282F6712FDC115500709518 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.14.0;
+			};
+		};
 		E29F41A32FCF592500021309 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/kakao/kakao-ios-sdk";
@@ -653,6 +672,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		E282F6722FDC115500709518 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E282F6712FDC115500709518 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		E282F6742FDC115500709518 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E282F6712FDC115500709518 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
 		E29F41A42FCF592500021309 /* KakaoSDKAuth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E29F41A32FCF592500021309 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;

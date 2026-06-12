@@ -15,7 +15,7 @@ struct RoomTabView: View {
                             path = NavigationPath()
                         })
                     case .bookDetail(let bookId):
-                        if let book = viewModel.books.first(where: { $0.id == bookId }) {
+                        if let book = viewModel.book(for: bookId) {
                             BookDetailView(viewModel: viewModel, book: book)
                         } else {
                             Text("책 정보를 찾을 수 없습니다.")

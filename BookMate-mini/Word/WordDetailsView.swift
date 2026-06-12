@@ -29,7 +29,7 @@ struct WordDetailsView: View {
     }
     
     private var relatedBook: Book? {
-        viewModel.books.first { $0.id == currentWord.bookId}
+        viewModel.book(for: currentWord.bookId)
     }
     
     
@@ -87,7 +87,7 @@ struct WordDetailsView: View {
         }
         .sheet(isPresented: $isShowingMoveBookSheet) {
             MoveWordBookSheet(
-                books: viewModel.books,
+                books: viewModel.booksOnShelf,
                 currentBookId: currentWord.bookId,
                 onSelect: { selectedBook in
                     Task {

@@ -39,7 +39,7 @@ struct MainTabView: View {
             RoomTabView(viewModel: viewModel)
                 .tabItem {
                     Image(systemName: "magnifyingglass")
-                    Text("방 구경")
+                    Text("미니룸")
                 }
                 .tag(3)
 
@@ -55,7 +55,7 @@ struct MainTabView: View {
         .tint(Color("Primary"))
         .appToast($viewModel.toast) // MainTabView가 가진 viewModel.toast 값을 AppToastModifier에게 연결해서 넘긴다.원본 값을 읽고 바꿀 수 있는 연결 통로 전달
         .task(id: authViewModel.currentUser?.id) {
-            viewModel.setRecentSearchOwner(userId: authViewModel.currentUser?.id) // 로그인한 사용자마다 최근 검색어 저장칸이 다름
+            viewModel.setCurrentUser(authViewModel.currentUser) // 로그인한 사용자마다 최근 검색어 저장칸이 다름
 
             await viewModel.loadBooks()
             await viewModel.loadSavedWords()

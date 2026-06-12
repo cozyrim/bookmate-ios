@@ -116,8 +116,9 @@ struct HomeView: View {
                             
                             Spacer()
                             
-                            if !viewModel.books.isEmpty {
+                            if !viewModel.shelfBooks.isEmpty {
                                 Button {
+                                    
                                     selectedTab = 1
                                 } label: {
                                     HStack(spacing: 4) {
@@ -139,25 +140,27 @@ struct HomeView: View {
                         .padding(.horizontal, 24)
                         .padding(.top, 24)
                         
-                        if viewModel.books.isEmpty {
+                        if viewModel.shelfBooks.isEmpty {
                             emptyBooksPlaceholderCard
                                 .padding(.horizontal, 24)
                                 .padding(.top, 14)
                         } else {
-                            ForEach(viewModel.books) { book in
-                                BookCardView(
-                                    imageName: book.imageName,
-                                    title: book.title,
-                                    author: book.author,
-                                    progress: book.progress,
-                                    category: book.category,
-                                    onTap: {
-                                        path.append(HomeRoute.bookDetail(book.id))
-                                    }, // 카드 눌렀을 때 상세 이동.
-                                    onMoreTap: {
-                                        activeBookSheet = .options(book)
-                                    } // 점 버튼 눌렀을 때 메뉴 시트 열기.
-                                )
+                            ForEach(viewModel.shelfBooks) { shelfBook in
+                                if let book = viewModel.book(for: shelfBook) {
+                                    BookCardView(
+                                        imageName: book.imageName,
+                                        title: book.title,
+                                        author: book.author,
+                                        progress: shelfBook.progress,
+                                        category: book.category,
+                                        onTap: {
+                                            path.append(HomeRoute.bookDetail(book.id))
+                                        }, // 카드 눌렀을 때 상세 이동.
+                                        onMoreTap: {
+                                            activeBookSheet = .options(book)
+                                        } // 점 버튼 눌렀을 때 메뉴 시트 열기.
+                                    )
+                                }
                             }
                         }
                     }
@@ -296,7 +299,7 @@ struct HomeView: View {
                     }
                     )
                 case .bookDetail(let bookId):
-                    if let book = viewModel.books.first(where: { $0.id == bookId }) {
+                    if let book = viewModel.book(for: bookId) {
                         BookDetailView(viewModel: viewModel, book: book)
                     } else {
                         Text("책 정보를 찾을 수 없습니다.")

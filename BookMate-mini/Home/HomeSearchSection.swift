@@ -322,8 +322,8 @@ struct HomeSearchSection: View {
                         .foregroundStyle(Color("TextSecondary"))
 
                     ForEach(viewModel.savedWordSearchResults) { word in
-                        let book = viewModel.books.first { $0.id == word.bookId}
-
+                        let book = viewModel.book(for: word.bookId)
+                        
                         NavigationLink {
                             WordDetailsView(viewModel: viewModel, word: word)
                         } label: {

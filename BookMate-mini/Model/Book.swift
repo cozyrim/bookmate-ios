@@ -8,19 +8,7 @@
 import Foundation
 
 // 독서 상태
-enum ReadingStatus: String, Codable, CaseIterable, Hashable {
-    case wantToRead = "wantToRead"
-    case reading    = "reading"
-    case finished   = "finished"
 
-    var displayName: String {
-        switch self {
-        case .wantToRead: return "읽고 싶어요"
-        case .reading:    return "읽는 중"
-        case .finished:   return "완독"
-        }
-    }
-}
 
 struct Book: Identifiable, Hashable {
     let id: UUID

@@ -8,6 +8,7 @@
 import SwiftUI
 import KakaoSDKCommon
 import KakaoSDKAuth
+import FirebaseCore
 
 @main
 struct BookMateApp: App {
@@ -22,6 +23,7 @@ struct BookMateApp: App {
         }
 
         KakaoSDK.initSDK(appKey: kakaoNativeAppKey)
+        FirebaseApp.configure()
     }
     
     private var preferredScheme: ColorScheme? {
