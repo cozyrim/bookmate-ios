@@ -47,19 +47,19 @@ struct HomeView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        
+
                         homeIntroHeader
-                        
-                        HomeSearchSection(viewModel: viewModel)
-                        
+
+                        HomeSearchSection(viewModel: viewModel, selectedTab: $selectedTab)
+
                         VStack(alignment: .leading, spacing: 18){
                             HStack {
                                 Text("최근 저장한 단어")
                                     .font(.title2)
                                     .fontWeight(.medium)
-                                
+
                                 Spacer()
-                                
+
                                 if !viewModel.savedWords.isEmpty {
                                     Button {
                                         selectedTab = 2
@@ -68,11 +68,11 @@ struct HomeView: View {
                                             Text("더보기")
                                                 .font(.caption)
                                                 .fontWeight(.semibold)
-                                            
+
                                             Image(systemName: "chevron.right")
                                                 .font(.caption2)
                                                 .fontWeight(.semibold)
-                                            
+
                                         }
                                         .foregroundStyle(Color("TextSecondary"))
                                         .padding(.vertical, 8)
@@ -108,24 +108,24 @@ struct HomeView: View {
                         }
                         //                        .frame(height: 90)
                         .frame(height: viewModel.savedWords.isEmpty ? 115 : 192, alignment: .top)
-                        
+
                         HStack {
                             Text("내 책장")
                                 .font(.title3)
                                 .fontWeight(.medium)
-                            
+
                             Spacer()
-                            
+
                             if !viewModel.shelfBooks.isEmpty {
                                 Button {
-                                    
+
                                     selectedTab = 1
                                 } label: {
                                     HStack(spacing: 4) {
                                         Text("더보기")
                                             .font(.caption)
                                             .fontWeight(.semibold)
-                                        
+
                                         Image(systemName: "chevron.right")
                                             .font(.caption2)
                                             .fontWeight(.semibold)
@@ -139,7 +139,7 @@ struct HomeView: View {
                         }
                         .padding(.horizontal, 24)
                         .padding(.top, 24)
-                        
+
                         if viewModel.shelfBooks.isEmpty {
                             emptyBooksPlaceholderCard
                                 .padding(.horizontal, 24)
@@ -347,13 +347,13 @@ struct HomeView: View {
                 .frame(width: 38, height: 38)
                 .background(Color("PrimarySoft").opacity(0.55))
                 .clipShape(Circle())
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text("아직 등록한 책이 없어요")
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundStyle(Color("TextPrimary"))
-                
+
                 Text("책을 등록하면 내 책장에 보여요.")
                     .font(.caption)
                     .foregroundStyle(Color("TextSecondary"))
@@ -368,8 +368,8 @@ struct HomeView: View {
             .clipShape(RoundedRectangle(cornerRadius: 34))
             .shadow(color: Color("Shadow").opacity(0.045), radius: 9, x: 0, y: 3)
     }
-    
-    
+
+
     private var homeIntroHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("오늘의 단어장")

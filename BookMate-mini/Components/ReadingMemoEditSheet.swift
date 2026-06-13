@@ -10,27 +10,28 @@ import SwiftUI
 struct ReadingMemoEditSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: BookMateViewModel
-    
+
     let memo: ReadingMemo
-    
-    @State private var date: String
+
+    @State private var selectedDate = Date()
+    @State private var isShowingDatePicker = false
     @State private var page: String
     @State private var text: String
-    
+
     init(viewModel: BookMateViewModel, memo: ReadingMemo) {
             self.viewModel = viewModel
             self.memo = memo
-            _date = State(initialValue: memo.date)
+            _selectedDate = State(initialValue: BookMateDateFormatter.date(from: memo.date) ?? Date())
             _page = State(initialValue: memo.page != nil ? String(memo.page!) : "")
             _text = State(initialValue: memo.text)
         }
-    
+
     var body: some View {
-        
+
         NavigationStack {
                     ZStack {
                         Color("AppBackground").ignoresSafeArea()
-                        
+
                         ScrollView {
                             VStack(alignment: .leading, spacing: 24) {
                                 HStack(spacing: 16) {
@@ -38,10 +39,23 @@ struct ReadingMemoEditSheet: View {
                                         Text("날짜")
                                             .font(.subheadline)
                                             .foregroundStyle(Color("TextMuted"))
-                                        TextField("예) 26.01.16", text: $date)
+                                        Button {
+                                            isShowingDatePicker = true
+                                        } label: {
+                                            HStack {
+                                                Image(systemName: "calendar")
+                                                Text(BookMateDateFormatter.display.string(from: selectedDate))
+                                                Spacer()
+                                            }
                                             .padding(16)
                                             .background(Color("Surface"))
                                             .clipShape(RoundedRectangle(cornerRadius: 16))
+                                        }
+                                        .buttonStyle(.plain)
+                                        .sheet(isPresented: $isShowingDatePicker) {
+                                            SingleDatePickerSheet(title: "메모 날짜", selectedDate: $selectedDate)
+                                                .presentationDetents([.medium])
+                                        }
                                     }
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("페이지 (선택)")
@@ -58,11 +72,19 @@ struct ReadingMemoEditSheet: View {
                                     TextEditor(text: $text)
                                         .scrollContentBackground(.hidden).padding(16).frame(minHeight: 140)
                                         .background(Color("Surface"))
-                                        clipShape(RoundedRectangle(cornerRadius: 16))
+                                        .clipShape(RoundedRectangle(cornerRadius: 16))
                                 }
                                 Button {
                                     Task {
-                                        let updatedMemo = ReadingMemo(id: memo.id, bookId: memo.bookId, date: date.isEmpty ? "날짜 없음" : date, page: Int(page), text: text)
+                                        let memoDate = BookMateDateFormatter.api.string(from: selectedDate)
+
+                                        let updatedMemo = ReadingMemo(
+                                            id: memo.id,
+                                            bookId: memo.bookId,
+                                            date: memoDate,
+                                            page: Int(page),
+                                            text: text
+                                        )
                                         let success = await viewModel.updateReadingMemo(updatedMemo)
                                         if success { dismiss() }
                                     }

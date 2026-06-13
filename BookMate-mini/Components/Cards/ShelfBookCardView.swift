@@ -14,10 +14,11 @@ struct ShelfBookCardView: View {
     let category: String
     let progress: Double
     let wordCount: Int
-    
+    let readingStatus: ReadingStatus
+
     let onTap: () -> Void
     let onMoreTap: () -> Void
-    
+
     private var authorLine: String {
         let trimmedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -27,20 +28,20 @@ struct ShelfBookCardView: View {
 
         return "\(author) · \(trimmedCategory)"
     }
-    
-    
+
+
     var body: some View {
         HStack {
             BookCoverCell(imageName: imageName, width: 82)
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 HStack{
                     Text("\(title)")
                         .font(.headline)
                         .fontWeight(.semibold)
-                    
+
                     Spacer()
-                    
+
                         Text("\(wordCount) 단어")
                             .font(.caption2)
                             .foregroundStyle(Color("TextSecondary"))
@@ -49,7 +50,7 @@ struct ShelfBookCardView: View {
                             .background(Color("SuccessSoft"))
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                             .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
-                        
+
                         Button {
                             onMoreTap()
                         } label: {
@@ -65,29 +66,28 @@ struct ShelfBookCardView: View {
                 Text(authorLine)
                     .font(.caption2)
                     .foregroundStyle(Color("TextSecondary"))
-                
+
                 VStack(alignment: .leading){
-                    HStack{
-                        Text("Gorgeous")
+                    HStack {
+                        Text(readingStatus.displayName)
                             .font(.caption2)
-                            .foregroundStyle(Color("Success"))
-                            .padding(.horizontal, 8)
+                            .foregroundStyle(Color("PrimaryDeep"))
+                            .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(Color("SuccessSoft"))
+                            .background(Color("Primary").opacity(0.12))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
-                        
-                        Text("Extravagant")
-                            .font(.caption2)
-                            .foregroundStyle(Color("Success"))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 6)
-                            .background(Color("SuccessSoft"))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+//                            .font(.caption2)
+//                                                        .foregroundStyle(Color("Success"))
+//                                                        .padding(.horizontal, 8)
+//                                                        .padding(.vertical, 6)
+//                                                        .background(Color("SuccessSoft"))
+//                                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+
                     }
                     VStack(spacing: 4) {
                         ProgressView(value: progress)
                             .tint(Color("Primary"))
-                        
+
                         HStack {
                             Spacer()
                             Text("\(Int(progress * 100))% 읽음")
@@ -95,11 +95,11 @@ struct ShelfBookCardView: View {
                                 .foregroundStyle(Color("TextPrimary").opacity(0.7))
                         }
                     }
-                    
+
                 }
                 .padding(.top)
             }
-            
+
 
     }
         .padding(.horizontal)
@@ -118,6 +118,6 @@ struct ShelfBookCardView: View {
 }
 
 #Preview {
-    ShelfBookCardView(imageName: Book.dummyBooks[0].imageName, author:Book.dummyBooks[0].author , title: Book.dummyBooks[0].title, category: "소설", progress: 0.65, wordCount: 12, onTap: {},
+    ShelfBookCardView(imageName: Book.dummyBooks[0].imageName, author:Book.dummyBooks[0].author , title: Book.dummyBooks[0].title, category: "소설", progress: 0.65, wordCount: 12, readingStatus: .reading, onTap: {},
                       onMoreTap: {})
 }

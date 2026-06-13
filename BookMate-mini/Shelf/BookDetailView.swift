@@ -17,43 +17,45 @@ enum BookDetailTab: String, CaseIterable {
 struct BookDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: BookMateViewModel
-    
+
     let book: Book // 어떤 책인지
-    
+
     // 탭 상태
     @State private var selectedTab: BookDetailTab = .words
-    
+
     // 단어 탭 전용 상태
     @State private var bookWordSearchText = ""
-    
+
     // 다이어리 탭 전용 상태
     @State private var rating: Int = 0
     @State private var reviewText: String = ""
     @State private var readingStatus: ReadingStatus? = nil
     @FocusState private var isReviewFocused: Bool
-    @State private var startDateText: String = "" // 시작 날짜 텍스트
-    @State private var endDateText: String = ""   // 종료 날짜 텍스트
-    
+    @State private var startDate: Date?
+    @State private var endDate: Date?
+    @State private var isShowingReadingPeriodPicker = false
+
     // 다이어리 메모 전용 상태
     @State private var isShowingMemoAddSheet = false
     @State private var editingMemo: ReadingMemo? = nil
-    
+
     // 구절 탭 전용 상태
     @State private var editingQuote: Quote? = nil
     @State private var isShowingQuoteAddSheet = false // 새 구절 시트 띄우기용
-    
     @State private var isReviewPublic: Bool = false
-    
+    @State private var quoteToDelete: Quote?
+    @State private var isShowingQuoteDeleteAlert = false
+
     // MARK: - Computed Properties
-    
+
     private var savedWordsForBookCount: Int {
         viewModel.savedWords(for: book.id).count
     }
-    
+
     private var filteredWordsForBook: [Word] {
         let words = viewModel.savedWords(for: book.id)
         let trimmed = bookWordSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         let filtered = trimmed.isEmpty ? words : words.filter { word in
             word.text.localizedCaseInsensitiveContains(trimmed)
             || word.meaning.localizedCaseInsensitiveContains(trimmed)
@@ -61,11 +63,11 @@ struct BookDetailView: View {
         }
         return Array(filtered.reversed())
     } // 현재 책 id와 같은 bookId를 가진 단어만 가져옴
-    
+
     private var  savedQuotesForBook: [Quote] {
         viewModel.savedQuotes(for: book.id)
     }
-    
+
     private func applyMyReviewToForm() {
         let myReview = viewModel.myReview(for: book.id)
 
@@ -73,16 +75,16 @@ struct BookDetailView: View {
         reviewText = myReview?.content ?? book.review ?? ""
         isReviewPublic = myReview?.isPublic ?? false
     }
-    
-    
-    
+
+
+
     // MARK: - Body
-    
+
     var body: some View {
         ZStack{
             Color("AppBackground")
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 24){
                 HStack {
                     CircleIconButton(systemName: "chevron.left") {
@@ -93,15 +95,15 @@ struct BookDetailView: View {
                 .padding(.horizontal, 24)
                 .padding(.top) //?
                 .padding(.bottom, 16) //?
-                
+
                 // 본문 스크롤
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
-                        
+
                         bookInfoCard
-                        
+
                         tabBar
-                        
+
                         // 탭에 따른 화면 전환
                         switch selectedTab {
                         case .words:
@@ -121,9 +123,9 @@ struct BookDetailView: View {
             // 다이어리 탭의 초기값 세팅
             applyMyReviewToForm()
             self.readingStatus = book.readingStatus
-            self.startDateText = book.startDate ?? ""
-            self.endDateText = book.endDate ?? ""
-            
+            self.startDate = BookMateDateFormatter.date(from: book.startDate)
+            self.endDate = BookMateDateFormatter.date(from: book.endDate)
+
             // 진입 시 이 책의 구절 데이터 로드
             Task {
                 await viewModel.loadMyReview(bookId: book.id)
@@ -144,15 +146,36 @@ struct BookDetailView: View {
         .sheet(item: $editingMemo) { memo in
             ReadingMemoEditSheet(viewModel: viewModel, memo: memo)
         }
+        .sheet(isPresented: $isShowingReadingPeriodPicker) {
+            ReadingPeriodPickerSheet(startDate: $startDate, endDate: $endDate)
+                .presentationDetents([.large])
+        }
+        .alert("구절을 삭제할까요?", isPresented: $isShowingQuoteDeleteAlert) {
+            Button("취소", role: .cancel) {
+                quoteToDelete = nil
+            }
+
+            Button("삭제", role: .destructive) {
+                guard let quote = quoteToDelete else { return }
+                quoteToDelete = nil
+
+                Task {
+                    await viewModel.deleteQuote(quote)
+                }
+            }
+        } message: {
+            Text("삭제한 구절은 되돌릴 수 없어요.")
+        }
     }
-    
+
+
     // MARK: - UI Components
-    
+
     // 상단 책 정보 카드
     private var bookInfoCard: some View {
         HStack(alignment: .top, spacing: 0){
             BookCoverCell(imageName: book.imageName)
-            
+
             VStack(alignment: .leading, spacing: 6){
                 // 독서 상태 뱃지
                 if let status = book.readingStatus {
@@ -165,23 +188,23 @@ struct BookDetailView: View {
                         .background(Color("Primary").opacity(0.1))
                         .clipShape(Capsule())
                 }
-                
+
                 Text("\(book.title)")
                     .font(.subheadline)
                     .fontWeight(.bold)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
-                
+
                 Text("\(book.author)")
                     .font(.caption)
                     .foregroundStyle(Color("TextMuted"))
                     .fontWeight(.bold)
-                
+
                 // 작성된 게 있을 때만 보임
                 if let rating = book.rating, rating > 0 {
                     StarRatingView(rating: rating, isInteractive: false, starSize: 14)
                 }
-                
+
                 HStack(spacing: 4) {
                     Image(systemName: "bookmark")
                     Text("저장된 단어 \(savedWordsForBookCount)개")
@@ -201,7 +224,7 @@ struct BookDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 24))
         .padding(.horizontal, 24)
     }
-    
+
     // 커스텀 탭 바 디자인
     private var tabBar: some View {
         HStack(spacing: 0) {
@@ -211,7 +234,7 @@ struct BookDetailView: View {
                         .font(.subheadline)
                         .fontWeight(selectedTab == tab ? .bold : .medium)
                         .foregroundStyle(selectedTab == tab ? Color("PrimaryDeep") : Color("TextMuted"))
-                    
+
                     Rectangle()
                         .fill(selectedTab == tab ? Color("PrimaryDeep") : Color.clear)
                         .frame(height: 2)
@@ -227,13 +250,13 @@ struct BookDetailView: View {
         }
         .padding(.horizontal, 24)
     }
-    
+
     // 단어 탭
     private var wordsTabContent: some View {
         VStack(spacing: 24) {
             SearchTextField(searchText: $bookWordSearchText, placeholder: "이 책에서 단어 검색...")
                 .padding(.horizontal, 24)
-            
+
             HStack{
                 Text("최근 추가됨")
                 Spacer()
@@ -242,7 +265,7 @@ struct BookDetailView: View {
             .font(.subheadline)
             .foregroundStyle(Color("TextMuted"))
             .padding(.horizontal, 24)
-            
+
             if filteredWordsForBook.isEmpty {
                 ContentStateView(
                     type: .empty,
@@ -266,9 +289,9 @@ struct BookDetailView: View {
             }
         }
     }
-    
-    
-    
+
+
+
     // 구절 탭
     private var quotesTabContent: some View {
         VStack(spacing: 16) {
@@ -290,7 +313,7 @@ struct BookDetailView: View {
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 8)
-            
+
             if savedQuotesForBook.isEmpty {
                 ContentStateView(
                     type: .empty,
@@ -308,7 +331,7 @@ struct BookDetailView: View {
                                 .font(.body)
                                 .fontWeight(.medium)
                                 .lineSpacing(4)
-                            
+
                             HStack {
                                 if let page = quote.page {
                                     Text("p.\(page)")
@@ -319,9 +342,9 @@ struct BookDetailView: View {
                                         .background(Color("Primary").opacity(0.1))
                                         .clipShape(Capsule())
                                 }
-                                
+
                                 Spacer()
-                                
+
                                 // 수정 버튼
                                 Button {
                                     editingQuote = quote
@@ -336,7 +359,8 @@ struct BookDetailView: View {
                                 .buttonStyle(.plain)
                                 // 삭제 버튼
                                 Button {
-                                    Task { await viewModel.deleteQuote(quote) }
+                                    quoteToDelete = quote
+                                    isShowingQuoteDeleteAlert = true
                                 } label: {
                                     Image(systemName: "trash")
                                         .font(.system(size: 14))
@@ -361,16 +385,16 @@ struct BookDetailView: View {
     // 다이어리 탭
     private var diaryTabContent: some View {
         VStack(alignment: .leading, spacing: 36) {
-            
+
             // 💡 [섹션 1] 다이어리 폼 (상태, 별점, 기간, 감상평)
             VStack(alignment: .leading, spacing: 24) {
-                
+
                 // 1-1. 독서 상태 선택
                 VStack(alignment: .leading, spacing: 12) {
                     Text("독서 상태")
                         .font(.headline)
                         .foregroundStyle(Color("TextMuted"))
-                    
+
                     HStack(spacing: 8) {
                         ForEach(ReadingStatus.allCases, id: \.self) { status in
                             Button {
@@ -395,16 +419,16 @@ struct BookDetailView: View {
                         }
                     }
                 }
-                
+
                 // 1-2. 별점 (이전 코드를 활용해 자연스럽게 배치)
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("이 책, 어땠나요?")
                             .font(.headline)
                             .foregroundStyle(Color("TextMuted"))
-                        
+
                         Spacer()
-                        
+
                         // 별점 초기화 버튼
                         if rating > 0 {
                             Button {
@@ -416,239 +440,249 @@ struct BookDetailView: View {
                             }
                         }
                     }
-                    
+
                     StarRatingView(rating: rating, isInteractive: true, starSize: 32) { newRating in
                         self.rating = newRating
                     }
                 }
-                
+
                 // 1-3. 읽은 기간
                 VStack(alignment: .leading, spacing: 12) {
                     Text("읽은 기간")
                         .font(.headline)
                         .foregroundStyle(Color("TextMuted"))
-                    
-                    HStack(spacing: 12) {
-                        Image(systemName: "calendar")
-                            .foregroundStyle(Color("Primary"))
-                        
-                        TextField("시작일 (예: 26.01.01)", text: $startDateText)
-                            .font(.subheadline)
-                            .multilineTextAlignment(.center)
-                        
-                        Text("~")
-                            .foregroundStyle(Color("TextMuted"))
-                        
-                        TextField("종료일 (예: 26.01.10)", text: $endDateText)
-                            .font(.subheadline)
-                            .multilineTextAlignment(.center)
+
+                    Button {
+                        isShowingReadingPeriodPicker = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "calendar")
+                                .foregroundStyle(Color("Primary"))
+
+                            Text(BookMateDateFormatter.displayString(from: startDate))
+                                .foregroundStyle(startDate == nil ? Color("TextMuted") : Color("TextPrimary"))
+
+                            Text("~")
+                                .foregroundStyle(Color("TextMuted"))
+
+                            Text(BookMateDateFormatter.displayString(from: endDate))
+                                .foregroundStyle(endDate == nil ? Color("TextMuted") : Color("TextPrimary"))
+
+                            Spacer()
+
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption)
+                                .foregroundStyle(Color("TextMuted"))
+                        }
+                        .font(.subheadline)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .background(Color("Surface"))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color("TextMuted").opacity(0.15), lineWidth: 1)
+                        )
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
+                    .buttonStyle(.plain)
+                }
+                    // 1-4. 나만의 감상평
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("나만의 감상평")
+                            .font(.headline)
+                            .foregroundStyle(Color("TextMuted"))
+
+                        TextEditor(text: $reviewText)
+                            .focused($isReviewFocused)
+                            .scrollContentBackground(.hidden)
+                            .padding(16)
+                            .frame(minHeight: 140)
+                            .background(Color("Surface"))
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color("TextMuted").opacity(0.15), lineWidth: 1)
+                            )
+                    }
+                    Toggle(isOn: $isReviewPublic) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("리뷰 공개")
+                                .font(.headline)
+                                .foregroundStyle(Color("TextMuted"))
+
+                            Text("공개하면 다른 사용자가 이 책의 리뷰를 볼 수 있어요.")
+                                .font(.caption)
+                                .foregroundStyle(Color("TextMuted"))
+                        }
+                    }
+                    .toggleStyle(SwitchToggleStyle(tint: Color("Primary")))
+                    .padding(16)
                     .background(Color("Surface"))
                     .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color("TextMuted").opacity(0.15), lineWidth: 1)
-                    )
+
+                    // 1-5. 다이어리 폼 전체 저장 버튼
+                    Button {
+                        isReviewFocused = false // 키보드 내리기
+                        Task {
+                            _ = await viewModel.saveReview(
+                                bookId: book.id,
+                                rating: rating,
+                                content: reviewText,
+                                isPublic: isReviewPublic
+                            )
+                            _ = await viewModel.saveRatingAndReview(
+                                book: book,
+                                rating: rating,
+                                review: reviewText,
+                                readingStatus: readingStatus,
+                                startDate: BookMateDateFormatter.apiString(from: startDate),
+                                endDate: BookMateDateFormatter.apiString(from: endDate)
+                            )
+                        }
+                    } label: {
+                        Text("다이어리 한 번에 저장하기")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color("Primary"))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .shadow(color: Color("Primary").opacity(0.3), radius: 8, x: 0, y: 4)
+                    }
+                    .padding(.top, 8)
                 }
-                // 1-4. 나만의 감상평
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("나만의 감상평")
-                        .font(.headline)
-                        .foregroundStyle(Color("TextMuted"))
-                    
-                    TextEditor(text: $reviewText)
-                        .focused($isReviewFocused)
-                        .scrollContentBackground(.hidden)
-                        .padding(16)
-                        .frame(minHeight: 140)
+                .padding(.horizontal, 24)
+
+                // 구분선으로 위아래 섹션 부드럽게 분리
+                Divider()
+                    .padding(.horizontal, 24)
+
+                // 💡 [섹션 2] 독서 타임라인 (메모)
+                VStack(alignment: .leading, spacing: 20) {
+                    // 타임라인 헤더
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("독서 타임라인")
+                                .font(.headline)
+                            Text("책을 읽으며 남긴 조각들")
+                                .font(.caption)
+                                .foregroundStyle(Color("TextMuted"))
+                        }
+
+                        Spacer()
+
+                        // 새 메모 추가 버튼 (캡슐 형태)
+                        Button {
+                            // TODO: 나중에 실제 메모 추가 시트로 연결될 부분
+                            //                        let dummyMemo = ReadingMemo(bookId: book.id, date: "2026-01-\(Int.random(in: 16...30))", page: Int.random(in: 10...150), text: "여우와의 대화 장면이 인상적. 여기에 메모가 들어갑니다!")
+                            isShowingMemoAddSheet = true
+                            //                        viewModel.addReadingMemo(dummyMemo)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "plus.circle.fill")
+                                Text("메모 남기기")
+                            }
+                            .font(.caption.bold())
+                            .foregroundStyle(Color("Primary"))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color("Primary").opacity(0.1))
+                            .clipShape(Capsule())
+                        }
+                    }
+
+                    let memos = viewModel.savedMemos(for: book.id)
+
+                    // 메모가 없을 때의 Empty State UI
+                    if memos.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "note.text")
+                                .font(.largeTitle)
+                                .foregroundStyle(Color("TextMuted").opacity(0.5))
+                            Text("아직 작성된 메모가 없어요.")
+                                .font(.subheadline)
+                                .foregroundStyle(Color("TextMuted"))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 36)
                         .background(Color("Surface"))
                         .clipShape(RoundedRectangle(cornerRadius: 20))
                         .overlay(
                             RoundedRectangle(cornerRadius: 20)
                                 .stroke(Color("TextMuted").opacity(0.15), lineWidth: 1)
                         )
-                }
-                Toggle(isOn: $isReviewPublic) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("리뷰 공개")
-                            .font(.headline)
-                            .foregroundStyle(Color("TextMuted"))
+                    } else {
+                        // 메모가 있을 때의 타임라인 렌더링
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(memos) { memo in
+                                HStack(alignment: .top, spacing: 16) {
 
-                        Text("공개하면 다른 사용자가 이 책의 리뷰를 볼 수 있어요.")
-                            .font(.caption)
-                            .foregroundStyle(Color("TextMuted"))
-                    }
-                }
-                .toggleStyle(SwitchToggleStyle(tint: Color("Primary")))
-                .padding(16)
-                .background(Color("Surface"))
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-                
-                // 1-5. 다이어리 폼 전체 저장 버튼
-                Button {
-                    isReviewFocused = false // 키보드 내리기
-                    Task {
-                        _ = await viewModel.saveReview(
-                            bookId: book.id,
-                            rating: rating,
-                            content: reviewText,
-                            isPublic: isReviewPublic
-                        )
-                        _ = await viewModel.saveRatingAndReview(
-                            book: book,
-                            rating: rating,
-                            review: reviewText,
-                            readingStatus: readingStatus,
-                            startDate: startDateText,
-                            endDate: endDateText
-                        )
-                    }
-                } label: {
-                    Text("다이어리 한 번에 저장하기")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color("Primary"))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(color: Color("Primary").opacity(0.3), radius: 8, x: 0, y: 4)
-                }
-                .padding(.top, 8)
-            }
-            .padding(.horizontal, 24)
-            
-            // 구분선으로 위아래 섹션 부드럽게 분리
-            Divider()
-                .padding(.horizontal, 24)
-            
-            // 💡 [섹션 2] 독서 타임라인 (메모)
-            VStack(alignment: .leading, spacing: 20) {
-                // 타임라인 헤더
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("독서 타임라인")
-                            .font(.headline)
-                        Text("책을 읽으며 남긴 조각들")
-                            .font(.caption)
-                            .foregroundStyle(Color("TextMuted"))
-                    }
-                    
-                    Spacer()
-                    
-                    // 새 메모 추가 버튼 (캡슐 형태)
-                    Button {
-                        // TODO: 나중에 실제 메모 추가 시트로 연결될 부분
-//                        let dummyMemo = ReadingMemo(bookId: book.id, date: "2026-01-\(Int.random(in: 16...30))", page: Int.random(in: 10...150), text: "여우와의 대화 장면이 인상적. 여기에 메모가 들어갑니다!")
-                        isShowingMemoAddSheet = true
-//                        viewModel.addReadingMemo(dummyMemo)
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "plus.circle.fill")
-                            Text("메모 남기기")
-                        }
-                        .font(.caption.bold())
-                        .foregroundStyle(Color("Primary"))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Color("Primary").opacity(0.1))
-                        .clipShape(Capsule())
-                    }
-                }
-                
-                let memos = viewModel.savedMemos(for: book.id)
-                
-                // 메모가 없을 때의 Empty State UI
-                if memos.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "note.text")
-                            .font(.largeTitle)
-                            .foregroundStyle(Color("TextMuted").opacity(0.5))
-                        Text("아직 작성된 메모가 없어요.")
-                            .font(.subheadline)
-                            .foregroundStyle(Color("TextMuted"))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 36)
-                    .background(Color("Surface"))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color("TextMuted").opacity(0.15), lineWidth: 1)
-                    )
-                } else {
-                    // 메모가 있을 때의 타임라인 렌더링
-                    VStack(alignment: .leading, spacing: 0) {
-                        ForEach(memos) { memo in
-                            HStack(alignment: .top, spacing: 16) {
-                                
-                                // 왼쪽 타임라인 그래픽 (점과 선)
-                                VStack(spacing: 0) {
-                                    Circle()
-                                        .fill(Color("Primary"))
-                                        .frame(width: 12, height: 12)
-                                        .overlay(
-                                            Circle()
-                                                .stroke(Color("AppBackground"), lineWidth: 3) // 배경색 겹쳐서 도넛 느낌
-                                        )
-                                        .padding(.top, 4)
-                                    
-                                    // 마지막 메모가 아니면 선 긋기
-                                    if memo.id != memos.last?.id {
-                                        Rectangle()
-                                            .fill(Color("Primary").opacity(0.3))
-                                            .frame(width: 2)
+                                    // 왼쪽 타임라인 그래픽 (점과 선)
+                                    VStack(spacing: 0) {
+                                        Circle()
+                                            .fill(Color("Primary"))
+                                            .frame(width: 12, height: 12)
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Color("AppBackground"), lineWidth: 3) // 배경색 겹쳐서 도넛 느낌
+                                            )
                                             .padding(.top, 4)
-                                    }
-                                }
-                                
-                                // 메모 우측 내용 영역
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack {
-                                        Text("\(memo.date)")
-                                            .font(.caption.bold())
-                                            .foregroundStyle(Color("Primary"))
-                                        
-                                        if let page = memo.page {
-                                            Text("· p.\(page)")
-                                                .font(.caption)
-                                                .foregroundStyle(Color("TextMuted"))
+
+                                        // 마지막 메모가 아니면 선 긋기
+                                        if memo.id != memos.last?.id {
+                                            Rectangle()
+                                                .fill(Color("Primary").opacity(0.3))
+                                                .frame(width: 2)
+                                                .padding(.top, 4)
                                         }
-                                        
-                                        Spacer()
-                                        
-                                        // 더보기 메뉴 (수정/삭제)
-                                        Menu {
-                                            Button("수정", action: { /* TODO: 수정 기능 */ })
-                                            Button("삭제", role: .destructive, action: {
-                                                Task { await viewModel.deleteReadingMemo(memo) }
+                                    }
+
+                                    // 메모 우측 내용 영역
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack {
+                                            Text("\(memo.date)")
+                                                .font(.caption.bold())
+                                                .foregroundStyle(Color("Primary"))
+
+                                            if let page = memo.page {
+                                                Text("· p.\(page)")
+                                                    .font(.caption)
+                                                    .foregroundStyle(Color("TextMuted"))
+                                            }
+
+                                            Spacer()
+
+                                            // 더보기 메뉴 (수정/삭제)
+                                            Menu {
+                                                Button("수정", action: { /* TODO: 수정 기능 */ })
+                                                Button("삭제", role: .destructive, action: {
+                                                    Task { await viewModel.deleteReadingMemo(memo) }
                                                 })
-                                        } label: {
-                                            Image(systemName: "ellipsis")
-                                                .foregroundStyle(Color("TextMuted"))
-                                                .padding(.horizontal, 4)
-                                                .padding(.vertical, 4)
+                                            } label: {
+                                                Image(systemName: "ellipsis")
+                                                    .foregroundStyle(Color("TextMuted"))
+                                                    .padding(.horizontal, 4)
+                                                    .padding(.vertical, 4)
+                                            }
                                         }
+
+                                        Text(memo.text)
+                                            .font(.body)
+                                            .lineSpacing(4)
+                                            .padding(.bottom, 28) // 항목 간 간격 띄우기
                                     }
-                                    
-                                    Text(memo.text)
-                                        .font(.body)
-                                        .lineSpacing(4)
-                                        .padding(.bottom, 28) // 항목 간 간격 띄우기
                                 }
                             }
                         }
+                        .padding(.top, 8)
                     }
-                    .padding(.top, 8)
                 }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 40)
+
         }
     }
-}
-
 
 
 #Preview {

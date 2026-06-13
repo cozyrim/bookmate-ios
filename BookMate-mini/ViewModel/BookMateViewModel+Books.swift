@@ -65,7 +65,8 @@ extension BookMateViewModel {
                 category: draft.category,
                 progress: draft.progress,
                 totalPages: totalPages,
-                currentPage: totalPages == nil ? nil : 0
+                currentPage: totalPages == nil ? nil : 0,
+                isbn: draft.isbn
             )
             books.insert(savedBook, at: 0)
             syncShelfBooksFromBooks()

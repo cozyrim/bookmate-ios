@@ -17,13 +17,15 @@ struct BookManualEntryView: View {
     @State private var totalPagesText = ""
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedCoverImage: UIImage?
-    @State private var previewDraft: BookRegistrationDraft?
+    @State private var registrationResult: RegistrationResult?
+    @State private var isSaving = false
+    @State private var errorMessage: String?
     @State private var isLoadingTotalPages = false
 
     @ObservedObject var viewModel: BookMateViewModel
     private let initialDraft: BookRegistrationDraft?
     @Binding var selectedTab: Int
-    
+
     private let categories = ["소설", "에세이", "인문", "자기계발", "과학", "기타"]
     private let coverWidth: CGFloat = 170
     private let coverHeight: CGFloat = 232
@@ -31,9 +33,18 @@ struct BookManualEntryView: View {
     private let contentHorizontalPadding: CGFloat = 28
     private let headerTopPadding: CGFloat = 52
     private let bottomTabClearance: CGFloat = 96
-    
+
     let onFinishRegistration: (Int) -> Void
-    
+
+    private struct RegistrationResult: Identifiable, Hashable {
+        let draft: BookRegistrationDraft
+        let book: Book
+
+        var id: UUID {
+            book.id
+        }
+    }
+
     private var coverPlaceholder: some View {
         ZStack {
             RoundedRectangle(cornerRadius: coverCornerRadius)
@@ -96,14 +107,14 @@ struct BookManualEntryView: View {
             coverPlaceholder
         }
     }
-    
+
     init(viewModel: BookMateViewModel, initialDraft: BookRegistrationDraft? = nil, selectedTab: Binding<Int>, onFinishRegistration: @escaping (Int) -> Void) {
         self.viewModel = viewModel
         self.initialDraft = initialDraft
         self._selectedTab = selectedTab
         // 검색 결과로 받은 책 정보를 새 책 등록 화면의 입력칸 초기값으로 넣어주는 코드
         self.onFinishRegistration = onFinishRegistration
-        
+
         // swiftui가 상태 관리, 처음 값을 정할 때 상자 직접 만듦
         // 값을 보관하고 바뀐 값을 감시하고 화면을 다시 그림
         _title = State(initialValue: initialDraft?.title ?? "")
@@ -112,7 +123,7 @@ struct BookManualEntryView: View {
         _selectedCategory = State(initialValue: initialDraft?.category ?? "카테고리 선택")
         _totalPagesText = State(initialValue: initialDraft?.totalPages.map(String.init) ?? "")
     }
-    
+
     var body: some View {
         ZStack {
             Color("AppBackground")
@@ -243,7 +254,7 @@ struct BookManualEntryView: View {
                 let trimmedTotalPages = totalPagesText.trimmingCharacters(in: .whitespacesAndNewlines)
                 let manualTotalPages = Int(trimmedTotalPages)
 
-                previewDraft = BookRegistrationDraft(
+                let draft = BookRegistrationDraft(
                     title: title,
                     author: author,
                     publisher: initialDraft?.publisher ?? "",
@@ -253,8 +264,24 @@ struct BookManualEntryView: View {
                     isbn: initialDraft?.isbn ?? "",
                     totalPages: manualTotalPages ?? initialDraft?.totalPages
                 )
+
+                Task {
+                    isSaving = true
+                    errorMessage = nil
+
+                    do {
+                        let savedBook = try await viewModel.registerBook(draft: draft)
+                        registrationResult = RegistrationResult(draft: draft, book: savedBook)
+                    } catch {
+                        errorMessage = "책 등록에 실패했습니다."
+                        DebugLogger.log("책 등록 실패:", error)
+                    }
+
+                    isSaving = false
+                }
+
             } label: {
-                Label("등록하기", systemImage: "checkmark.circle")
+                Label(isSaving ? "등록 중..." : "등록하기", systemImage: "checkmark.circle")
                     .font(.title3)
                     .fontWeight(.bold)
                     .frame(maxWidth: .infinity)
@@ -264,14 +291,16 @@ struct BookManualEntryView: View {
                     .clipShape(Capsule())
                     .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
             }
+            .disabled(isSaving)
             .padding(.horizontal, contentHorizontalPadding)
             .padding(.bottom, 12)
             .background(Color("AppBackground").opacity(0.96))
         }
-        .navigationDestination(item: $previewDraft){ draft in
-            BookRegistrationPreviewView(
-                draft: draft,
+        .navigationDestination(item: $registrationResult) { result in
+            BookRegistrationCompleteView(
                 viewModel: viewModel,
+                draft: result.draft,
+                book: result.book,
                 selectedTab: $selectedTab,
                 onFinishRegistration: { tab in
                     dismiss()
@@ -286,7 +315,7 @@ struct BookManualEntryView: View {
         }
         .navigationBarBackButtonHidden(true)
     }
-    
+
     private func fillTotalPagesIfNeeded() async {
         guard totalPagesText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         guard let isbn = initialDraft?.isbn, !isbn.isEmpty else { return }

@@ -96,4 +96,25 @@ extension BookMateViewModel {
         )
         return await updateBook(updatedBook, successMessage: "리뷰를 저장했어요.")
     }
+
+    func loadPublicReviews(isbn: String, title: String, author: String) async {
+        isPublicReviewLoading = true
+        publicReviewErrorMessage = nil
+
+        do {
+            publicBookReviews = try await reviewAPIService.fetchPublicReviews(
+                isbn: isbn,
+                title: title,
+                author: author
+            )
+        } catch {
+            if handleUnauthorizedIfNeeded(error) { return }
+
+            publicBookReviews = []
+            publicReviewErrorMessage = "공개 리뷰를 불러오지 못했어요."
+            DebugLogger.log("공개 리뷰 조회 실패:", error)
+        }
+
+        isPublicReviewLoading = false
+    }
 }

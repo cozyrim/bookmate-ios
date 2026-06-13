@@ -44,12 +44,26 @@ extension BookMateViewModel {
     func performSearch() async {
         switch searchMode {
         case .dictionary:
-            savedWordSearchResults = []
-            await searchDictionaryEntry()
-        case .savedWords:
-            dictionarySearchResult = nil
-            searchSavedWords()
-        }
+                savedWordSearchResults = []
+                savedBookSearchResults = []
+                bookSearchResults = []
+                await searchDictionaryEntry()
+
+            case .book:
+                dictionarySearchResult = nil
+                dictionarySuggestions = []
+                savedWordSearchResults = []
+                savedBookSearchResults = []
+                await searchBooks(query: searchText)
+                addRecentSearch(searchText)
+
+            case .savedWords:
+                dictionarySearchResult = nil
+                dictionarySuggestions = []
+                bookSearchResults = []
+                searchSavedWords()
+                addRecentSearch(searchText)
+            }
     }
 
     // 저장된 단어와 책 목록에서 검색어가 포함된 항목을 찾는다.
@@ -365,11 +379,16 @@ extension BookMateViewModel {
 
     // 현재 사용자별 최근 검색어 저장 키를 만든다.
     private var recentSearchesKey: String {
-        if let recentSearchOwnerId {
-            return "recentDictionarySearches.\(recentSearchOwnerId.uuidString)"
-        } else {
-            return "recentDictionarySearches.guest"
-        }
+        let ownerKey = recentSearchOwnerId?.uuidString ?? "guest"
+
+            switch searchMode {
+            case .dictionary:
+                return "recentSearches.dictionary.\(ownerKey)"
+            case .book:
+                return "recentSearches.book.\(ownerKey)"
+            case .savedWords:
+                return "recentSearches.savedWords.\(ownerKey)"
+            }
     }
 
     // UserDefaults에 저장된 최근 검색어를 불러온다.

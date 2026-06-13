@@ -11,21 +11,38 @@ struct ReadingMemoAddSheet: View {
     @Environment(\.dismiss) private var dismiss
         @ObservedObject var viewModel: BookMateViewModel
         let bookId: UUID
-        @State private var date: String = ""
+        @State private var selectedDate = Date()
+        @State private var isShowingDatePicker = false
         @State private var page: String = ""
         @State private var text: String = ""
-    
+
     var body: some View {
         NavigationStack {
                     ZStack {
                         Color("AppBackground").ignoresSafeArea()
-                        
+
                         ScrollView {
                             VStack(alignment: .leading, spacing: 24) {
                                 HStack(spacing: 16) {
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("날짜").font(.subheadline).foregroundStyle(Color("TextMuted"))
-                                        TextField("예) 26.01.16", text: $date).padding(16).background(Color("Surface")).clipShape(RoundedRectangle(cornerRadius: 16))
+                                        Button {
+                                            isShowingDatePicker = true
+                                        } label: {
+                                            HStack {
+                                                Image(systemName: "calendar")
+                                                Text(BookMateDateFormatter.display.string(from: selectedDate))
+                                                Spacer()
+                                            }
+                                            .padding(16)
+                                            .background(Color("Surface"))
+                                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                                        }
+                                        .buttonStyle(.plain)
+                                        .sheet(isPresented: $isShowingDatePicker) {
+                                            SingleDatePickerSheet(title: "메모 날짜", selectedDate: $selectedDate)
+                                                .presentationDetents([.medium])
+                                        }
                                     }
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("페이지 (선택)").font(.subheadline).foregroundStyle(Color("TextMuted"))
@@ -38,7 +55,14 @@ struct ReadingMemoAddSheet: View {
                                 }
                                 Button {
                                     Task {
-                                        let success = await viewModel.saveReadingMemo(bookId: bookId, date: date.isEmpty ? "날짜 없음" : date, page: Int(page), text: text)
+                                        let memoDate = BookMateDateFormatter.api.string(from: selectedDate)
+
+                                        let success = await viewModel.saveReadingMemo(
+                                            bookId: bookId,
+                                            date: memoDate,
+                                            page: Int(page),
+                                            text: text
+                                        )
                                         if success { dismiss() }
                                     }
                                 } label: {

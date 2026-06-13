@@ -15,6 +15,7 @@ private struct BookCreateRequest: Encodable {
     let progress: Double
     let totalPages: Int?
     let currentPage: Int?
+    let isbn: String?
 }
 
 private struct BookUpdateRequest: Encodable {
@@ -116,7 +117,8 @@ struct BookAPIService {
         category: String = "카테고리 선택",
         progress: Double,
         totalPages: Int? = nil,
-        currentPage: Int? = nil
+        currentPage: Int? = nil,
+        isbn: String? = nil,
     ) async throws -> Book {
         let url = baseURL
             .appendingPathComponent("api")
@@ -129,7 +131,8 @@ struct BookAPIService {
             category: category,
             progress: progress,
             totalPages: totalPages,
-            currentPage: currentPage
+            currentPage: currentPage,
+            isbn: isbn,
         )
 
         var request = client.makeRequest(url: url, method: "POST")
@@ -174,7 +177,7 @@ struct BookAPIService {
             rating: book.rating,
             review: book.review,
             readingStatus: book.readingStatus?.rawValue,
-            startDate: book.startDate, 
+            startDate: book.startDate,
             endDate: book.endDate
         )
 

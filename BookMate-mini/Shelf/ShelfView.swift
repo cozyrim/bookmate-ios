@@ -96,7 +96,7 @@ struct ShelfView: View {
                             VStack(spacing: 16){
                                 ForEach(viewModel.shelfBooks) { shelfBook in
                                     if let book = viewModel.book(for: shelfBook) {
-                                        ShelfBookCardView(imageName: book.imageName, author: book.author, title: book.title, category: book.category, progress: shelfBook.progress, wordCount: viewModel.savedWords(for: book.id).count,
+                                        ShelfBookCardView(imageName: book.imageName, author: book.author, title: book.title, category: book.category, progress: shelfBook.progress, wordCount: viewModel.savedWords(for: book.id).count, readingStatus: shelfBook.status,
                                                           onTap: {
                                             path.append(ShelfRoute.bookDetail(book.id))
                                         },
@@ -228,10 +228,10 @@ struct ShelfView: View {
                     } else {
                         Text("책 정보를 찾을 수 없습니다.")
                     }
-                    
+
                 case .publicRoom(let user):
                     PublicBookshelfView(targetUser: user)
-                    
+
                 case .searchUsers:
                     UserSearchView()
                 }

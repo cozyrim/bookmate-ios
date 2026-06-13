@@ -15,23 +15,25 @@ struct BookSearchResultRow: View {
     var body: some View {
         HStack {
             BookCoverCell(imageName: imageName, width: 44)
-            
+
             HStack {
                 VStack(alignment: .leading, spacing: 5) {
-                    
+
                     Text("\(title)")
                         .font(.headline)
                         .fontWeight(.semibold)
-                    
+
                     Text("\(author)")
                         .font(.caption2)
                         .foregroundStyle(Color("TextSecondary"))
                 }
                 Spacer()
-                Image(systemName: "plus.circle.fill")
-                    .resizable()
-                    .frame(width: 30, height: 30)
-                    .foregroundStyle(Color("Primary"))
+                Image(systemName: "chevron.right")
+//                    .resizable()
+//                    .frame(width: 30, height: 30)
+//                    .foregroundStyle(Color("Primary"))
+                    .font(.caption.bold())
+                        .foregroundStyle(Color("TextMuted"))
             }
     }
         .padding(.horizontal, 14)

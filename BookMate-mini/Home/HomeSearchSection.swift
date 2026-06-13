@@ -14,17 +14,15 @@ struct HomeSearchSection: View {
     @State private var selectedWordToEdit: Word?
     @State private var selectedWordToMove: Word?
     @State private var isShowingDeleteAlert = false
+    @Binding var selectedTab: Int
+    @State private var bookSearchTask: Task<Void, Never>?
 
-    private func searchRecentWord(_ word: String) {
+    private func searchRecentKeyword(_ word: String) {
         let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        viewModel.searchMode = .dictionary
-            viewModel.searchText = trimmed
-            viewModel.dictionarySuggestions = []
-            viewModel.dictionarySearchResult = nil
-            viewModel.searchErrorMessage = nil
-            viewModel.isLoading = true
+        viewModel.searchText = trimmed
+        runSearch()
 
         withAnimation(.easeInOut(duration: 0.2)) {
                 isShowingSearchResult = true
@@ -46,6 +44,7 @@ struct HomeSearchSection: View {
 
     private func selectSearchMode(_ mode: BookMateViewModel.SearchMode) {
         viewModel.searchMode = mode
+        viewModel.loadRecentSearches()
 
         let trimmed = viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -57,6 +56,17 @@ struct HomeSearchSection: View {
         }
 
         runSearch()
+    }
+
+    private var searchPlaceholder: String {
+        switch viewModel.searchMode {
+        case .dictionary:
+            return "사전에서 단어 검색..."
+        case .book:
+            return "책 제목 또는 저자 검색..."
+        case .savedWords:
+            return "저장한 책 또는 단어 검색..."
+        }
     }
 
     var body: some View {
@@ -88,6 +98,25 @@ struct HomeSearchSection: View {
                             )
                     }
                     .disabled(viewModel.isLoading)
+
+                    Button {
+                        selectSearchMode(.book)
+                    } label: {
+                        Text("도서 검색")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(viewModel.searchMode == .book ? .white : Color("TextPrimary"))
+                            .padding(.vertical, 9)
+                            .padding(.horizontal, 14)
+                            .background(
+                                Capsule().fill(viewModel.searchMode == .book ? Color("Primary") : Color("SurfaceElevated").opacity(0.96))
+                            )
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color("Border").opacity(0.55), lineWidth: viewModel.searchMode == .book ? 0 : 1)
+                            )
+                    }
+                    .disabled(viewModel.isLoading || viewModel.isBookSearchLoading)
 
                     Button {
                         selectSearchMode(.savedWords)
@@ -127,11 +156,7 @@ struct HomeSearchSection: View {
 
                     "",
                     text: $viewModel.searchText,
-                    prompt: Text(
-                        viewModel.searchMode == .dictionary
-                        ? "사전에서 단어 검색..."
-                        : "저장한 책 또는 단어 검색..."
-                    )
+                    prompt: Text(searchPlaceholder)
                     .foregroundStyle(Color("TextPrimary").opacity(0.6))
                 )
 
@@ -158,6 +183,21 @@ struct HomeSearchSection: View {
                             await viewModel.fetchDictionarySuggestions()
                         }
 
+                    case .book:
+                        bookSearchTask?.cancel()
+                        viewModel.bookSearchErrorMessage = nil
+
+                        guard trimmed.count >= 1 else {
+                            viewModel.bookSearchResults = []
+                            return
+                        }
+
+                        bookSearchTask = Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 250_000_000)
+                            if Task.isCancelled { return }
+                            await viewModel.searchBooks(query: trimmed)
+                        }
+
                     case .savedWords:
                         viewModel.searchSavedWords()
                     }
@@ -182,8 +222,7 @@ struct HomeSearchSection: View {
             }
             .shadow(color: Color("Shadow").opacity(0.07), radius: 18, x: 0, y: 8)
 
-            if viewModel.searchMode == .dictionary,
-               viewModel.searchText.isEmpty,
+            if viewModel.searchText.isEmpty,
                !viewModel.recentSearches.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("최근 검색어")
@@ -196,7 +235,7 @@ struct HomeSearchSection: View {
                             ForEach(viewModel.recentSearches, id: \.self) { recentWord in
                                 HStack(spacing: 6) {
                                     Button {
-                                        searchRecentWord(recentWord)
+                                        searchRecentKeyword(recentWord)
                                     } label: {
                                         Text(recentWord)
                                             .font(.caption)
@@ -277,6 +316,49 @@ struct HomeSearchSection: View {
                     .foregroundStyle(Color("Error"))
             }
 
+            if viewModel.searchMode == .book {
+                if viewModel.isBookSearchLoading {
+                    ProgressView("책 검색 중...")
+                        .font(.caption)
+                }
+
+                if let errorMessage = viewModel.bookSearchErrorMessage {
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundStyle(Color("Error"))
+                }
+
+                if !viewModel.bookSearchResults.isEmpty {
+                    Text("도서")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color("TextSecondary"))
+
+                    ForEach(viewModel.bookSearchResults) { kakaoBook in
+                        let draft = BookRegistrationDraft(kakaoBook: kakaoBook)
+
+                        NavigationLink {
+                            BookDiscoveryDetailView(
+                                    viewModel: viewModel,
+                                    draft: draft,
+                                    selectedTab: $selectedTab,
+                                    onFinishRegistration: { tab in
+                                        selectedTab = tab
+                                    }
+                                )
+                        } label: {
+                            BookSearchResultRow(
+                                imageName: draft.imageName,
+                                title: draft.title,
+                                author: draft.author
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+
+
             if viewModel.searchMode == .savedWords {
                 if !viewModel.savedBookSearchResults.isEmpty {
                     Text("책")
@@ -323,7 +405,7 @@ struct HomeSearchSection: View {
 
                     ForEach(viewModel.savedWordSearchResults) { word in
                         let book = viewModel.book(for: word.bookId)
-                        
+
                         NavigationLink {
                             WordDetailsView(viewModel: viewModel, word: word)
                         } label: {
@@ -412,6 +494,14 @@ struct HomeSearchSection: View {
                 await viewModel.performSearch()
             }
 
+        case .book:
+            viewModel.bookSearchErrorMessage = nil
+            viewModel.bookSearchResults = []
+
+            Task { @MainActor in
+                await viewModel.performSearch()
+            }
+
         case .savedWords:
             Task { @MainActor in
                 await viewModel.performSearch()
@@ -426,5 +516,5 @@ struct HomeSearchSection: View {
 
 }
 #Preview {
-    HomeSearchSection(viewModel: BookMateViewModel())
+    HomeSearchSection(viewModel: BookMateViewModel(), selectedTab: .constant(0))
 }

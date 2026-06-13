@@ -16,6 +16,7 @@ final class BookMateViewModel: ObservableObject {
 
     enum SearchMode {
         case dictionary
+        case book
         case savedWords
     }
 
@@ -104,6 +105,10 @@ final class BookMateViewModel: ObservableObject {
 
     // 현재 메모리에 반영된 리뷰 목록이다.
     @Published var reviews: [Review] = Review.sampleReviews
+
+    @Published var publicBookReviews: [Review] = []
+    @Published var isPublicReviewLoading = false
+    @Published var publicReviewErrorMessage: String?
 
     // MARK: - App State
 
