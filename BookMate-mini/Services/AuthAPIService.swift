@@ -100,6 +100,22 @@ struct AuthAPIService {
         
         return try JSONDecoder().decode(AuthResponse.self, from: data)
     }
+
+    func fetchNicknameSuggestion() async throws -> String {
+        let url = baseURL
+            .appendingPathComponent("api")
+            .appendingPathComponent("auth")
+            .appendingPathComponent("nickname-suggestion")
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try client.validate(response)
+
+        let suggestion = try JSONDecoder().decode(NicknameSuggestionResponse.self, from: data)
+        return suggestion.nickname
+    }
     
     
     func fetchProfile(token: String) async throws -> ProfileResponse {
@@ -196,4 +212,3 @@ struct AuthAPIService {
     }
     
 }
-

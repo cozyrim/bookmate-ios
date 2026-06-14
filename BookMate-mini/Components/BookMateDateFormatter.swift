@@ -22,6 +22,13 @@ enum BookMateDateFormatter {
         return formatter
     }()
 
+    static let dateTimeDisplay: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy.MM.dd HH:mm"
+        formatter.locale = Locale(identifier: "ko_KR")
+        return formatter
+    }()
+
     static func apiString(from date: Date?) -> String? {
         guard let date else { return nil }
         return api.string(from: date)
@@ -71,5 +78,19 @@ enum BookMateDateFormatter {
         }
 
         return display.string(from: date)
+    }
+
+    static func serverDateTimeDisplayString(from string: String?) -> String {
+        guard let string, !string.isEmpty else { return "" }
+
+        if let date = serverDateTime(from: string) {
+            return dateTimeDisplay.string(from: date)
+        }
+
+        return string
+            .replacingOccurrences(of: "T", with: " ")
+            .split(separator: ".")
+            .first
+            .map(String.init) ?? string
     }
 }

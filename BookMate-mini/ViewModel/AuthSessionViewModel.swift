@@ -111,6 +111,17 @@ final class AuthSessionViewModel: ObservableObject {
         isLoading = false
     }
 
+    // 서버에서 중복되지 않는 랜덤 닉네임을 추천받는다.
+    func suggestNickname() async -> String? {
+        do {
+            return try await authAPIService.fetchNicknameSuggestion()
+        } catch {
+            errorMessage = "닉네임 추천에 실패했습니다."
+            DebugLogger.log("닉네임 추천 실패:", error)
+            return nil
+        }
+    }
+
     // Keychain에 저장된 토큰으로 앱 재실행 후 로그인 상태를 복구한다.
     func restoreSession() async {
         guard let token = tokenStore.load() else {

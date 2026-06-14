@@ -16,6 +16,7 @@ struct SignupView: View {
     @State private var password = ""
     @State private var passwordConfirm = ""
     @State private var nickname = ""
+    @State private var isSuggestingNickname = false
     
     private var canGoNext: Bool {
         email.contains("@") &&
@@ -24,7 +25,16 @@ struct SignupView: View {
     }
     
     private var canSubmit: Bool {
-        !nickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        true
+    }
+
+    private var displayedNickname: String {
+        let trimmed = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "자동 생성 예정" : trimmed
+    }
+
+    private var nicknameInitial: String {
+        String(displayedNickname.prefix(1))
     }
     
     
@@ -70,6 +80,15 @@ struct SignupView: View {
             .padding(.top, 18)
             .padding(.bottom, 28)
         }
+        .navigationBarBackButtonHidden(true)
+        .task(id: step) {
+            guard step == 2,
+                  nickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return
+            }
+
+            await suggestNickname()
+        }
     }
     
     private var header: some View {
@@ -103,9 +122,14 @@ struct SignupView: View {
                 .font(.title)
                 .fontWeight(.bold)
                 .foregroundStyle(Color("TextPrimary"))
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+
             
             Text("북메이트에서 사용할 이메일과 비밀번호를 설정합니다.")
                 .foregroundStyle(Color("TextSecondary"))
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
             
             signupField(title: "이메일 주소", placeholder: "example@bookmate.com", text: $email, icon: "envelope")
             
@@ -123,31 +147,70 @@ struct SignupView: View {
         VStack(alignment: .leading, spacing: 24) {
             stepIndicator(current: 2)
             
-            VStack(spacing: 18) {
-                Image(systemName: "person.crop.circle.badge.checkmark")
-                    .font(.system(size: 54))
-                    .foregroundStyle(Color("PrimaryDeep"))
-                    .frame(width: 132, height: 132)
-                    .background(Color("Surface").opacity(0.85))
-                    .clipShape(RoundedRectangle(cornerRadius: 36))
-                    .shadow(color: Color("Shadow").opacity(0.05), radius: 12, x: 0, y: 6)
-            }
-            .frame(maxWidth: .infinity)
+            nicknamePreviewCard
             
             Text("사용하실 닉네임을\n설정해주세요")
-                .font(.largeTitle)
+                .font(.title)
                 .fontWeight(.bold)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
             
             Text("북메이트에서 불릴 이름을 정해주세요.")
                 .foregroundStyle(Color("TextSecondary"))
             
-            signupField(title: "닉네임", placeholder: "북메이트친구", text: $nickname, icon: "sparkles")
+            signupField(title: "닉네임", placeholder: "비워두면 랜덤으로 정해져요", text: $nickname, icon: "sparkles")
+
+            Button {
+                Task {
+                    await suggestNickname()
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    if isSuggestingNickname {
+                        ProgressView()
+                            .tint(Color("Primary"))
+                    } else {
+                        Image(systemName: "sparkles")
+                    }
+
+                    Text(isSuggestingNickname ? "추천 닉네임 만드는 중..." : "다른 닉네임 추천받기")
+                }
+                .font(.caption.bold())
+                .foregroundStyle(Color("Primary"))
+            }
+            .disabled(isSuggestingNickname)
             
             HStack(spacing: 12) {
                 infoCard(icon: "textformat", title: "한글/영문 가능")
                 infoCard(icon: "ruler", title: "최대 10자 추천")
             }
         }
+    }
+
+    private var nicknamePreviewCard: some View {
+        VStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(Color("Primary").opacity(0.12))
+                    .frame(width: 92, height: 92)
+
+                Text(nicknameInitial)
+                    .font(.largeTitle.bold())
+                    .foregroundStyle(Color("PrimaryDeep"))
+            }
+
+            Text(displayedNickname)
+                .font(.headline)
+                .foregroundStyle(Color("TextPrimary"))
+
+            Text(nickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "가입 시 서버가 자동으로 이름을 정해줘요." : "이 이름으로 북메이트를 시작해요.")
+                .font(.caption)
+                .foregroundStyle(Color("TextSecondary"))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+        .background(Color("Surface").opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 28))
     }
     
     private func stepIndicator(current: Int) -> some View {
@@ -222,6 +285,16 @@ struct SignupView: View {
         .frame(height: 82)
         .background(Color("Surface").opacity(0.86))
         .clipShape(RoundedRectangle(cornerRadius: 24))
+    }
+
+    private func suggestNickname() async {
+        guard !isSuggestingNickname else { return }
+
+        isSuggestingNickname = true
+        if let suggestedNickname = await authViewModel.suggestNickname() {
+            nickname = suggestedNickname
+        }
+        isSuggestingNickname = false
     }
 }
 

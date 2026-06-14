@@ -19,34 +19,39 @@ struct GuestbookSheetView: View {
             List {
                 ForEach(messages) { message in
                     VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            ProfileImageView(imageName: "profileImage",
-                                             imageURLString: message.writerProfileImageUrl,
-                                             showsEditIcon: false
-                                         )
-                                         .scaleEffect(0.3)
-                            Text(message.writerNickname)
-                                .font(.subheadline)
-                                .fontWeight(.bold)
+                        HStack(alignment: .top, spacing: 10) {
+                            ProfileImageView(
+                                imageName: "profileImage",
+                                imageURLString: message.writerProfileImageUrl,
+                                showsEditIcon: false,
+                                size: 34
+                            )
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(message.writerNickname)
+                                    .font(.subheadline.bold())
+
+                                Text(message.content)
+                                    .font(.body)
+
+                                Text(BookMateDateFormatter.serverDateTimeDisplayString(from: message.createdAt))
+                                    .font(.caption2)
+                                    .foregroundStyle(Color("TextMuted"))
+                            }
                             
                             Spacer()
                             
-                            // 👉 authViewModel.currentUser 로 접근
-                            if authViewModel.currentUser?.id == message.writerId || authViewModel.currentUser?.id == targetUser.id {
-                                Button(role: .destructive, action: {
+                            if authViewModel.currentUser?.id == message.writerId ||
+                                authViewModel.currentUser?.id == targetUser.id {
+                                Button(role: .destructive) {
                                     deleteMessage(messageId: message.id)
-                                }) {
+                                } label: {
                                     Image(systemName: "trash")
-                                        .foregroundColor(.red)
                                 }
                                 .buttonStyle(.borderless)
                             }
                         }
-                        Text(message.content)
-                            .font(.body)
-                        Text(message.createdAt)
-                            .font(.caption2)
-                            .foregroundColor(.gray)
+                        .padding(.vertical, 8)
                     }
                     .padding(.vertical, 4)
                 }
