@@ -9,62 +9,97 @@ import SwiftUI
 
 struct MiniRoomSceneView: View {
     let nickname: String
-        let profileImageUrl: String?
-        let theme: MiniRoomTheme
-        let books: [Book]
-        let showsExploreButtons: Bool
-        let isSurfing: Bool
-        let onSearchUsers: () -> Void
-        let onSurfRandomUser: () -> Void
-        let onOpenGuestbook: () -> Void
-        let onBookTap: (Book) -> Void
-    
+    let profileImageUrl: String?
+    let theme: MiniRoomTheme
+    let books: [Book]
+    let showsExploreButtons: Bool
+    let isSurfing: Bool
+    let onSearchUsers: () -> Void
+    let onSurfRandomUser: () -> Void
+    let onOpenGuestbook: () -> Void
+    let onBookTap: (Book) -> Void
+
     var body: some View {
-        ZStack {
-                    theme.backgroundColor
-                        .ignoresSafeArea()
+        GeometryReader { proxy in
+            ZStack {
+                theme.backgroundColor
+                    .ignoresSafeArea()
 
-                    Image(theme.imageName)
-                        .resizable()
-                        .scaledToFit()
-                        .offset(y: -40)
+                VStack(spacing: 0) {
+                    MiniRoomHeaderView(
+                        nickname: nickname,
+                        profileImageUrl: profileImageUrl,
+                        showsExploreButtons: showsExploreButtons,
+                        isSurfing: isSurfing,
+                        onSearchUsers: onSearchUsers,
+                        onSurfRandomUser: onSurfRandomUser
+                    )
+                    .padding(.horizontal, 24)
+                    .padding(.top, 20)
 
-                    VStack(spacing: 0) {
-                        MiniRoomHeaderView(
-                            nickname: nickname,
-                            profileImageUrl: profileImageUrl,
-                            showsExploreButtons: showsExploreButtons,
-                            isSurfing: isSurfing,
-                            onSearchUsers: onSearchUsers,
-                            onSurfRandomUser: onSurfRandomUser
-                        )
-                        .padding(.horizontal, 24)
-                        .padding(.top, 20)
-
-                        Spacer()
-
-                        HStack {
-                            Spacer()
-
-                            Button(action: onOpenGuestbook) {
-                                Label("방명록", systemImage: "text.book.closed.fill")
-                                    .font(.subheadline.bold())
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
-                                    .background(Color.white)
-                                    .foregroundStyle(Color("Primary"))
-                                    .clipShape(Capsule())
-                            }
-                            .padding(.trailing, 20)
-                            .padding(.bottom, 15)
-                        }
-
-                        MiniRoomBookshelfView(
-                            books: books,
-                            onBookTap: onBookTap
-                        )
-                    }
+                    MiniRoomCanvas(
+                        books: books,
+                        onOpenGuestbook: onOpenGuestbook,
+                        onBookTap: onBookTap
+                    )
+                    .frame(height: max(560, proxy.size.height - 118))
+                    .padding(.top, 4)
                 }
+            }
+        }
     }
 }
 
+private struct MiniRoomCanvas: View {
+    let books: [Book]
+    let onOpenGuestbook: () -> Void
+    let onBookTap: (Book) -> Void
+
+    private let backgroundAspectRatio: CGFloat = 1024 / 1536
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let canvasWidth = min(width * 1.2, 520)
+            let canvasHeight = canvasWidth / backgroundAspectRatio
+            let guestbookX = min(width - 88, max(88, width / 2 - canvasWidth * 0.25))
+
+            ZStack(alignment: .top) {
+                layeredImage("MiniRoomLayeredRoomBackground", canvasWidth: canvasWidth, canvasHeight: canvasHeight, containerWidth: width)
+                    .shadow(color: Color("Shadow").opacity(0.12), radius: 18, y: 8)
+
+                MiniRoomBookshelfView(
+                    books: books,
+                    onBookTap: onBookTap
+                )
+                .frame(width: canvasWidth, height: canvasHeight)
+                .position(x: width / 2, y: canvasHeight / 2)
+
+                Button(action: onOpenGuestbook) {
+                    Label("방명록", systemImage: "heart.text.square")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Color("PrimaryDeep"))
+                        .padding(.horizontal, 17)
+                        .padding(.vertical, 12)
+                        .background(
+                            Capsule()
+                                .fill(.ultraThinMaterial)
+                                .shadow(color: Color("Shadow").opacity(0.16), radius: 12, y: 5)
+                        )
+                }
+                .buttonStyle(.plain)
+                .position(x: guestbookX, y: canvasHeight * 0.81)
+            }
+            .frame(width: width, height: proxy.size.height, alignment: .top)
+            .offset(y: -4)
+        }
+    }
+
+    private func layeredImage(_ name: String, canvasWidth: CGFloat, canvasHeight: CGFloat, containerWidth: CGFloat) -> some View {
+        Image(name)
+            .resizable()
+            .scaledToFit()
+            .frame(width: canvasWidth, height: canvasHeight)
+            .position(x: containerWidth / 2, y: canvasHeight / 2)
+    }
+}

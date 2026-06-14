@@ -10,37 +10,341 @@ import SwiftUI
 struct MiniRoomBookshelfView: View {
     let books: [Book]
     let onBookTap: (Book) -> Void
-    
+
+    @State private var currentPage = 0
+    @GestureState private var dragOffset: CGFloat = 0
+
+    private let slotTemplates = MiniRoomBookSlotTemplate.defaultSlots
+
+    private var booksPerPage: Int {
+        slotTemplates.count
+    }
+
+    private var totalPages: Int {
+        max(1, Int(ceil(Double(books.count) / Double(booksPerPage))))
+    }
+
     var body: some View {
-        ZStack(alignment: .bottom) {
-                    Color(red: 110/255, green: 75/255, blue: 50/255)
-                        .frame(height: 180)
-                        .shadow(color: .black.opacity(0.25), radius: 10, y: -5)
+        GeometryReader { proxy in
+            let size = proxy.size
 
-                    Rectangle()
-                        .fill(Color(red: 160/255, green: 110/255, blue: 75/255))
-                        .frame(height: 25)
+            ZStack {
+                bookPager(in: size)
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 15) {
-                            if books.isEmpty {
-                                ForEach(0..<4, id: \.self) { _ in
-                                    BookCoverCell(imageName: "bookPlaceholder", width: 90)
-                                }
-                            } else {
-                                ForEach(books) { book in
-                                    Button {
-                                        onBookTap(book)
-                                    } label: {
-                                        BookCoverCell(imageName: book.imageName, width: 90)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 25)
-                    }
+                if books.isEmpty {
+                    emptyState
+                        .position(x: size.width * 0.54, y: size.height * 0.56)
+                }
+
+                if totalPages > 1 {
+                    shelfPageHint
+                        .position(x: size.width * 0.54, y: size.height * 0.82)
+                }
+            }
+            .onChange(of: books.count) { _, _ in
+                currentPage = min(currentPage, totalPages - 1)
+            }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("미니룸 책장")
+    }
+
+    private func bookPager(in size: CGSize) -> some View {
+        ZStack(alignment: .topLeading) {
+            ForEach(0..<totalPages, id: \.self) { pageIndex in
+                bookPage(pageIndex, in: size)
+                    .frame(width: size.width, height: size.height)
+                    .offset(x: CGFloat(pageIndex - currentPage) * size.width + dragOffset)
+            }
+        }
+        .frame(width: size.width, height: size.height)
+        .contentShape(Rectangle())
+        .gesture(pageDrag(in: size))
+        .animation(.spring(response: 0.32, dampingFraction: 0.84), value: currentPage)
+    }
+
+    private func bookPage(_ pageIndex: Int, in size: CGSize) -> some View {
+        let pageBooks = booksForPage(pageIndex)
+
+        return ZStack {
+            ForEach(Array(pageBooks.enumerated()), id: \.element.id) { slotIndex, book in
+                let absoluteIndex = pageIndex * booksPerPage + slotIndex
+                let slot = slotTemplates[slotIndex].resolve(in: size)
+
+                Button {
+                    onBookTap(book)
+                } label: {
+                    MiniRoomShelfBook(
+                        title: book.title,
+                        palette: spinePalette(for: absoluteIndex),
+                        width: slot.width,
+                        height: slot.height
+                    )
+                }
+                .buttonStyle(.plain)
+                .position(x: slot.centerX, y: slot.centerY)
+                .zIndex(slot.zIndex)
+                .accessibilityLabel("\(book.title) 책 상세 보기")
+            }
+        }
+        .frame(width: size.width, height: size.height, alignment: .topLeading)
+    }
+
+    private func pageDrag(in size: CGSize) -> some Gesture {
+        DragGesture(minimumDistance: 18)
+            .updating($dragOffset) { value, state, _ in
+                guard totalPages > 1 else { return }
+                state = value.translation.width
+            }
+            .onEnded { value in
+                guard totalPages > 1 else { return }
+
+                let threshold = size.width * 0.16
+                let predicted = value.predictedEndTranslation.width
+                let dragDistance = abs(predicted) > abs(value.translation.width) ? predicted : value.translation.width
+
+                if dragDistance < -threshold {
+                    currentPage = min(totalPages - 1, currentPage + 1)
+                } else if dragDistance > threshold {
+                    currentPage = max(0, currentPage - 1)
+                }
+            }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 7) {
+            Image(systemName: "books.vertical")
+                .font(.title2)
+            Text("읽은 책이 꽂혀요")
+                .font(.caption.bold())
+        }
+        .foregroundStyle(Color("TextSecondary"))
+        .padding(12)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var shelfPageHint: some View {
+        HStack(spacing: 9) {
+            Button {
+                currentPage = max(0, currentPage - 1)
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.caption2.weight(.bold))
+            }
+            .disabled(currentPage == 0)
+
+            HStack(spacing: 6) {
+                ForEach(0..<totalPages, id: \.self) { page in
+                    Circle()
+                        .fill(page == currentPage ? Color("PrimaryDeep").opacity(0.82) : Color("TextSecondary").opacity(0.26))
+                        .frame(width: page == currentPage ? 8 : 5, height: page == currentPage ? 8 : 5)
+                }
+            }
+            .frame(minWidth: 38)
+
+            Button {
+                currentPage = min(totalPages - 1, currentPage + 1)
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.bold))
+            }
+            .disabled(currentPage >= totalPages - 1)
+        }
+        .foregroundStyle(Color("PrimaryDeep").opacity(0.82))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            Capsule()
+                .fill(.ultraThinMaterial.opacity(0.74))
+                .shadow(color: Color("Shadow").opacity(0.10), radius: 8, y: 3)
+        )
+        .buttonStyle(.plain)
+        .accessibilityLabel("책장이 여러 페이지입니다. 좌우로 넘길 수 있어요.")
+    }
+
+    private func booksForPage(_ pageIndex: Int) -> [Book] {
+        guard !books.isEmpty else { return [] }
+
+        let safePage = min(pageIndex, totalPages - 1)
+        let startIndex = safePage * booksPerPage
+        let endIndex = min(startIndex + booksPerPage, books.count)
+        return Array(books[startIndex..<endIndex])
+    }
+
+    private func spinePalette(for index: Int) -> MiniRoomBookPalette {
+        [
+            MiniRoomBookPalette(base: Color(red: 238/255, green: 218/255, blue: 184/255), edge: Color(red: 172/255, green: 124/255, blue: 82/255), accent: Color(red: 184/255, green: 135/255, blue: 82/255)),
+            MiniRoomBookPalette(base: Color(red: 177/255, green: 148/255, blue: 166/255), edge: Color(red: 116/255, green: 83/255, blue: 104/255), accent: Color(red: 136/255, green: 96/255, blue: 116/255)),
+            MiniRoomBookPalette(base: Color(red: 221/255, green: 174/255, blue: 88/255), edge: Color(red: 146/255, green: 98/255, blue: 44/255), accent: Color(red: 164/255, green: 112/255, blue: 52/255)),
+            MiniRoomBookPalette(base: Color(red: 100/255, green: 137/255, blue: 141/255), edge: Color(red: 52/255, green: 86/255, blue: 91/255), accent: Color(red: 70/255, green: 100/255, blue: 106/255)),
+            MiniRoomBookPalette(base: Color(red: 224/255, green: 147/255, blue: 125/255), edge: Color(red: 150/255, green: 84/255, blue: 70/255), accent: Color(red: 172/255, green: 96/255, blue: 80/255)),
+            MiniRoomBookPalette(base: Color(red: 151/255, green: 168/255, blue: 112/255), edge: Color(red: 88/255, green: 105/255, blue: 64/255), accent: Color(red: 108/255, green: 126/255, blue: 76/255)),
+            MiniRoomBookPalette(base: Color(red: 190/255, green: 180/255, blue: 148/255), edge: Color(red: 116/255, green: 107/255, blue: 82/255), accent: Color(red: 132/255, green: 121/255, blue: 92/255)),
+            MiniRoomBookPalette(base: Color(red: 129/255, green: 108/255, blue: 91/255), edge: Color(red: 80/255, green: 60/255, blue: 48/255), accent: Color(red: 96/255, green: 72/255, blue: 56/255))
+        ][index % 8]
+    }
+}
+
+private struct MiniRoomBookPalette {
+    let base: Color
+    let edge: Color
+    let accent: Color
+}
+
+private struct MiniRoomBookSlotTemplate {
+    let x: CGFloat
+    let baselineY: CGFloat
+    let width: CGFloat
+    let height: CGFloat
+    let zIndex: Double
+
+    static let defaultSlots: [MiniRoomBookSlotTemplate] = [
+        MiniRoomBookSlotTemplate(x: 0.300, baselineY: 0.430, width: 0.074, height: 0.132, zIndex: 0),
+        MiniRoomBookSlotTemplate(x: 0.388, baselineY: 0.430, width: 0.078, height: 0.145, zIndex: 1),
+        MiniRoomBookSlotTemplate(x: 0.480, baselineY: 0.430, width: 0.076, height: 0.137, zIndex: 2),
+        MiniRoomBookSlotTemplate(x: 0.572, baselineY: 0.430, width: 0.078, height: 0.148, zIndex: 3),
+        MiniRoomBookSlotTemplate(x: 0.664, baselineY: 0.430, width: 0.076, height: 0.139, zIndex: 4),
+        MiniRoomBookSlotTemplate(x: 0.756, baselineY: 0.430, width: 0.078, height: 0.146, zIndex: 5),
+
+        MiniRoomBookSlotTemplate(x: 0.300, baselineY: 0.577, width: 0.076, height: 0.132, zIndex: 6),
+        MiniRoomBookSlotTemplate(x: 0.388, baselineY: 0.577, width: 0.078, height: 0.145, zIndex: 7),
+        MiniRoomBookSlotTemplate(x: 0.480, baselineY: 0.577, width: 0.076, height: 0.136, zIndex: 8),
+        MiniRoomBookSlotTemplate(x: 0.572, baselineY: 0.577, width: 0.078, height: 0.147, zIndex: 9),
+        MiniRoomBookSlotTemplate(x: 0.664, baselineY: 0.577, width: 0.076, height: 0.138, zIndex: 10),
+        MiniRoomBookSlotTemplate(x: 0.756, baselineY: 0.577, width: 0.078, height: 0.146, zIndex: 11),
+
+        MiniRoomBookSlotTemplate(x: 0.300, baselineY: 0.738, width: 0.076, height: 0.128, zIndex: 12),
+        MiniRoomBookSlotTemplate(x: 0.388, baselineY: 0.738, width: 0.078, height: 0.141, zIndex: 13),
+        MiniRoomBookSlotTemplate(x: 0.480, baselineY: 0.738, width: 0.076, height: 0.132, zIndex: 14),
+        MiniRoomBookSlotTemplate(x: 0.572, baselineY: 0.738, width: 0.078, height: 0.143, zIndex: 15),
+        MiniRoomBookSlotTemplate(x: 0.664, baselineY: 0.738, width: 0.076, height: 0.134, zIndex: 16),
+        MiniRoomBookSlotTemplate(x: 0.756, baselineY: 0.738, width: 0.078, height: 0.141, zIndex: 17)
+    ]
+
+    func resolve(in size: CGSize) -> MiniRoomBookSlot {
+        let resolvedHeight = height * size.height
+
+        return MiniRoomBookSlot(
+            centerX: x * size.width,
+            baselineY: baselineY * size.height,
+            centerY: baselineY * size.height - resolvedHeight / 2,
+            width: width * size.width,
+            height: resolvedHeight,
+            zIndex: zIndex
+        )
+    }
+}
+
+private struct MiniRoomBookSlot {
+    let centerX: CGFloat
+    let baselineY: CGFloat
+    let centerY: CGFloat
+    let width: CGFloat
+    let height: CGFloat
+    let zIndex: Double
+}
+
+private struct MiniRoomShelfBook: View {
+    let title: String
+    let palette: MiniRoomBookPalette
+    let width: CGFloat
+    let height: CGFloat
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: max(3, width * 0.12))
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            palette.base.opacity(0.95),
+                            palette.base,
+                            palette.edge.opacity(0.84)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .overlay(alignment: .leading) {
+                    Rectangle()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: max(1, width * 0.12))
+                }
+                .overlay(alignment: .trailing) {
+                    Rectangle()
+                        .fill(Color.black.opacity(0.10))
+                        .frame(width: max(1, width * 0.11))
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: max(3, width * 0.12))
+                        .stroke(palette.edge.opacity(0.42), lineWidth: 0.8)
+                }
+
+            spineDecoration
+
+            VerticalBookTitle(title: title, width: width * 0.84, height: height * 0.82)
+                .padding(.top, height * 0.04)
+        }
+        .frame(width: width, height: height)
+        .shadow(color: Color("Shadow").opacity(0.13), radius: 2, y: 1)
+    }
+
+    private var spineDecoration: some View {
+        VStack {
+            Capsule()
+                .fill(Color.white.opacity(0.24))
+                .frame(width: width * 0.34, height: max(1, height * 0.012))
+
+            Spacer()
+
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(palette.accent.opacity(0.32))
+                .frame(width: width * 0.18, height: height * 0.08)
+                .padding(.bottom, height * 0.04)
+        }
+        .padding(.top, height * 0.08)
+    }
+}
+
+private struct VerticalBookTitle: View {
+    let title: String
+    let width: CGFloat
+    let height: CGFloat
+
+    private var characters: [String] {
+        let compact = title
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "\n", with: "")
+        return compact.isEmpty ? ["책"] : compact.map { String($0) }
+    }
+
+    private var rowHeight: CGFloat {
+        max(1, height / CGFloat(max(characters.count, 1)))
+    }
+
+    private var characterFrameWidth: CGFloat {
+        max(1, width)
+    }
+
+    private var fontSize: CGFloat {
+        let widthLimit = characterFrameWidth * 0.58
+        let heightLimit = rowHeight * 0.76
+        return min(13, max(4.6, min(widthLimit, heightLimit)))
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(characters.enumerated()), id: \.offset) { _, character in
+                Text(character)
+                    .font(.system(size: fontSize, weight: .black))
+                    .foregroundStyle(Color("TextPrimary").opacity(0.98))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.55)
+                    .allowsTightening(true)
+                    .frame(width: characterFrameWidth, height: rowHeight, alignment: .center)
+                    .shadow(color: Color.white.opacity(0.35), radius: 0.35, y: 0.2)
+            }
+        }
+        .frame(width: width, height: height, alignment: .center)
+        .allowsHitTesting(false)
     }
 }

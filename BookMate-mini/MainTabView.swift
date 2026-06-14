@@ -38,7 +38,7 @@ struct MainTabView: View {
 
             RoomTabView(viewModel: viewModel)
                 .tabItem {
-                    Image(systemName: "magnifyingglass")
+                    Image(systemName: "door.left.hand.open")
                     Text("미니룸")
                 }
                 .tag(3)
