@@ -11,8 +11,7 @@ struct MiniRoomBookshelfView: View {
     let books: [Book]
     let onBookTap: (Book) -> Void
 
-    @State private var currentPage = 0
-    @GestureState private var dragOffset: CGFloat = 0
+    @State private var currentPage: Int? = 0
 
     private let slotTemplates = MiniRoomBookSlotTemplate.defaultSlots
 
@@ -22,6 +21,10 @@ struct MiniRoomBookshelfView: View {
 
     private var totalPages: Int {
         max(1, Int(ceil(Double(books.count) / Double(booksPerPage))))
+    }
+
+    private var selectedPage: Int {
+        min(max(currentPage ?? 0, 0), totalPages - 1)
     }
 
     var body: some View {
@@ -42,25 +45,39 @@ struct MiniRoomBookshelfView: View {
                 }
             }
             .onChange(of: books.count) { _, _ in
-                currentPage = min(currentPage, totalPages - 1)
+                currentPage = selectedPage
+            }
+            .onAppear {
+                currentPage = selectedPage
             }
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("미니룸 책장")
     }
 
+    @ViewBuilder
     private func bookPager(in size: CGSize) -> some View {
-        ZStack(alignment: .topLeading) {
-            ForEach(0..<totalPages, id: \.self) { pageIndex in
-                bookPage(pageIndex, in: size)
-                    .frame(width: size.width, height: size.height)
-                    .offset(x: CGFloat(pageIndex - currentPage) * size.width + dragOffset)
+        if totalPages <= 1 {
+            bookPage(0, in: size)
+                .frame(width: size.width, height: size.height)
+        } else {
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 0) {
+                    ForEach(0..<totalPages, id: \.self) { pageIndex in
+                        bookPage(pageIndex, in: size)
+                            .frame(width: size.width, height: size.height)
+                            .id(pageIndex)
+                    }
+                }
+                .scrollTargetLayout()
             }
+            .scrollIndicators(.hidden)
+            .scrollTargetBehavior(.paging)
+            .scrollPosition(id: $currentPage)
+            .frame(width: size.width, height: size.height)
+            .contentShape(Rectangle())
+            .animation(.spring(response: 0.32, dampingFraction: 0.84), value: currentPage)
         }
-        .frame(width: size.width, height: size.height)
-        .contentShape(Rectangle())
-        .gesture(pageDrag(in: size))
-        .animation(.spring(response: 0.32, dampingFraction: 0.84), value: currentPage)
     }
 
     private func bookPage(_ pageIndex: Int, in size: CGSize) -> some View {
@@ -90,27 +107,6 @@ struct MiniRoomBookshelfView: View {
         .frame(width: size.width, height: size.height, alignment: .topLeading)
     }
 
-    private func pageDrag(in size: CGSize) -> some Gesture {
-        DragGesture(minimumDistance: 18)
-            .updating($dragOffset) { value, state, _ in
-                guard totalPages > 1 else { return }
-                state = value.translation.width
-            }
-            .onEnded { value in
-                guard totalPages > 1 else { return }
-
-                let threshold = size.width * 0.16
-                let predicted = value.predictedEndTranslation.width
-                let dragDistance = abs(predicted) > abs(value.translation.width) ? predicted : value.translation.width
-
-                if dragDistance < -threshold {
-                    currentPage = min(totalPages - 1, currentPage + 1)
-                } else if dragDistance > threshold {
-                    currentPage = max(0, currentPage - 1)
-                }
-            }
-    }
-
     private var emptyState: some View {
         VStack(spacing: 7) {
             Image(systemName: "books.vertical")
@@ -126,29 +122,29 @@ struct MiniRoomBookshelfView: View {
     private var shelfPageHint: some View {
         HStack(spacing: 9) {
             Button {
-                currentPage = max(0, currentPage - 1)
+                currentPage = max(0, selectedPage - 1)
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.caption2.weight(.bold))
             }
-            .disabled(currentPage == 0)
+            .disabled(selectedPage == 0)
 
             HStack(spacing: 6) {
                 ForEach(0..<totalPages, id: \.self) { page in
                     Circle()
-                        .fill(page == currentPage ? Color("PrimaryDeep").opacity(0.82) : Color("TextSecondary").opacity(0.26))
-                        .frame(width: page == currentPage ? 8 : 5, height: page == currentPage ? 8 : 5)
+                        .fill(page == selectedPage ? Color("PrimaryDeep").opacity(0.82) : Color("TextSecondary").opacity(0.26))
+                        .frame(width: page == selectedPage ? 8 : 5, height: page == selectedPage ? 8 : 5)
                 }
             }
             .frame(minWidth: 38)
 
             Button {
-                currentPage = min(totalPages - 1, currentPage + 1)
+                currentPage = min(totalPages - 1, selectedPage + 1)
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.caption2.weight(.bold))
             }
-            .disabled(currentPage >= totalPages - 1)
+            .disabled(selectedPage >= totalPages - 1)
         }
         .foregroundStyle(Color("PrimaryDeep").opacity(0.82))
         .padding(.horizontal, 12)
@@ -327,23 +323,24 @@ private struct VerticalBookTitle: View {
 
     private var fontSize: CGFloat {
         let widthLimit = characterFrameWidth * 0.58
-        let heightLimit = rowHeight * 0.76
+        let heightLimit = rowHeight * 0.68
         return min(13, max(4.6, min(widthLimit, heightLimit)))
     }
 
+    private var verticalTitle: String {
+        characters.joined(separator: "\n")
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(characters.enumerated()), id: \.offset) { _, character in
-                Text(character)
-                    .font(.system(size: fontSize, weight: .black))
-                    .foregroundStyle(Color("TextPrimary").opacity(0.98))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.55)
-                    .allowsTightening(true)
-                    .frame(width: characterFrameWidth, height: rowHeight, alignment: .center)
-                    .shadow(color: Color.white.opacity(0.35), radius: 0.35, y: 0.2)
-            }
-        }
+        Text(verticalTitle)
+            .font(.system(size: fontSize, weight: .black))
+            .foregroundStyle(Color("TextPrimary").opacity(0.98))
+            .lineLimit(characters.count)
+            .minimumScaleFactor(0.58)
+            .allowsTightening(true)
+            .multilineTextAlignment(.center)
+            .shadow(color: Color.white.opacity(0.35), radius: 0.35, y: 0.2)
+            .frame(width: characterFrameWidth, height: height, alignment: .center)
         .frame(width: width, height: height, alignment: .center)
         .allowsHitTesting(false)
     }

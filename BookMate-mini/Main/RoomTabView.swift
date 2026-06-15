@@ -1,12 +1,19 @@
 import SwiftUI
+import Combine
 
 struct RoomTabView: View {
-    @ObservedObject var viewModel: BookMateViewModel
+    let viewModel: BookMateViewModel
+    @StateObject private var booksStore: MiniRoomBooksStore
     @State private var path = NavigationPath()
+
+    init(viewModel: BookMateViewModel) {
+        self.viewModel = viewModel
+        _booksStore = StateObject(wrappedValue: MiniRoomBooksStore(viewModel: viewModel))
+    }
     
     var body: some View {
         NavigationStack(path: $path) {
-            MyRoomView(viewModel: viewModel, path: $path)
+            MyRoomView(books: booksStore.books, path: $path)
                 .navigationDestination(for: ShelfView.ShelfRoute.self) { route in
                     switch route {
                     case .bookSearch:
@@ -27,5 +34,21 @@ struct RoomTabView: View {
                     }
                 }
         }
+    }
+}
+
+@MainActor
+private final class MiniRoomBooksStore: ObservableObject {
+    @Published private(set) var books: [Book]
+
+    private var cancellable: AnyCancellable?
+
+    init(viewModel: BookMateViewModel) {
+        self.books = viewModel.books
+        self.cancellable = viewModel.$books
+            .removeDuplicates()
+            .sink { [weak self] books in
+                self?.books = books
+            }
     }
 }

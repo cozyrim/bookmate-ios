@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MyRoomView: View {
-    @ObservedObject var viewModel: BookMateViewModel
+    let books: [Book]
     @EnvironmentObject var authViewModel: AuthSessionViewModel
     @Binding var path: NavigationPath
     
@@ -13,20 +13,6 @@ struct MyRoomView: View {
     @State private var guestbookMessages: [GuestbookMessageResponse] = []
     @State private var showingGuestbook = false
     
-    // 🎨 테마에 맞춰 위아래 여백을 채워줄 배경색
-    private var themeBackgroundColor: Color {
-        guard let currentUser = authViewModel.currentUser else { return Color("AppBackground") }
-        let theme = (currentUser.profileImageUrl == nil && currentUser.nickname.isEmpty) ? "room_bg_default" : "room_bg_default" // FIXME: UserEntity needs roomTheme. Defaulting.
-        switch theme {
-        case "room_bg_pink":
-            return Color(red: 251/255, green: 228/255, blue: 228/255)
-        case "room_bg_mint":
-            return Color(red: 230/255, green: 247/255, blue: 245/255)
-        default:
-            return Color(red: 249/255, green: 244/255, blue: 236/255)
-        }
-    }
-    
     var body: some View {
         Group {
                 if let user = authViewModel.currentUser {
@@ -34,7 +20,7 @@ struct MyRoomView: View {
                         nickname: user.nickname,
                         profileImageUrl: user.profileImageUrl,
                         theme: .basic,
-                        books: viewModel.books,
+                        books: books,
                         showsExploreButtons: true,
                         isSurfing: isSurfing,
                         onSearchUsers: {
