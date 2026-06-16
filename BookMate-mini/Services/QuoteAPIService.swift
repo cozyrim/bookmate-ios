@@ -41,7 +41,7 @@ private struct QuoteResponse: Decodable {
 }
 
 struct QuoteAPIService {
-    private let baseURL = URL(string: "http://127.0.0.1:8080")!
+    private let baseURL = APIEnvironment.baseURL
     private let client = APIClient() // ← 공통 네트워크 헬퍼
 
     // 특정 책의 구절 목록 가져오기

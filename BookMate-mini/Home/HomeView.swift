@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct HomeView: View {
     @ObservedObject var viewModel: BookMateViewModel // 다른 곳에서 만든 viewModel 받아서 관찰
@@ -25,6 +26,17 @@ struct HomeView: View {
         case bookSearch
         case bookDetail(UUID)
     }
+
+    private var isSearchActive: Bool {
+        !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        || viewModel.isLoading
+        || viewModel.isBookSearchLoading
+        || !viewModel.dictionarySuggestions.isEmpty
+        || !viewModel.bookSearchResults.isEmpty
+        || !viewModel.savedWordSearchResults.isEmpty
+        || !viewModel.savedBookSearchResults.isEmpty
+    }
+
 
     private let recentWordRows = [
         GridItem(.fixed(90), spacing: 12),
@@ -52,17 +64,75 @@ struct HomeView: View {
 
                         HomeSearchSection(viewModel: viewModel, selectedTab: $selectedTab)
 
-                        VStack(alignment: .leading, spacing: 18){
+                        if !isSearchActive {
+                            VStack(alignment: .leading, spacing: 18){
+                                HStack {
+                                    Text("최근 저장한 단어")
+                                        .font(.title2)
+                                        .fontWeight(.medium)
+
+                                    Spacer()
+
+                                    if !viewModel.savedWords.isEmpty {
+                                        Button {
+                                            selectedTab = 2
+                                        } label: {
+                                            HStack(spacing: 4) {
+                                                Text("더보기")
+                                                    .font(.caption)
+                                                    .fontWeight(.semibold)
+
+                                                Image(systemName: "chevron.right")
+                                                    .font(.caption2)
+                                                    .fontWeight(.semibold)
+
+                                            }
+                                            .foregroundStyle(Color("TextSecondary"))
+                                            .padding(.vertical, 8)
+                                            .contentShape(Rectangle())
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .padding(.horizontal, 24)
+                                .padding(.top, 22)
+                                .padding(.bottom, 16)
+                            }
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack {
+                                    if viewModel.savedWords.isEmpty {
+                                        HStack {
+                                            recentWordsPlaceholderCard
+                                        }
+                                        .padding(.horizontal, 24)
+                                    } else {
+                                        LazyHGrid(rows: recentWordRows, spacing: 12) {
+                                            ForEach(viewModel.savedWords.prefix(8)) { word in
+                                                NavigationLink {
+                                                    WordDetailsView(viewModel: viewModel, word: word)
+                                                } label: {
+                                                    WordCardView(word: word)
+                                                }
+                                            }
+                                        }
+                                        .padding(.horizontal, 24)
+                                    }
+                                }
+                            }
+                            //                        .frame(height: 90)
+                            .frame(height: viewModel.savedWords.isEmpty ? 115 : 192, alignment: .top)
+
                             HStack {
-                                Text("최근 저장한 단어")
-                                    .font(.title2)
+                                Text("내 책장")
+                                    .font(.title3)
                                     .fontWeight(.medium)
 
                                 Spacer()
 
-                                if !viewModel.savedWords.isEmpty {
+                                if !viewModel.shelfBooks.isEmpty {
                                     Button {
-                                        selectedTab = 2
+
+                                        selectedTab = 1
                                     } label: {
                                         HStack(spacing: 4) {
                                             Text("더보기")
@@ -72,7 +142,6 @@ struct HomeView: View {
                                             Image(systemName: "chevron.right")
                                                 .font(.caption2)
                                                 .fontWeight(.semibold)
-
                                         }
                                         .foregroundStyle(Color("TextSecondary"))
                                         .padding(.vertical, 8)
@@ -82,87 +151,33 @@ struct HomeView: View {
                                 }
                             }
                             .padding(.horizontal, 24)
-                            .padding(.top, 22)
-                            .padding(.bottom, 16)
-                        }
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack {
-                                if viewModel.savedWords.isEmpty {
-                                    HStack {
-                                        recentWordsPlaceholderCard
-                                    }
+                            .padding(.top, 24)
+
+                            if viewModel.shelfBooks.isEmpty {
+                                emptyBooksPlaceholderCard
                                     .padding(.horizontal, 24)
-                                } else {
-                                    LazyHGrid(rows: recentWordRows, spacing: 12) {
-                                        ForEach(viewModel.savedWords.prefix(8)) { word in
-                                            NavigationLink {
-                                                WordDetailsView(viewModel: viewModel, word: word)
-                                            } label: {
-                                                WordCardView(word: word)
-                                            }
-                                        }
+                                    .padding(.top, 14)
+                            } else {
+                                ForEach(viewModel.shelfBooks) { shelfBook in
+                                    if let book = viewModel.book(for: shelfBook) {
+                                        BookCardView(
+                                            imageName: book.imageName,
+                                            title: book.title,
+                                            author: book.author,
+                                            progress: shelfBook.progress,
+                                            category: book.category,
+                                            onTap: {
+                                                path.append(HomeRoute.bookDetail(book.id))
+                                            }, // 카드 눌렀을 때 상세 이동.
+                                            onMoreTap: {
+                                                activeBookSheet = .options(book)
+                                            } // 점 버튼 눌렀을 때 메뉴 시트 열기.
+                                        )
                                     }
-                                    .padding(.horizontal, 24)
                                 }
                             }
                         }
-                        //                        .frame(height: 90)
-                        .frame(height: viewModel.savedWords.isEmpty ? 115 : 192, alignment: .top)
 
-                        HStack {
-                            Text("내 책장")
-                                .font(.title3)
-                                .fontWeight(.medium)
-
-                            Spacer()
-
-                            if !viewModel.shelfBooks.isEmpty {
-                                Button {
-
-                                    selectedTab = 1
-                                } label: {
-                                    HStack(spacing: 4) {
-                                        Text("더보기")
-                                            .font(.caption)
-                                            .fontWeight(.semibold)
-
-                                        Image(systemName: "chevron.right")
-                                            .font(.caption2)
-                                            .fontWeight(.semibold)
-                                    }
-                                    .foregroundStyle(Color("TextSecondary"))
-                                    .padding(.vertical, 8)
-                                    .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.top, 24)
-
-                        if viewModel.shelfBooks.isEmpty {
-                            emptyBooksPlaceholderCard
-                                .padding(.horizontal, 24)
-                                .padding(.top, 14)
-                        } else {
-                            ForEach(viewModel.shelfBooks) { shelfBook in
-                                if let book = viewModel.book(for: shelfBook) {
-                                    BookCardView(
-                                        imageName: book.imageName,
-                                        title: book.title,
-                                        author: book.author,
-                                        progress: shelfBook.progress,
-                                        category: book.category,
-                                        onTap: {
-                                            path.append(HomeRoute.bookDetail(book.id))
-                                        }, // 카드 눌렀을 때 상세 이동.
-                                        onMoreTap: {
-                                            activeBookSheet = .options(book)
-                                        } // 점 버튼 눌렀을 때 메뉴 시트 열기.
-                                    )
-                                }
-                            }
-                        }
                     }
                     .buttonStyle(.plain)
 
@@ -185,6 +200,8 @@ struct HomeView: View {
 
                 }
                 .buttonStyle(.plain)
+                .scrollDismissesKeyboard(.interactively)
+                .hideKeyboardOnTap()
 
             }
             .sheet(item: $activeBookSheet) { sheet in
@@ -385,6 +402,19 @@ struct HomeView: View {
         .padding(.horizontal, 24)
         .padding(.top, 18)
         .padding(.bottom, 2)
+    }
+}
+
+private extension View {
+    func hideKeyboardOnTap() -> some View {
+        self.onTapGesture {
+            UIApplication.shared.sendAction(
+                #selector(UIResponder.resignFirstResponder),
+                to: nil,
+                from: nil,
+                for: nil
+            )
+        }
     }
 }
 

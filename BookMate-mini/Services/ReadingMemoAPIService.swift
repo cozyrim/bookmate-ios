@@ -41,7 +41,7 @@ private struct ReadingMemoResponse: Decodable {
 }
 
 struct ReadingMemoAPIService {
-    private let baseURL = URL(string: "http://127.0.0.1:8080")!
+    private let baseURL = APIEnvironment.baseURL
         private let client = APIClient()
     
     // 특정 책의 독서 메모 목록 가져오기

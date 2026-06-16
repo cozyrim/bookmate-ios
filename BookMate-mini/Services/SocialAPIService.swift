@@ -8,7 +8,7 @@
 import Foundation
 
 struct SocialAPIService {
-    private let baseURL = URL(string: "http://127.0.0.1:8080")!
+    private let baseURL = APIEnvironment.baseURL
     private let client = APIClient()
     
     // 1. 유저 검색 API
