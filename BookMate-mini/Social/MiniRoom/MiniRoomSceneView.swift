@@ -47,6 +47,9 @@ struct MiniRoomSceneView: View {
                 }
             }
         }
+        .onAppear {
+            PerformanceLogger.event("MiniRoomSceneAppear")
+        }
     }
 }
 
@@ -75,7 +78,10 @@ private struct MiniRoomCanvas: View {
                 .frame(width: canvasWidth, height: canvasHeight)
                 .position(x: width / 2, y: canvasHeight / 2)
 
-                Button(action: onOpenGuestbook) {
+                Button {
+                    PerformanceLogger.event("MiniRoomCanvasGuestbookButtonTapped")
+                    onOpenGuestbook()
+                } label: {
                     Label("방명록", systemImage: "heart.text.square")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(Color("PrimaryDeep"))

@@ -49,6 +49,7 @@ struct MiniRoomBookshelfView: View {
             }
             .onAppear {
                 currentPage = selectedPage
+                PerformanceLogger.event("MiniRoomBookshelfAppear")
             }
         }
         .accessibilityElement(children: .contain)
@@ -77,6 +78,9 @@ struct MiniRoomBookshelfView: View {
             .frame(width: size.width, height: size.height)
             .contentShape(Rectangle())
             .animation(.spring(response: 0.32, dampingFraction: 0.84), value: currentPage)
+            .onChange(of: currentPage) { _, page in
+                PerformanceLogger.event("MiniRoomShelfPageChanged")
+            }
         }
     }
 
@@ -89,6 +93,7 @@ struct MiniRoomBookshelfView: View {
                 let slot = slotTemplates[slotIndex].resolve(in: size)
 
                 Button {
+                    PerformanceLogger.event("MiniRoomBookTapped")
                     onBookTap(book)
                 } label: {
                     MiniRoomShelfBook(

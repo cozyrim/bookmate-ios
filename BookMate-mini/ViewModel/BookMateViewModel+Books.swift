@@ -11,6 +11,13 @@ import Foundation
 extension BookMateViewModel {
     // 서버에서 내 책 목록을 불러오고 책장 표시용 상태를 동기화한다.
     func loadBooks() async {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("LoadBooksAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("LoadBooksAPI", id: signpostID)
+        }
+        
         do {
             books = try await bookAPIService.fetchBooks()
             syncShelfBooksFromBooks()
@@ -35,6 +42,13 @@ extension BookMateViewModel {
             return
         }
 
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("SearchBooksAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("SearchBooksAPI", id: signpostID)
+        }
+
         isBookSearchLoading = true
         bookSearchErrorMessage = nil
 
@@ -50,6 +64,13 @@ extension BookMateViewModel {
 
     // 등록 초안으로 서버에 새 책을 저장하고 화면 상태에 즉시 반영한다.
     func registerBook(draft: BookRegistrationDraft) async throws -> Book {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("RegisterBookAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("RegisterBookAPI", id: signpostID)
+        }
+
         do {
             let totalPages: Int?
             if let draftTotalPages = draft.totalPages {
@@ -87,6 +108,13 @@ extension BookMateViewModel {
 
     // 서버에서 책을 삭제하고 관련 로컬 상태도 함께 제거한다.
     func deleteBook(_ book: Book) async -> Bool {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("DeleteBookAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("DeleteBookAPI", id: signpostID)
+        }
+
         do {
             try await bookAPIService.deleteBook(id: book.id)
 
@@ -116,6 +144,13 @@ extension BookMateViewModel {
             operationErrorMessage = nil
             showToast(successMessage, style: .success)
             return true
+        }
+
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("UpdateBookAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("UpdateBookAPI", id: signpostID)
         }
 
         do {

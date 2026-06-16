@@ -11,6 +11,13 @@ import Foundation
 extension BookMateViewModel {
     // 특정 책에 저장된 구절 목록을 서버에서 불러온다.
     func loadQuotes(bookId: UUID) async {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("LoadQuotesAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("LoadQuotesAPI", id: signpostID)
+        }
+
         do {
             quotes = try await quoteAPIService.fetchQuotes(bookId: bookId)
             quoteLoadErrorMessage = nil
@@ -31,6 +38,13 @@ extension BookMateViewModel {
 
     // 새 구절을 서버에 저장하고 로컬 목록 맨 앞에 추가한다.
     func saveQuote(bookId: UUID, text: String, page: Int?, memo: String?) async -> Bool {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("SaveQuoteAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("SaveQuoteAPI", id: signpostID)
+        }
+
         do {
             let savedQuote = try await quoteAPIService.saveQuote(
                 bookId: bookId,
@@ -53,6 +67,13 @@ extension BookMateViewModel {
 
     // 기존 구절을 서버에 수정 요청하고 로컬 목록을 갱신한다.
     func updateQuote(_ quote: Quote) async -> Bool {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("UpdateQuoteAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("UpdateQuoteAPI", id: signpostID)
+        }
+
         do {
             let updatedQuote = try await quoteAPIService.updateQuote(quote)
             if let index = quotes.firstIndex(where: { $0.id == updatedQuote.id }) {
@@ -72,6 +93,13 @@ extension BookMateViewModel {
 
     // 서버에서 구절을 삭제하고 로컬 목록에서도 제거한다.
     func deleteQuote(_ quote: Quote) async -> Bool {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("DeleteQuoteAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("DeleteQuoteAPI", id: signpostID)
+        }
+
         do {
             try await quoteAPIService.deleteQuote(id: quote.id)
             quotes.removeAll { $0.id == quote.id }

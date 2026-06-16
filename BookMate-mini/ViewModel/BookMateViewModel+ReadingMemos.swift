@@ -16,6 +16,13 @@ extension BookMateViewModel {
 
     // 특정 책의 독서 메모 목록을 서버에서 불러온다.
     func loadReadingMemos(bookId: UUID) async {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("LoadReadingMemosAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("LoadReadingMemosAPI", id: signpostID)
+        }
+
         do {
             readingMemos = try await memoAPIService.fetchMemos(bookId: bookId)
         } catch {
@@ -26,6 +33,13 @@ extension BookMateViewModel {
 
     // 새 독서 메모를 서버에 저장하고 날짜순으로 정렬한다.
     func saveReadingMemo(bookId: UUID, date: String, page: Int?, text: String) async -> Bool {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("SaveReadingMemoAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("SaveReadingMemoAPI", id: signpostID)
+        }
+
         do {
             let savedMemo = try await memoAPIService.saveMemo(bookId: bookId, date: date, page: page, text: text)
             readingMemos.append(savedMemo)
@@ -42,6 +56,13 @@ extension BookMateViewModel {
 
     // 기존 독서 메모를 서버에 수정 요청하고 로컬 목록을 갱신한다.
     func updateReadingMemo(_ memo: ReadingMemo) async -> Bool {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("UpdateReadingMemoAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("UpdateReadingMemoAPI", id: signpostID)
+        }
+
         do {
             let updatedMemo = try await memoAPIService.updateMemo(memo)
             if let index = readingMemos.firstIndex(where: { $0.id == memo.id }) {
@@ -60,6 +81,13 @@ extension BookMateViewModel {
 
     // 서버에서 독서 메모를 삭제하고 로컬 목록에서도 제거한다.
     func deleteReadingMemo(_ memo: ReadingMemo) async {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("DeleteReadingMemoAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("DeleteReadingMemoAPI", id: signpostID)
+        }
+
         do {
             try await memoAPIService.deleteMemo(id: memo.id)
             readingMemos.removeAll { $0.id == memo.id }

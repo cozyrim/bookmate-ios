@@ -25,6 +25,13 @@ extension BookMateViewModel {
 
     // 리뷰를 서버에 저장하고 서버가 확정한 응답값으로 로컬 상태를 갱신한다.
     func saveReview(bookId: UUID, rating: Int, content: String, isPublic: Bool) async -> Bool {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("SaveReviewAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("SaveReviewAPI", id: signpostID)
+        }
+
         do {
             let savedReview = try await reviewAPIService.saveReview(
                 bookId: bookId,
@@ -58,6 +65,13 @@ extension BookMateViewModel {
 
     // 서버에서 현재 로그인한 사용자의 책 리뷰를 불러온다.
     func loadMyReview(bookId: UUID) async {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("LoadMyReviewAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("LoadMyReviewAPI", id: signpostID)
+        }
+
         do {
             if let review = try await reviewAPIService.fetchMyReview(bookId: bookId) {
                 upsertReview(review)
@@ -98,6 +112,13 @@ extension BookMateViewModel {
     }
 
     func loadPublicReviews(isbn: String, title: String, author: String) async {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("LoadPublicReviewsAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("LoadPublicReviewsAPI", id: signpostID)
+        }
+
         isPublicReviewLoading = true
         publicReviewErrorMessage = nil
 

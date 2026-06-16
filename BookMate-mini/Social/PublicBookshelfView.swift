@@ -26,9 +26,11 @@ struct PublicBookshelfView: View {
                     onSearchUsers: {},
                     onSurfRandomUser: {},
                     onOpenGuestbook: {
+                        PerformanceLogger.event("PublicGuestbookTapped")
                         showingGuestbook = true
                     },
                     onBookTap: { book in
+                        PerformanceLogger.event("PublicRoomBookTapped")
                         selectedBook = book
                     }
                 )
@@ -48,6 +50,7 @@ struct PublicBookshelfView: View {
                 )
             }
             .onAppear {
+                PerformanceLogger.event("PublicBookshelfAppear")
                 fetchData()
             }
             .sheet(isPresented: $showingGuestbook) {
@@ -65,6 +68,13 @@ struct PublicBookshelfView: View {
         guard let token = tokenStore.load() else { return }
         isLoading = true
         Task {
+            let signpostID = PerformanceLogger.makeSignpostID()
+            PerformanceLogger.begin("FetchPublicBookshelfAPI", id: signpostID)
+
+            defer {
+                PerformanceLogger.end("FetchPublicBookshelfAPI", id: signpostID)
+            }
+
             do {
                 async let fetchedBooks = socialService.fetchPublicBooks(token: token, userId: targetUser.id)
                 async let fetchedMessages = socialService.fetchGuestbook(token: token, userId: targetUser.id)

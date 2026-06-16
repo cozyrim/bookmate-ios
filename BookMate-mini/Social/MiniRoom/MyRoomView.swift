@@ -24,16 +24,19 @@ struct MyRoomView: View {
                         showsExploreButtons: true,
                         isSurfing: isSurfing,
                         onSearchUsers: {
+                            PerformanceLogger.event("MiniRoomSearchUsersTapped")
                             path.append(ShelfView.ShelfRoute.searchUsers)
                         },
                         onSurfRandomUser: {
                             surfRandomUser()
                         },
                         onOpenGuestbook: {
+                            PerformanceLogger.event("MiniRoomGuestbookTapped")
                             fetchGuestbook()
                             showingGuestbook = true
                         },
                         onBookTap: { book in
+                            PerformanceLogger.event("MiniRoomOwnBookTapped")
                             path.append(ShelfView.ShelfRoute.bookDetail(book.id))
                         }
                     )
@@ -67,6 +70,13 @@ struct MyRoomView: View {
     private func fetchGuestbook() {
         guard let token = tokenStore.load(), let user = authViewModel.currentUser else { return }
         Task {
+            let signpostID = PerformanceLogger.makeSignpostID()
+            PerformanceLogger.begin("FetchMyGuestbookAPI", id: signpostID)
+
+            defer {
+                PerformanceLogger.end("FetchMyGuestbookAPI", id: signpostID)
+            }
+
             do {
                 let messages = try await socialService.fetchGuestbook(token: token, userId: user.id)
                 await MainActor.run {
@@ -83,6 +93,13 @@ struct MyRoomView: View {
         isSurfing = true
         
         Task {
+            let signpostID = PerformanceLogger.makeSignpostID()
+            PerformanceLogger.begin("SurfRandomUserAPI", id: signpostID)
+
+            defer {
+                PerformanceLogger.end("SurfRandomUserAPI", id: signpostID)
+            }
+
             do {
                 let randomUser = try await socialService.getRandomUser(token: token)
                 await MainActor.run {

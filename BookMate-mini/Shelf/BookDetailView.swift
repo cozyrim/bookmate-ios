@@ -120,6 +120,8 @@ struct BookDetailView: View {
         }
         .navigationBarBackButtonHidden(true)
         .onAppear {
+            PerformanceLogger.event("BookDetailAppear")
+
             // 다이어리 탭의 초기값 세팅
             applyMyReviewToForm()
             self.readingStatus = book.readingStatus

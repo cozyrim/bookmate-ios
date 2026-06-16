@@ -34,6 +34,9 @@ struct RoomTabView: View {
                     }
                 }
         }
+        .onAppear {
+            PerformanceLogger.event("MiniRoomTabAppear")
+        }
     }
 }
 
@@ -48,6 +51,7 @@ private final class MiniRoomBooksStore: ObservableObject {
         self.cancellable = viewModel.$books
             .removeDuplicates()
             .sink { [weak self] books in
+                PerformanceLogger.event("MiniRoomBooksUpdated")
                 self?.books = books
             }
     }
