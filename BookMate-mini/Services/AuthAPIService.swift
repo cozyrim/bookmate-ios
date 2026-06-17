@@ -10,7 +10,7 @@ import Foundation
 
 // signup, loginWithKakao, fetchProfile, updateProfile, logout를 추가하면 됨
 struct AuthAPIService {
-    private let baseURL = URL(string: "http://127.0.0.1:8080")!
+    private let baseURL = APIEnvironment.baseURL
     private let client = APIClient() // ← 공통 네트워크 헬퍼
     
     private struct ProfileUpdateBody: Encodable {

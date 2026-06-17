@@ -92,24 +92,7 @@ struct ProfileImageView: View {
     }
     
     private func displayImageURL(from string: String) -> URL? {
-        guard var components = URLComponents(string: string) else {
-            return nil
-        }
-
-        if components.scheme == "http" {
-            let host = components.host ?? ""
-
-            let isLocalServer =
-                host == "127.0.0.1" ||
-                host == "localhost" ||
-                host == "::1"
-
-            if !isLocalServer {
-                components.scheme = "https"
-            }
-        }
-
-        return components.url
+        APIEnvironment.displayURL(from: string)
     }
     
     

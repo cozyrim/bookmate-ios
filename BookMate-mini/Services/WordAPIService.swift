@@ -49,7 +49,7 @@ private struct WordResponse: Decodable {
 }
 
 struct WordAPIService {
-    private let baseURL = URL(string: "http://127.0.0.1:8080")!
+    private let baseURL = APIEnvironment.baseURL
     private let client = APIClient() // ← 공통 네트워크 헬퍼
 
     // 서버에서 전체 저장 단어 목록 가져오기

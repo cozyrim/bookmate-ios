@@ -42,7 +42,7 @@ private struct ReviewResponse: Decodable {
 }
 
 struct ReviewAPIService {
-    private let baseURL = URL(string: "http://127.0.0.1:8080")!
+    private let baseURL = APIEnvironment.baseURL
     private let client = APIClient()
 
     func fetchMyReview(bookId: UUID) async throws -> Review? {

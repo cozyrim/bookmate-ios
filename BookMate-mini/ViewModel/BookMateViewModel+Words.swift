@@ -119,6 +119,13 @@ extension BookMateViewModel {
             return
         }
 
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("SearchDictionaryAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("SearchDictionaryAPI", id: signpostID)
+        }
+
         do {
             var components = URLComponents(string: "https://stdict.korean.go.kr/api/search.do")!
             components.queryItems = [
@@ -187,6 +194,13 @@ extension BookMateViewModel {
         guard !apiKey.isEmpty else {
             dictionarySuggestions = []
             return
+        }
+
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("FetchDictionarySuggestionsAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("FetchDictionarySuggestionsAPI", id: signpostID)
         }
 
         do {
@@ -269,6 +283,13 @@ extension BookMateViewModel {
             return false
         }
 
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("SaveDictionaryWordAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("SaveDictionaryWordAPI", id: signpostID)
+        }
+
         do {
             let savedWord = try await wordAPIService.saveWord(
                 bookId: bookId,
@@ -299,6 +320,13 @@ extension BookMateViewModel {
 
     // 서버에서 저장한 단어 목록을 불러온다.
     func loadSavedWords() async {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("LoadSavedWordsAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("LoadSavedWordsAPI", id: signpostID)
+        }
+
         do {
             savedWords = try await wordAPIService.fetchWords()
             wordLoadErrorMessage = nil
@@ -315,6 +343,13 @@ extension BookMateViewModel {
 
     // 서버에서 단어를 삭제하고 로컬 목록에서도 제거한다.
     func deleteWord(_ word: Word) async -> Bool {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("DeleteWordAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("DeleteWordAPI", id: signpostID)
+        }
+
         do {
             try await wordAPIService.deleteWord(id: word.id)
 
@@ -336,6 +371,13 @@ extension BookMateViewModel {
 
     // 서버에서 단어 기록을 수정하고 로컬 목록을 갱신한다.
     func updateWord(_ word: Word, successMessage: String = "단어 기록을 수정했어요.") async -> Bool {
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("UpdateWordAPI", id: signpostID)
+
+        defer {
+            PerformanceLogger.end("UpdateWordAPI", id: signpostID)
+        }
+
         do {
             let updatedWord = try await wordAPIService.updateWord(word)
 

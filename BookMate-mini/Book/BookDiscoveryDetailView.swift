@@ -69,6 +69,7 @@ struct BookDiscoveryDetailView: View {
         }
         .task(id: selectedTabItem) {
             guard selectedTabItem == .reviews else { return }
+            PerformanceLogger.event("BookDiscoveryReviewsTabAppear")
 
             await viewModel.loadPublicReviews(
                 isbn: draft.isbn,

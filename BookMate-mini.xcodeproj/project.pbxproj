@@ -44,7 +44,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		E286E4872FB1B48400F1715A /* BookMate-mini */ = {
+		E25884C32FE1AE2000F99ED7 /* BookMate-mini */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "BookMate-mini";
 			sourceTree = "<group>";
@@ -94,7 +94,7 @@
 		E286E47C2FB1B48400F1715A = {
 			isa = PBXGroup;
 			children = (
-				E286E4872FB1B48400F1715A /* BookMate-mini */,
+				E25884C32FE1AE2000F99ED7 /* BookMate-mini */,
 				E286E4972FB1B48600F1715A /* BookMate-miniTests */,
 				E286E4A12FB1B48600F1715A /* BookMate-miniUITests */,
 				E2B000022FB5000000000002 /* Config */,
@@ -139,7 +139,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				E286E4872FB1B48400F1715A /* BookMate-mini */,
+				E25884C32FE1AE2000F99ED7 /* BookMate-mini */,
 			);
 			name = "BookMate-mini";
 			packageProductDependencies = (
@@ -433,6 +433,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6K7Z5G4HYN;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -477,6 +478,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6K7Z5G4HYN;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;

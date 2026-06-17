@@ -80,6 +80,9 @@ struct GuestbookSheetView: View {
             }
             .padding()
         }
+        .onAppear {
+            PerformanceLogger.event("GuestbookSheetAppear")
+        }
     }
     
     private func postMessage() {
@@ -87,6 +90,13 @@ struct GuestbookSheetView: View {
         isPosting = true
         
         Task {
+            let signpostID = PerformanceLogger.makeSignpostID()
+            PerformanceLogger.begin("PostGuestbookAPI", id: signpostID)
+
+            defer {
+                PerformanceLogger.end("PostGuestbookAPI", id: signpostID)
+            }
+
             do {
                 let newMessage = try await socialService.writeGuestbook(
                     token: token,
@@ -109,6 +119,13 @@ struct GuestbookSheetView: View {
         guard let token = tokenStore.load() else { return }
         
         Task {
+            let signpostID = PerformanceLogger.makeSignpostID()
+            PerformanceLogger.begin("DeleteGuestbookAPI", id: signpostID)
+
+            defer {
+                PerformanceLogger.end("DeleteGuestbookAPI", id: signpostID)
+            }
+
             do {
                 try await socialService.deleteGuestbook(token: token, messageId: messageId)
                 await MainActor.run {
