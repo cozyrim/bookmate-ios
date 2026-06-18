@@ -137,7 +137,7 @@ struct ReadingProgressSheet: View {
                 Text("저장하기")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(calculatedProgress == nil ? Color("TextSecondary") : Color("PrimaryButtonText"))
                     .frame(maxWidth: .infinity)
                     .frame(height: 60)
                     .background(calculatedProgress == nil ? Color.gray.opacity(0.35) : Color("Primary"))

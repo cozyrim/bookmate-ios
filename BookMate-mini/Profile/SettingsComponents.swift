@@ -153,7 +153,7 @@ struct SettingsPrimaryButton: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 62)
                 .background(Color("Primary"))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color("PrimaryButtonText"))
                 .clipShape(Capsule())
                 .shadow(color: Color("Primary").opacity(0.25), radius: 14, x: 0, y: 8)
         }

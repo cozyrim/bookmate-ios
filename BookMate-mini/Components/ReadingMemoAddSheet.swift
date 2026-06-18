@@ -66,7 +66,7 @@ struct ReadingMemoAddSheet: View {
                                         if success { dismiss() }
                                     }
                                 } label: {
-                                    Text("저장하기").font(.headline).foregroundStyle(.white).frame(maxWidth: .infinity).padding(.vertical, 16)
+                                    Text("저장하기").font(.headline).foregroundStyle(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color("TextSecondary") : Color("PrimaryButtonText")).frame(maxWidth: .infinity).padding(.vertical, 16)
                                         .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color("TextMuted").opacity(0.4) : Color("Primary"))
                                         .clipShape(RoundedRectangle(cornerRadius: 16))
                                 }.disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -79,5 +79,4 @@ struct ReadingMemoAddSheet: View {
                 }
             }
         }
-
 

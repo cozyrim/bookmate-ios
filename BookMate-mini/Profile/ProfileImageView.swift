@@ -43,7 +43,7 @@ struct ProfileImageView: View {
             if showsEditIcon {
                 Image(systemName: "pencil")
                                     .font(.system(size: 17, weight: .semibold))
-                                    .foregroundStyle(Color("TextSecondary"))
+                                    .foregroundStyle(Color("PrimaryButtonText"))
                                     .frame(width: 48, height: 48)
                                     .background(Color("Primary"))
                                     .clipShape(Circle())
@@ -51,7 +51,7 @@ struct ProfileImageView: View {
                                         Circle()
                                             .stroke(Color("Surface"), lineWidth: 4)
                                     }
-                                    .shadow(color: Color("Primary").opacity(0.35), radius: 10, x: 0, y: 4)
+//                                    .shadow(color: Color("Primary").opacity(0.35), radius: 10, x: 0, y: 4)
                                     .offset(x: 10, y: 10)
             }
         }

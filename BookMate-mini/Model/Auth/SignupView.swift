@@ -114,7 +114,7 @@ struct SignupView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 62)
                         .background((step == 1 ? canGoNext : canSubmit) ? Color("Primary") : Color.gray.opacity(0.25))
-                        .foregroundStyle(.white)
+                        .foregroundStyle((step == 1 ? canGoNext : canSubmit) ? Color("PrimaryButtonText") : Color("TextSecondary"))
                         .clipShape(Capsule())
                         .shadow(color: Color("Primary").opacity(0.25), radius: 12, x: 0, y: 6)
                 }

@@ -75,7 +75,7 @@ struct ReadingPeriodPickerSheet: View {
                 } label: {
                     Text("기간 선택 완료")
                         .font(.headline)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color("PrimaryButtonText"))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(Color("Primary"))

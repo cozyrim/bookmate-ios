@@ -48,6 +48,10 @@ struct MiniRoomHeaderView: View {
         : Color("Border").opacity(0.3)
     }
 
+    private var controlForeground: Color {
+        colorScheme == .dark ? Color("LightButtonText") : Color("PrimaryDeep")
+    }
+
     var body: some View {
         HStack(spacing: 10) {
             if let onBack {
@@ -89,7 +93,7 @@ struct MiniRoomHeaderView: View {
                         VStack(spacing: 3) {
                             if isSurfing {
                                 ProgressView()
-                                    .tint(Color("Primary"))
+                                    .tint(controlForeground)
                                     .frame(width: 20, height: 20)
                             } else {
                                 Image(systemName: "water.waves")
@@ -100,7 +104,7 @@ struct MiniRoomHeaderView: View {
                                 .font(.system(size: 10, weight: .semibold))
                                 .lineLimit(1)
                         }
-                        .foregroundStyle(Color("PrimaryDeep"))
+                        .foregroundStyle(controlForeground)
                         .frame(width: 58, height: 48)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18))
                     }
@@ -124,7 +128,7 @@ struct MiniRoomHeaderView: View {
                     .font(.system(size: 10, weight: .semibold))
                     .lineLimit(1)
             }
-            .foregroundStyle(Color("PrimaryDeep"))
+            .foregroundStyle(controlForeground)
             .frame(width: 48, height: 48)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         }

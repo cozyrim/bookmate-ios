@@ -63,7 +63,7 @@ struct WordDetailsView: View {
                     Label("기록 수정하기", systemImage: "pencil")
                         .font(.headline)
                         .fontWeight(.bold)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color("PrimaryButtonText"))
                         .frame(maxWidth: .infinity)
                         .frame(height: 62)
                         .background(Color("Primary"))

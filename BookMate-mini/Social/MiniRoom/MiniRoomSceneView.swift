@@ -76,6 +76,7 @@ struct MiniRoomSceneView: View {
                 }
             }
         }
+        .toolbarColorScheme(.light, for: .navigationBar)
         .onAppear {
             PerformanceLogger.event("MiniRoomSceneAppear")
         }
@@ -83,11 +84,17 @@ struct MiniRoomSceneView: View {
 }
 
 private struct MiniRoomCanvas: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let books: [Book]
     let onOpenGuestbook: () -> Void
     let onBookTap: (Book) -> Void
 
     private let backgroundAspectRatio: CGFloat = 1024 / 1536
+
+    private var controlForeground: Color {
+        colorScheme == .dark ? Color("LightButtonText") : Color("PrimaryDeep")
+    }
 
     var body: some View {
         GeometryReader { proxy in
@@ -113,7 +120,7 @@ private struct MiniRoomCanvas: View {
                 } label: {
                     Label("방명록", systemImage: "heart.text.square")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(Color("PrimaryDeep"))
+                        .foregroundStyle(controlForeground)
                         .padding(.horizontal, 17)
                         .padding(.vertical, 12)
                         .background(

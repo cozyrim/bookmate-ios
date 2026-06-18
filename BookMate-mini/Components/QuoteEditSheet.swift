@@ -81,7 +81,7 @@ struct QuoteEditSheet: View {
                                                                 } label: {
                                                                     Text("수정 저장")
                                                                         .font(.headline)
-                                                                        .foregroundStyle(.white)
+                                                                        .foregroundStyle(editedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color("TextSecondary") : Color("PrimaryButtonText"))
                                                                         .frame(maxWidth: .infinity)
                                                                         .padding(.vertical, 16)
                                                                         .background(editedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -127,4 +127,3 @@ struct QuoteEditSheet: View {
         }
     }
 }
-

@@ -91,7 +91,7 @@ struct ReadingMemoEditSheet: View {
                                 } label: {
                                     Text("수정 완료")
                                         .font(.headline)
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color("TextSecondary") : Color("PrimaryButtonText"))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 16)
                                         .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color("TextMuted").opacity(0.4) : Color("Primary"))

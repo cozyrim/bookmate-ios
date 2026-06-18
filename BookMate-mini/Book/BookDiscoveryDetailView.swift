@@ -90,7 +90,7 @@ struct BookDiscoveryDetailView: View {
             } label: {
                 Text("내 책장에 등록하기")
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color("PrimaryButtonText"))
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
                     .background(Color("Primary"))

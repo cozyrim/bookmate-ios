@@ -183,7 +183,7 @@ struct BookRegistrationPreviewView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 64)
                             .background(Color("Primary"))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color("PrimaryButtonText"))
                             .clipShape(Capsule())
                             .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
                     }

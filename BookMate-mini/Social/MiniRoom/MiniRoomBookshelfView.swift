@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct MiniRoomBookshelfView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let books: [Book]
     let onBookTap: (Book) -> Void
 
@@ -25,6 +27,10 @@ struct MiniRoomBookshelfView: View {
 
     private var selectedPage: Int {
         min(max(currentPage ?? 0, 0), totalPages - 1)
+    }
+
+    private var controlForeground: Color {
+        colorScheme == .dark ? Color("LightButtonText") : Color("PrimaryDeep")
     }
 
     var body: some View {
@@ -137,7 +143,7 @@ struct MiniRoomBookshelfView: View {
             HStack(spacing: 6) {
                 ForEach(0..<totalPages, id: \.self) { page in
                     Circle()
-                        .fill(page == selectedPage ? Color("PrimaryDeep").opacity(0.82) : Color("TextSecondary").opacity(0.26))
+                        .fill(page == selectedPage ? controlForeground.opacity(0.86) : controlForeground.opacity(0.28))
                         .frame(width: page == selectedPage ? 8 : 5, height: page == selectedPage ? 8 : 5)
                 }
             }
@@ -151,7 +157,7 @@ struct MiniRoomBookshelfView: View {
             }
             .disabled(selectedPage >= totalPages - 1)
         }
-        .foregroundStyle(Color("PrimaryDeep").opacity(0.82))
+        .foregroundStyle(controlForeground.opacity(0.86))
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(

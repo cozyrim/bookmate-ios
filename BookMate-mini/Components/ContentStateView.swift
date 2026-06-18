@@ -73,7 +73,7 @@ struct ContentStateView: View {
                                 .frame(width: 245, height: 64)
                                 .background(Color("Primary"))
 //                                .foregroundStyle(Color("TextPrimary"))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color("PrimaryButtonText"))
                                 
                                 
                                 

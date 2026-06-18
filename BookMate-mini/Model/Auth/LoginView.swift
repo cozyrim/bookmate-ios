@@ -79,7 +79,7 @@ struct LoginView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(Color("Primary"))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color("PrimaryButtonText"))
                             .clipShape(Capsule())
                     }
                     .disabled(authViewModel.isLoading)
@@ -98,7 +98,7 @@ struct LoginView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
                         .background(Color(red: 1.0, green: 0.90, blue: 0.0))
-                        .foregroundStyle(Color("TextPrimary").opacity(0.85))
+                        .foregroundStyle(Color("LightButtonText").opacity(0.88))
                         .clipShape(Capsule())
                     }
                     .disabled(authViewModel.isLoading)

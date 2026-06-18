@@ -82,7 +82,7 @@ struct BookEditSheet: View {
                                             Text(isSaving ? "저장 중..." : "저장하기")
                                                 .font(.headline)
                                                 .fontWeight(.bold)
-                                                .foregroundStyle(.white)
+                                                .foregroundStyle(Color("PrimaryButtonText"))
                                                 .frame(maxWidth: .infinity)
                                                 .frame(height: 56)
                                                 .background(Color("Primary"))

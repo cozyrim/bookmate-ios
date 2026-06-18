@@ -288,6 +288,7 @@ struct HomeSearchSection: View {
             }
         }
         .onDisappear {
+            guard !isShowingSearchResult else { return }
             clearSearchText()
         }
     }

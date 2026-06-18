@@ -90,13 +90,25 @@ private struct RemoteBookCoverImage: View {
 
             loadedImage = image
         } catch {
+            if Task.isCancelled || isCancelledImageRequest(error) {
+                return
+            }
+
             didFail = true
             DebugLogger.log("커버 이미지 로딩 실패:", url.absoluteString, error.localizedDescription)
         }
+    }
+
+    private func isCancelledImageRequest(_ error: Error) -> Bool {
+        if error is CancellationError {
+            return true
+        }
+
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
     }
 }
 
 #Preview {
     BookCoverCell(isSelected: false, imageName: Book.dummyBooks[0].imageName)
 }
-

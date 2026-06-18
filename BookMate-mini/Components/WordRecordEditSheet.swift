@@ -118,7 +118,7 @@ struct WordRecordEditSheet: View {
                         .disabled(isSaving)
                         .font(.title3)
                         .fontWeight(.bold)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color("PrimaryButtonText"))
                         .frame(maxWidth: .infinity)
                         .frame(height: 64)
                         .background(Color("Primary"))

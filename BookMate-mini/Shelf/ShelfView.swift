@@ -47,7 +47,7 @@ struct ShelfView: View {
                         NavigationLink(value: ShelfRoute.bookSearch) {
                             Text(" + 새 책 추가") // 이 버튼을 누르면 NavigationStack의 path에 ShelfRoute.bookSearch라는 값을 넣어줘.
                                 .font(.caption2)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color("PrimaryButtonText"))
                                 .fontWeight(.semibold)
                                 .padding(.horizontal, 18)
                                 .padding(.vertical, 11)

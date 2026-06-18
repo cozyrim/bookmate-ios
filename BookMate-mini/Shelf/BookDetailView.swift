@@ -544,7 +544,7 @@ struct BookDetailView: View {
                     } label: {
                         Text("다이어리 한 번에 저장하기")
                             .font(.headline)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color("PrimaryButtonText"))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
                             .background(Color("Primary"))
