@@ -12,6 +12,11 @@ struct MyRoomView: View {
     
     @State private var guestbookMessages: [GuestbookMessageResponse] = []
     @State private var showingGuestbook = false
+    @State private var showingThemePicker = false
+
+    private var currentTheme: MiniRoomTheme {
+        MiniRoomTheme.from(authViewModel.profile?.roomTheme ?? authViewModel.currentUser?.roomTheme)
+    }
     
     var body: some View {
         Group {
@@ -19,7 +24,7 @@ struct MyRoomView: View {
                     MiniRoomSceneView(
                         nickname: user.nickname,
                         profileImageUrl: user.profileImageUrl,
-                        theme: .basic,
+                        theme: currentTheme,
                         books: books,
                         showsExploreButtons: true,
                         isSurfing: isSurfing,
@@ -29,6 +34,10 @@ struct MyRoomView: View {
                         },
                         onSurfRandomUser: {
                             surfRandomUser()
+                        },
+                        onChangeTheme: {
+                            PerformanceLogger.event("MiniRoomThemePickerTapped")
+                            showingThemePicker = true
                         },
                         onOpenGuestbook: {
                             PerformanceLogger.event("MiniRoomGuestbookTapped")
@@ -57,13 +66,18 @@ struct MyRoomView: View {
                             id: user.id,
                             nickname: user.nickname,
                             profileImageUrl: user.profileImageUrl,
-                            roomTheme: "room_bg_default"
+                            roomTheme: currentTheme.rawValue
                         ),
                         socialService: socialService
                     )
                     .environmentObject(authViewModel)
                     .presentationDetents([.medium, .large])
                 }
+            }
+            .sheet(isPresented: $showingThemePicker) {
+                MiniRoomThemePickerView(selectedTheme: currentTheme)
+                    .environmentObject(authViewModel)
+                    .presentationDetents([.large])
             }
         }
     

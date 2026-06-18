@@ -179,7 +179,7 @@ struct AuthAPIService {
         nickname: String,
         profileImageUrl: String?,
         isPublic: Bool,
-        roomTheme: String = "AppBackground"
+        roomTheme: String
     ) async throws -> ProfileResponse {
         let url = baseURL
             .appendingPathComponent("api")

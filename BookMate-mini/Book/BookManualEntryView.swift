@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PhotosUI
+import UIKit
 
 struct BookManualEntryView: View {
     @Environment(\.dismiss) var dismiss
@@ -32,7 +33,7 @@ struct BookManualEntryView: View {
     private let coverCornerRadius: CGFloat = 26
     private let contentHorizontalPadding: CGFloat = 28
     private let headerTopPadding: CGFloat = 52
-    private let bottomTabClearance: CGFloat = 96
+    private let bottomFormPadding: CGFloat = 36
 
     let onFinishRegistration: (Int) -> Void
 
@@ -206,7 +207,11 @@ struct BookManualEntryView: View {
                                         .foregroundStyle(Color("TextMuted"))
 
                                     Text(selectedCategory)
-                                        .foregroundStyle(selectedCategory == "카테고리 선택" ? .gray : .black)
+                                        .foregroundStyle(
+                                            selectedCategory == "카테고리 선택"
+                                            ? Color("LightButtonText").opacity(0.42)
+                                            : Color("LightButtonText")
+                                        )
 
                                     Spacer()
 
@@ -242,59 +247,16 @@ struct BookManualEntryView: View {
                             )
                             .keyboardType(.numberPad)
                         }
+
+                        registrationButton
+                            .padding(.top, 8)
                     }
                     .padding(.horizontal, contentHorizontalPadding)
                     .padding(.top, 18)
-                    .padding(.bottom, bottomTabClearance + 20)
+                    .padding(.bottom, bottomFormPadding)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
-        }
-        .safeAreaInset(edge: .bottom) {
-            Button {
-                let trimmedTotalPages = totalPagesText.trimmingCharacters(in: .whitespacesAndNewlines)
-                let manualTotalPages = Int(trimmedTotalPages)
-
-                let draft = BookRegistrationDraft(
-                    title: title,
-                    author: author,
-                    publisher: initialDraft?.publisher ?? "",
-                    contents: initialDraft?.contents ?? "",
-                    imageName: imageName,
-                    category: selectedCategory,
-                    isbn: initialDraft?.isbn ?? "",
-                    totalPages: manualTotalPages ?? initialDraft?.totalPages
-                )
-
-                Task {
-                    isSaving = true
-                    errorMessage = nil
-
-                    do {
-                        let savedBook = try await viewModel.registerBook(draft: draft)
-                        registrationResult = RegistrationResult(draft: draft, book: savedBook)
-                    } catch {
-                        errorMessage = "책 등록에 실패했습니다."
-                        DebugLogger.log("책 등록 실패:", error)
-                    }
-
-                    isSaving = false
-                }
-
-            } label: {
-                Label(isSaving ? "등록 중..." : "등록하기", systemImage: "checkmark.circle")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 64)
-                    .background(Color("Primary"))
-                    .foregroundStyle(Color("PrimaryButtonText"))
-                    .clipShape(Capsule())
-                    .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
-            }
-            .disabled(isSaving)
-            .padding(.horizontal, contentHorizontalPadding)
-            .padding(.bottom, 12)
-            .background(Color("AppBackground").opacity(0.96))
         }
         .navigationDestination(item: $registrationResult) { result in
             BookRegistrationCompleteView(
@@ -314,6 +276,63 @@ struct BookManualEntryView: View {
             await fillTotalPagesIfNeeded()
         }
         .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .tabBar)
+    }
+
+    private var registrationButton: some View {
+        Button {
+            dismissKeyboard()
+
+            let trimmedTotalPages = totalPagesText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let manualTotalPages = Int(trimmedTotalPages)
+
+            let draft = BookRegistrationDraft(
+                title: title,
+                author: author,
+                publisher: initialDraft?.publisher ?? "",
+                contents: initialDraft?.contents ?? "",
+                imageName: imageName,
+                category: selectedCategory,
+                isbn: initialDraft?.isbn ?? "",
+                totalPages: manualTotalPages ?? initialDraft?.totalPages
+            )
+
+            Task {
+                isSaving = true
+                errorMessage = nil
+
+                do {
+                    let savedBook = try await viewModel.registerBook(draft: draft)
+                    registrationResult = RegistrationResult(draft: draft, book: savedBook)
+                } catch {
+                    errorMessage = "책 등록에 실패했습니다."
+                    DebugLogger.log("책 등록 실패:", error)
+                }
+
+                isSaving = false
+            }
+
+        } label: {
+            Label(isSaving ? "등록 중..." : "등록하기", systemImage: "checkmark.circle")
+                .font(.title3)
+                .fontWeight(.bold)
+                .frame(maxWidth: .infinity)
+                .frame(height: 64)
+                .background(Color("Primary"))
+                .foregroundStyle(Color("PrimaryButtonText"))
+                .clipShape(Capsule())
+                .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
+        }
+        .disabled(isSaving)
+    }
+
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
     }
 
     private func fillTotalPagesIfNeeded() async {

@@ -201,7 +201,7 @@ struct SaveWordSheet: View {
             Text(book.title)
                 .font(.caption)
                 .fontWeight(isSelected ? .bold : .medium)
-                .foregroundStyle(isSelected ? Color("TextSecondary") : .black.opacity(0.66))
+                .foregroundStyle(isSelected ? Color("Primary") : Color("TextPrimary").opacity(0.88))
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .frame(width: 78, height: 18, alignment: .center)

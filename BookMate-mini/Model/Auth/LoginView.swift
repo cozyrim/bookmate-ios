@@ -37,6 +37,14 @@ struct LoginView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 20) {
+                    Image("BookMatePlainIcon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 112, height: 112)
+                        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                        .shadow(color: Color("Shadow").opacity(0.08), radius: 18, x: 0, y: 8)
+                        .padding(.bottom, 4)
+
                     Text("북메이트")
                         .font(.largeTitle)
                         .fontWeight(.bold)

@@ -33,6 +33,18 @@ struct MiniRoomBookshelfView: View {
         colorScheme == .dark ? Color("LightButtonText") : Color("PrimaryDeep")
     }
 
+    private var emptyStateForeground: Color {
+        colorScheme == .dark ? Color("TextPrimary").opacity(0.9) : Color("PrimaryDeep")
+    }
+
+    private var emptyStateBackground: AnyShapeStyle {
+        if colorScheme == .dark {
+            return AnyShapeStyle(Color("SurfaceElevated").opacity(0.76))
+        }
+
+        return AnyShapeStyle(Color("Surface").opacity(0.84))
+    }
+
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
@@ -125,9 +137,13 @@ struct MiniRoomBookshelfView: View {
             Text("읽은 책이 꽂혀요")
                 .font(.caption.bold())
         }
-        .foregroundStyle(Color("TextSecondary"))
+        .foregroundStyle(emptyStateForeground)
         .padding(12)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .background(emptyStateBackground, in: RoundedRectangle(cornerRadius: 12))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color("Border").opacity(0.18), lineWidth: 1)
+        }
     }
 
     private var shelfPageHint: some View {

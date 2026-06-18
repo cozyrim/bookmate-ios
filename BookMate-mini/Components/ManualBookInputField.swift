@@ -16,15 +16,17 @@ struct ManualBookInputField: View {
         
         HStack{
             Image(systemName: iconName)
-                .foregroundStyle(Color(.gray).opacity(0.8))
+                .foregroundStyle(Color("LightButtonText").opacity(0.45))
                 .fontWeight(.bold)
             
             TextField(
                 "",
                 text: $text,
                 prompt: Text(placeholder)
-                    .foregroundStyle(Color("TextMuted").opacity(0.6))
+                    .foregroundStyle(Color("LightButtonText").opacity(0.42))
             )
+            .foregroundStyle(Color("LightButtonText"))
+            .tint(Color("PrimaryDeep"))
         }
         .padding(.horizontal, 20)
         .frame(height: 58)

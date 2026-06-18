@@ -236,7 +236,8 @@ final class AuthSessionViewModel: ObservableObject {
                 token: token,
                 nickname: nickname,
                 profileImageUrl: profileImageUrl,
-                isPublic: isPublic
+                isPublic: isPublic,
+                roomTheme: profile?.roomTheme ?? currentUser?.roomTheme ?? MiniRoomTheme.basic.rawValue
             )
 
             profile = updatedProfile
@@ -252,6 +253,46 @@ final class AuthSessionViewModel: ObservableObject {
             errorMessage = "프로필 수정에 실패했습니다."
             isLoading = false
             DebugLogger.log("프로필 수정 실패:", error)
+            return false
+        }
+    }
+
+    func updateMiniRoomTheme(_ theme: MiniRoomTheme) async -> Bool {
+        guard let token = tokenStore.load() else {
+            errorMessage = "로그인이 필요합니다."
+            return false
+        }
+
+        guard let user = currentUser else {
+            errorMessage = "사용자 정보를 찾지 못했습니다."
+            return false
+        }
+
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let updatedProfile = try await authAPIService.updateProfile(
+                token: token,
+                nickname: profile?.nickname ?? user.nickname,
+                profileImageUrl: profile?.profileImageUrl ?? user.profileImageUrl,
+                isPublic: profile?.isPublic ?? user.isPublic ?? true,
+                roomTheme: theme.rawValue
+            )
+
+            profile = updatedProfile
+            currentUser = updatedProfile.toAuthUser()
+            isLoading = false
+            return true
+        } catch {
+            if handleUnauthorizedIfNeeded(error) {
+                isLoading = false
+                return false
+            }
+
+            errorMessage = "미니룸 배경 저장에 실패했습니다."
+            isLoading = false
+            DebugLogger.log("미니룸 배경 저장 실패:", error)
             return false
         }
     }

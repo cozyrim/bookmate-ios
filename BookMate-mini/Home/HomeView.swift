@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import UIKit
 
 struct HomeView: View {
     @ObservedObject var viewModel: BookMateViewModel // 다른 곳에서 만든 viewModel 받아서 관찰
@@ -35,6 +34,10 @@ struct HomeView: View {
         || !viewModel.bookSearchResults.isEmpty
         || !viewModel.savedWordSearchResults.isEmpty
         || !viewModel.savedBookSearchResults.isEmpty
+    }
+
+    private var shouldShowStarterGuide: Bool {
+        viewModel.savedWords.isEmpty && viewModel.shelfBooks.isEmpty
     }
 
 
@@ -69,6 +72,13 @@ struct HomeView: View {
                         )
 
                         if !isSearchActive {
+                            if shouldShowStarterGuide {
+                                homeStarterGuideCard
+                                    .padding(.horizontal, 24)
+                                    .padding(.top, 2)
+                                    .padding(.bottom, 8)
+                            }
+
                             VStack(alignment: .leading, spacing: 18){
                                 HStack {
                                     Text("최근 저장한 단어")
@@ -205,7 +215,6 @@ struct HomeView: View {
                 }
                 .buttonStyle(.plain)
                 .scrollDismissesKeyboard(.interactively)
-                .hideKeyboardOnTap()
 
             }
             .sheet(item: $activeBookSheet) { sheet in
@@ -390,13 +399,89 @@ struct HomeView: View {
             .shadow(color: Color("Shadow").opacity(0.045), radius: 9, x: 0, y: 3)
     }
 
+    private var homeStarterGuideCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "magnifyingglass.circle.fill")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(Color("Primary"))
+                    .frame(width: 42, height: 42)
+                    .background(Color("Primary").opacity(0.12), in: Circle())
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("처음엔 단어 하나부터 찾아볼까요?")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color("TextPrimary"))
+
+                    Text("궁금한 단어를 검색하고, 저장할 책은 바로 등록할 수 있어요.")
+                        .font(.caption)
+                        .foregroundStyle(Color("TextSecondary"))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            HStack(spacing: 8) {
+                starterKeywordButton("희망")
+                starterKeywordButton("행복")
+
+                Button {
+                    path.append(HomeRoute.bookSearch)
+                } label: {
+                    Label("책 등록", systemImage: "plus")
+                        .font(.caption.bold())
+                        .foregroundStyle(Color("PrimaryButtonText"))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 9)
+                        .background(Color("Primary"), in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color("Surface").opacity(0.9), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(Color("Border").opacity(0.28), lineWidth: 1)
+        }
+        .shadow(color: Color("Shadow").opacity(0.04), radius: 12, x: 0, y: 6)
+    }
+
+    private func starterKeywordButton(_ keyword: String) -> some View {
+        Button {
+            viewModel.searchMode = .dictionary
+            viewModel.searchText = keyword
+
+            Task {
+                await viewModel.performSearch()
+            }
+        } label: {
+            Text(keyword)
+                .font(.caption.bold())
+                .foregroundStyle(Color("PrimaryDeep"))
+                .padding(.horizontal, 13)
+                .padding(.vertical, 9)
+                .background(Color("Primary").opacity(0.14), in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
 
     private var homeIntroHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("오늘의 단어장")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundStyle(Color("TextSecondary"))
+            HStack(spacing: 7) {
+                Text("오늘의 단어장")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color("TextSecondary"))
+
+                Image("BookMateSymbolIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 28, height: 28)
+                    .offset(y: -2)
+            }
 
             Text("읽다가 만난 단어들")
                 .font(.title)
@@ -406,19 +491,6 @@ struct HomeView: View {
         .padding(.horizontal, 24)
         .padding(.top, 18)
         .padding(.bottom, 2)
-    }
-}
-
-private extension View {
-    func hideKeyboardOnTap() -> some View {
-        self.onTapGesture {
-            UIApplication.shared.sendAction(
-                #selector(UIResponder.resignFirstResponder),
-                to: nil,
-                from: nil,
-                for: nil
-            )
-        }
     }
 }
 

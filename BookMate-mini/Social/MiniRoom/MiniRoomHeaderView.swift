@@ -17,6 +17,7 @@ struct MiniRoomHeaderView: View {
     let onBack: (() -> Void)?
     let onSearchUsers: () -> Void
     let onSurfRandomUser: () -> Void
+    let onChangeTheme: (() -> Void)?
 
     init(
         nickname: String,
@@ -25,7 +26,8 @@ struct MiniRoomHeaderView: View {
         isSurfing: Bool,
         onBack: (() -> Void)? = nil,
         onSearchUsers: @escaping () -> Void,
-        onSurfRandomUser: @escaping () -> Void
+        onSurfRandomUser: @escaping () -> Void,
+        onChangeTheme: (() -> Void)? = nil
     ) {
         self.nickname = nickname
         self.profileImageUrl = profileImageUrl
@@ -34,6 +36,7 @@ struct MiniRoomHeaderView: View {
         self.onBack = onBack
         self.onSearchUsers = onSearchUsers
         self.onSurfRandomUser = onSurfRandomUser
+        self.onChangeTheme = onChangeTheme
     }
 
     private var chipBackground: Color {
@@ -49,7 +52,7 @@ struct MiniRoomHeaderView: View {
     }
 
     private var controlForeground: Color {
-        colorScheme == .dark ? Color("LightButtonText") : Color("PrimaryDeep")
+        colorScheme == .dark ? Color("TextPrimary") : Color("PrimaryDeep")
     }
 
     var body: some View {
@@ -87,6 +90,10 @@ struct MiniRoomHeaderView: View {
 
             if showsExploreButtons {
                 HStack(spacing: 6) {
+                    if let onChangeTheme {
+                        headerButton(title: "배경", systemImage: "paintpalette", action: onChangeTheme)
+                    }
+
                     headerButton(title: "검색", systemImage: "magnifyingglass", action: onSearchUsers)
 
                     Button(action: onSurfRandomUser) {
@@ -106,7 +113,7 @@ struct MiniRoomHeaderView: View {
                         }
                         .foregroundStyle(controlForeground)
                         .frame(width: 58, height: 48)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                        .background(headerButtonBackground, in: RoundedRectangle(cornerRadius: 18))
                     }
                     .buttonStyle(.plain)
                     .disabled(isSurfing)
@@ -130,8 +137,14 @@ struct MiniRoomHeaderView: View {
             }
             .foregroundStyle(controlForeground)
             .frame(width: 48, height: 48)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            .background(headerButtonBackground, in: RoundedRectangle(cornerRadius: 16))
         }
         .buttonStyle(.plain)
+    }
+
+    private var headerButtonBackground: AnyShapeStyle {
+        colorScheme == .dark
+        ? AnyShapeStyle(Color("SurfaceElevated").opacity(0.82))
+        : AnyShapeStyle(.ultraThinMaterial)
     }
 }

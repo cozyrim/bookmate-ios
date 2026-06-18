@@ -48,6 +48,8 @@ struct PublicBookshelfView: View {
             }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .navigationBarHidden(true)
             .navigationDestination(item: $selectedBook) { book in
                 PublicBookDetailView(
                     book: book,

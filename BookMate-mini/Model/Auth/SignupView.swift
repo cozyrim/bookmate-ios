@@ -225,10 +225,17 @@ struct SignupView: View {
                 Image(systemName: "envelope")
                     .foregroundStyle(Color("TextSecondary").opacity(0.75))
 
-                TextField("example@bookmate.com", text: $email)
+                TextField(
+                    "",
+                    text: $email,
+                    prompt: Text("example@bookmate.com")
+                        .foregroundStyle(Color("TextSecondary").opacity(0.48))
+                )
                     .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
+                    .foregroundStyle(Color("TextPrimary"))
+                    .tint(Color("Primary").opacity(0.68))
                     .focused($focusedField, equals: .email)
                     .submitLabel(.next)
                     .onSubmit {

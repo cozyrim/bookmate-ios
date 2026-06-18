@@ -25,19 +25,22 @@ struct RootView: View {
 
     
     var body: some View {
-        if authViewModel.isCheckingSession {
-            ZStack {
-                Color("AppBackground")
-                    .ignoresSafeArea()
-                
-                ProgressView()
+        Group {
+            if authViewModel.isCheckingSession {
+                ZStack {
+                    Color("AppBackground")
+                        .ignoresSafeArea()
+
+                    ProgressView()
+                }
+            } else if authViewModel.isLoggedIn {
+                MainTabView(authViewModel: authViewModel)
+                    .environmentObject(authViewModel)
+            } else {
+                LoginView(authViewModel: authViewModel)
             }
-        } else if authViewModel.isLoggedIn {
-            MainTabView(authViewModel: authViewModel)
-                .environmentObject(authViewModel)
-        } else {
-            LoginView(authViewModel: authViewModel)
         }
+        .dismissKeyboardOnTap()
     }
 }
 #Preview {
