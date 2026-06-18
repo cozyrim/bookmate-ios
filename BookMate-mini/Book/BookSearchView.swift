@@ -16,6 +16,7 @@ struct BookSearchView: View {
     @State private var query = ""
     @State private var searchTask: Task<Void, Never>? // 이전에 실행 중이던 검색 예약
     @ObservedObject var viewModel: BookMateViewModel
+
     @Binding var selectedTab: Int
     // @Published에 의해서 값이 바뀌면 ViewModel을 보고 있는 View들이 다시 그려짐
 
@@ -26,6 +27,7 @@ struct BookSearchView: View {
 //    @Published = 바뀐 걸 View에 알림
 //    ForEach = 결과 개수만큼 카드 그림
     let onFinishRegistration: (Int) -> Void
+
 
     private func finishRegistration(to tab: Int) {
         onFinishRegistration(tab)

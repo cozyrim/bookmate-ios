@@ -62,7 +62,11 @@ struct HomeView: View {
 
                         homeIntroHeader
 
-                        HomeSearchSection(viewModel: viewModel, selectedTab: $selectedTab)
+                        HomeSearchSection(viewModel: viewModel, selectedTab: $selectedTab,
+                                          onRegisterBookTap: {
+                            path.append(HomeRoute.bookSearch)
+                        }
+                        )
 
                         if !isSearchActive {
                             VStack(alignment: .leading, spacing: 18){

@@ -18,6 +18,8 @@ struct HomeSearchSection: View {
     @State private var bookSearchTask: Task<Void, Never>?
     @FocusState private var isSearchFocused: Bool
 
+    let onRegisterBookTap: () -> Void
+
     private func searchRecentKeyword(_ word: String) {
         let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -278,9 +280,11 @@ struct HomeSearchSection: View {
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity)
         .navigationDestination(isPresented: $isShowingSearchResult) {
-            SearchResultView(viewModel: viewModel) {
+            SearchResultView(viewModel: viewModel, onSaveComplete: {
                 isShowingSearchResult = false
-            }
+            },
+            onRegisterBookTap: onRegisterBookTap
+        )
         }
         .onChange(of: isShowingSearchResult) { _, isShowing in
             if !isShowing {
@@ -589,5 +593,5 @@ struct HomeSearchSection: View {
 
 }
 #Preview {
-    HomeSearchSection(viewModel: BookMateViewModel(), selectedTab: .constant(0))
+    HomeSearchSection(viewModel: BookMateViewModel(), selectedTab: .constant(0), onRegisterBookTap: {})
 }

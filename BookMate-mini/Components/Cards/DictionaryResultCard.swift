@@ -15,6 +15,7 @@ struct DictionaryResultCard: View {
     let exampleSentence: String
     let imageName: String
     let onSaveComplete: () -> Void
+    let onRegisterBookTap: () -> Void
     
     @ObservedObject var viewModel: BookMateViewModel
     @State var showingSheet = false
@@ -62,7 +63,7 @@ struct DictionaryResultCard: View {
                 .clipShape(Capsule())
             }
             .sheet(isPresented: $showingSheet){
-                SaveWordSheet(viewModel: viewModel, text: text, meaning: meaning, imageName: imageName, onSaveComplete: onSaveComplete)
+                SaveWordSheet(viewModel: viewModel, text: text, meaning: meaning, imageName: imageName, onSaveComplete: onSaveComplete, onRegisterBookTap: onRegisterBookTap)
                     .presentationDragIndicator(.visible)
             }
             .padding(.top, 8)
@@ -79,5 +80,5 @@ struct DictionaryResultCard: View {
 }
 
 #Preview {
-    DictionaryResultCard(text: Word.sampleWords[0].text, meaning: Word.sampleWords[0].meaning, partOfSpeech: Word.sampleWords[0].partOfSpeech, exampleSentence: Word.sampleWords[0].exampleSentence ?? "기본 예시문", imageName: Book.dummyBooks[0].imageName, onSaveComplete: {}, viewModel: BookMateViewModel(), showingSheet: false)
+    DictionaryResultCard(text: Word.sampleWords[0].text, meaning: Word.sampleWords[0].meaning, partOfSpeech: Word.sampleWords[0].partOfSpeech, exampleSentence: Word.sampleWords[0].exampleSentence ?? "기본 예시문", imageName: Book.dummyBooks[0].imageName, onSaveComplete: {}, onRegisterBookTap: {}, viewModel: BookMateViewModel(), showingSheet: false)
 }

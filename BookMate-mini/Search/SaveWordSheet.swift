@@ -19,6 +19,7 @@ struct SaveWordSheet: View {
     let meaning: String
     var imageName: String
     let onSaveComplete: () -> Void
+    let onRegisterBookTap: () -> Void
     
     
     var body: some View {
@@ -46,11 +47,28 @@ struct SaveWordSheet: View {
             .background(Color("PrimarySoft"))
             
             VStack(alignment: .leading, spacing: 12){
+                HStack{
                 Text("어느 책에 저장할까요?")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(Color("TextPrimary").opacity(0.72))
                 
+                    Spacer()
+
+                        Button {
+                            dismiss()
+                            onRegisterBookTap()
+                        } label: {
+                            Label("책 등록", systemImage: "plus")
+                                .font(.caption.bold())
+                                .foregroundStyle(Color("PrimaryButtonText"))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color("Primary"), in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+
                 if viewModel.booksOnShelf.isEmpty {
                     Text("먼저 책을 등록해 주세요.")
                         .font(.caption)
@@ -198,6 +216,7 @@ struct SaveWordSheet: View {
         viewModel: BookMateViewModel(), text: Word.sampleWords[0].text,
         meaning: Word.sampleWords[0].meaning,
         imageName: Book.dummyBooks[2].imageName,
-        onSaveComplete: {}
+        onSaveComplete: {},
+        onRegisterBookTap: {}
     )
 }
