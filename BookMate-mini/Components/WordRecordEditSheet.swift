@@ -146,7 +146,7 @@ struct WordRecordEditSheet: View {
                 .foregroundStyle(Color("Primary").opacity(0.78))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(Color.blue.opacity(0.10))
+                .background(Color("Primary").opacity(0.10))
                 .clipShape(Capsule())
 
             Text(word.meaning)

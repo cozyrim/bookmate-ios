@@ -23,6 +23,7 @@ struct SortOrderSheet: View {
             Text("정렬 기준")
                 .font(.headline)
                 .fontWeight(.bold)
+                .foregroundStyle(Color("TextPrimary"))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 24)
                 .padding(.bottom, 20)
@@ -60,6 +61,7 @@ struct SortOrderSheet: View {
                                 .padding(.leading, 24)
                         }
                     }
+                    .foregroundStyle(Color("TextPrimary"))
                     .presentationBackground(Color("AppBackground"))
     }
 }

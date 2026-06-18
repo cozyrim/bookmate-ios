@@ -49,8 +49,8 @@ struct MoreOptionsMenu: View {
 //                Image("ellipsis-vertical")
                 Image(systemName: "ellipsis")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.black.opacity(0.55))
-                    .frame(width: 22, height: 22)
+                    .foregroundStyle(Color("TextPrimary").opacity(0.75))
+                    .frame(width: 28, height: 28)
                     .contentShape(Rectangle())
             }
             .sheet(isPresented: $isShowingSheet) {

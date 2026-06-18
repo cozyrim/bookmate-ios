@@ -142,6 +142,7 @@ struct ProfileView: View {
                 Text(userName)
                     .font(.title)
                     .fontWeight(.bold)
+                    .foregroundStyle(Color("TextPrimary"))
                 
                 // 멤버쉽
             }

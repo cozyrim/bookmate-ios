@@ -17,7 +17,7 @@ struct ProfileStatItemView: View {
             Text(value)
                 .font(.headline)
                 .fontWeight(.bold)
-                .foregroundStyle(Color("TextSecondary"))
+                .foregroundStyle(Color("TextPrimary").opacity(0.9))
             
             Text(label)
                 .font(.caption2)

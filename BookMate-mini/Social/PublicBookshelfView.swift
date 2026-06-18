@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PublicBookshelfView: View {
     @EnvironmentObject var authViewModel: AuthSessionViewModel
+    @Environment(\.dismiss) private var dismiss
     let targetUser: PublicUserResponse
     
     @State private var books: [Book] = []
@@ -23,6 +24,9 @@ struct PublicBookshelfView: View {
                     books: books,
                     showsExploreButtons: false,
                     isSurfing: false,
+                    onBack: {
+                        dismiss()
+                    },
                     onSearchUsers: {},
                     onSurfRandomUser: {},
                     onOpenGuestbook: {
@@ -42,7 +46,8 @@ struct PublicBookshelfView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
             }
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(item: $selectedBook) { book in
                 PublicBookDetailView(
                     book: book,

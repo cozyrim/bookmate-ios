@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MoreOptionsSheet: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     
     let editTitle: String
     let deleteTitle: String
@@ -17,6 +18,14 @@ struct MoreOptionsSheet: View {
     let onEdit: () -> Void
     let onDelete: () -> Void
     let onMove: () -> Void
+
+    private var normalOptionColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.9) : Color("TextPrimary")
+    }
+
+    private var sheetRowBackground: Color {
+        colorScheme == .dark ? Color.white.opacity(0.06) : Color("Surface")
+    }
     
     init(
             editTitle: String = "단어 수정하기",
@@ -69,7 +78,7 @@ struct MoreOptionsSheet: View {
                 optionRow(
                     title: editTitle,
                     systemImage: "pencil",
-                    color: .black,
+                    color: normalOptionColor,
                     action: onEdit
                 )
             
@@ -80,7 +89,7 @@ struct MoreOptionsSheet: View {
                     optionRow(
                         title: moveTitle,
                         systemImage: "rectangle.portrait.and.arrow.right",
-                        color: .black,
+                        color: normalOptionColor,
                         action: onMove
                     )
                 }
@@ -93,7 +102,7 @@ struct MoreOptionsSheet: View {
 //                    }
 //                )
             }
-            .background(Color("Surface"))
+            .background(sheetRowBackground)
             .clipShape(RoundedRectangle(cornerRadius: 28))
             
             Button { // 여기서 onDelete()는 “삭제 버튼이 눌렸다”는 사실을 바깥에 알려주는 역할
@@ -111,7 +120,7 @@ struct MoreOptionsSheet: View {
                 .foregroundStyle(Color("Error"))
                 .padding(.horizontal, 24)
                 .frame(height: 72)
-                .background(Color("Surface"))
+                .background(sheetRowBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 28))
             }
             .padding(.top, moveTitle == nil ? 28 : 0)
@@ -123,15 +132,16 @@ struct MoreOptionsSheet: View {
                 Text("취소")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundStyle(Color("TextPrimary"))
+                    .foregroundStyle(normalOptionColor)
                     .frame(maxWidth: .infinity)
                     .frame(height: 72)
-                    .background(Color("Surface"))
+                    .background(sheetRowBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 28))
             }
         }
         .padding(.horizontal, 24)
         .padding(.top, 24)
+        .foregroundStyle(Color("TextPrimary"))
 
     }
 

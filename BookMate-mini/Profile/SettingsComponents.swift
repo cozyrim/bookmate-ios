@@ -30,6 +30,7 @@ struct SettingsScreenHeader: View {
                 .frame(width: 44, height: 44)
         }
         .padding(.horizontal, 20)
+        .padding(.top, 12)
     }
 }
 

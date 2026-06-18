@@ -15,19 +15,19 @@ struct ProfileMenuRowView: View {
     let item: ProfileMenuItem
     
     private var tintColor: Color {
-        item.isDestructive ? .red : Color("TextSecondary")
+        item.isDestructive ? Color("Error") : Color("TextSecondary").opacity(0.9)
     }
 
             var body: some View {
                 HStack(spacing: 14) {
                     Image(systemName: item.imageName)
                         .font(.system(size: 21, weight: .regular))
-                        .foregroundStyle(Color("TextSecondary"))
+                        .foregroundStyle(tintColor)
                         .frame(width: 22, height: 22)
 
                     Text(item.title)
                         .font(.callout)
-                        .foregroundStyle(item.isDestructive ? .red : .black)
+                        .foregroundStyle(item.isDestructive ? Color("Error") : Color("TextPrimary").opacity(0.82))
 
                     Spacer()
 

@@ -282,7 +282,7 @@ private struct MiniRoomShelfBook: View {
 
             spineDecoration
 
-            VerticalBookTitle(title: title, width: width * 0.84, height: height * 0.82)
+            VerticalBookTitle(title: title, width: width * 0.9, height: height * 0.84)
                 .padding(.top, height * 0.04)
         }
         .frame(width: width, height: height)
@@ -311,41 +311,68 @@ private struct VerticalBookTitle: View {
     let width: CGFloat
     let height: CGFloat
 
-    private var characters: [String] {
+    private var rawCharacters: [String] {
         let compact = title
             .replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "\n", with: "")
         return compact.isEmpty ? ["책"] : compact.map { String($0) }
     }
 
+    private var characters: [String] {
+        let maxCount = 14
+
+        guard rawCharacters.count > maxCount else {
+            return rawCharacters
+        }
+
+        return Array(rawCharacters.prefix(maxCount - 1)) + ["..."]
+    }
+
     private var rowHeight: CGFloat {
-        max(1, height / CGFloat(max(characters.count, 1)))
+        max(1, height / CGFloat(max(maxRows, 1)))
     }
 
     private var characterFrameWidth: CGFloat {
-        max(1, width)
+        max(1, (width - columnSpacing) / CGFloat(titleColumns.count))
     }
 
     private var fontSize: CGFloat {
-        let widthLimit = characterFrameWidth * 0.58
-        let heightLimit = rowHeight * 0.68
-        return min(13, max(4.6, min(widthLimit, heightLimit)))
+        let widthLimit = characterFrameWidth * 0.78
+        let heightLimit = rowHeight * 0.7
+        return min(11.5, max(6.2, min(widthLimit, heightLimit)))
     }
 
-    private var verticalTitle: String {
-        characters.joined(separator: "\n")
+    private var titleColumns: [[String]] {
+        guard characters.count > 7 else { return [characters] }
+
+        let firstColumnCount = Int(ceil(Double(characters.count) / 2.0))
+        let firstColumn = Array(characters.prefix(firstColumnCount))
+        let secondColumn = Array(characters.dropFirst(firstColumnCount))
+        return [firstColumn, secondColumn].filter { !$0.isEmpty }
+    }
+
+    private var maxRows: Int {
+        titleColumns.map(\.count).max() ?? characters.count
+    }
+
+    private var columnSpacing: CGFloat {
+        titleColumns.count > 1 ? max(1, width * 0.08) : 0
     }
 
     var body: some View {
-        Text(verticalTitle)
-            .font(.system(size: fontSize, weight: .black))
-            .foregroundStyle(Color("TextPrimary").opacity(0.98))
-            .lineLimit(characters.count)
-            .minimumScaleFactor(0.58)
-            .allowsTightening(true)
-            .multilineTextAlignment(.center)
-            .shadow(color: Color.white.opacity(0.35), radius: 0.35, y: 0.2)
-            .frame(width: characterFrameWidth, height: height, alignment: .center)
+        HStack(alignment: .center, spacing: columnSpacing) {
+            ForEach(Array(titleColumns.enumerated()), id: \.offset) { _, column in
+                Text(column.joined(separator: "\n"))
+                    .font(.system(size: fontSize, weight: .black))
+                    .foregroundStyle(Color(red: 0.13, green: 0.10, blue: 0.08).opacity(0.82))
+                    .lineLimit(column.count)
+                    .minimumScaleFactor(0.82)
+                    .allowsTightening(true)
+                    .multilineTextAlignment(.center)
+                    .shadow(color: Color.white.opacity(0.35), radius: 0.35, y: 0.2)
+                    .frame(width: characterFrameWidth, height: height, alignment: .center)
+            }
+        }
         .frame(width: width, height: height, alignment: .center)
         .allowsHitTesting(false)
     }

@@ -42,6 +42,7 @@ struct BookCardView: View {
                     Text("\(title)")
                         .font(.headline)
                         .fontWeight(.semibold)
+                        .foregroundStyle(Color("TextPrimary").opacity(0.92))
                     
                     Spacer()
                     
@@ -68,7 +69,7 @@ struct BookCardView: View {
                 
                 Text(authorLine)
                     .font(.caption2)
-                    .foregroundStyle(Color("TextSecondary"))
+                    .foregroundStyle(Color("TextSecondary").opacity(0.82))
                 
                 ProgressView(value: progress)
                     .tint(Color("Primary"))

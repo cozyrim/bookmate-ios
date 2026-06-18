@@ -34,10 +34,11 @@ struct MoveWordBookSheet: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(book.title)
                                         .font(.headline)
+                                        .foregroundStyle(Color("TextPrimary"))
                                     
                                     Text(book.author)
                                         .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Color("TextSecondary"))
                                 }
                                 Spacer()
                                 
@@ -55,9 +56,10 @@ struct MoveWordBookSheet: View {
                         }
                     }
                 }
-            }
+        }
         .padding(.horizontal, 24)
         .background(Color("AppBackground"))
+        .foregroundStyle(Color("TextPrimary"))
     
     }
 }

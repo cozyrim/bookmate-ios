@@ -53,7 +53,7 @@ struct ShelfView: View {
                                 .padding(.vertical, 11)
                                 .background(Color("Primary"))
                                 .clipShape(RoundedRectangle(cornerRadius: 18))
-                                .shadow(color: Color("Primary").opacity(0.3), radius: 7, x: 0, y: 2)
+
                         }
                     }
                     .padding(.horizontal, 24)

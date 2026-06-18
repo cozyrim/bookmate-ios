@@ -122,6 +122,26 @@ final class AuthSessionViewModel: ObservableObject {
         }
     }
 
+    func checkEmailAvailability(email: String) async -> EmailAvailabilityResponse? {
+        do {
+            return try await authAPIService.checkEmailAvailability(email: email)
+        } catch {
+            errorMessage = "이메일 중복 확인에 실패했습니다."
+            DebugLogger.log("이메일 중복 확인 실패:", error)
+            return nil
+        }
+    }
+
+    func checkNicknameAvailability(nickname: String) async -> NicknameAvailabilityResponse? {
+        do {
+            return try await authAPIService.checkNicknameAvailability(nickname: nickname)
+        } catch {
+            errorMessage = "닉네임 중복 확인에 실패했습니다."
+            DebugLogger.log("닉네임 중복 확인 실패:", error)
+            return nil
+        }
+    }
+
     // Keychain에 저장된 토큰으로 앱 재실행 후 로그인 상태를 복구한다.
     func restoreSession() async {
         guard let token = tokenStore.load() else {

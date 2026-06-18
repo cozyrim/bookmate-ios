@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ShelfBookCardView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let imageName: String
     let author: String
     let title: String
@@ -29,6 +31,24 @@ struct ShelfBookCardView: View {
         return "\(author) · \(trimmedCategory)"
     }
 
+    private var cardBackground: Color {
+        colorScheme == .dark
+        ? Color("SurfaceElevated").opacity(0.94)
+        : Color("Surface").opacity(0.96)
+    }
+
+    private var cardBorder: Color {
+        colorScheme == .dark
+        ? Color.white.opacity(0.08)
+        : Color("Border").opacity(0.45)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark
+        ? Color.black.opacity(0.28)
+        : Color("Shadow").opacity(0.055)
+    }
+
 
     var body: some View {
         HStack {
@@ -39,6 +59,7 @@ struct ShelfBookCardView: View {
                     Text("\(title)")
                         .font(.headline)
                         .fontWeight(.semibold)
+                        .foregroundStyle(Color("TextPrimary").opacity(0.92))
 
                     Spacer()
 
@@ -56,8 +77,8 @@ struct ShelfBookCardView: View {
                         } label: {
                             Image(systemName: "ellipsis")
                                 .font(.system(size: 15, weight: .bold))
-                                .foregroundColor(.black.opacity(0.55))
-                                .frame(width: 22, height: 22)
+                                .foregroundStyle(Color("TextPrimary").opacity(0.75))
+                                .frame(width: 28, height: 28)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -65,7 +86,7 @@ struct ShelfBookCardView: View {
                 }
                 Text(authorLine)
                     .font(.caption2)
-                    .foregroundStyle(Color("TextSecondary"))
+                    .foregroundStyle(Color("TextSecondary").opacity(0.82))
 
                 VStack(alignment: .leading){
                     HStack {
@@ -103,11 +124,20 @@ struct ShelfBookCardView: View {
 
     }
         .padding(.horizontal)
-        .frame(width: 350, height: 160)
-//        .background(Color("Surface"))
-        .background(Color("AppBackground"))
-        .clipShape(RoundedRectangle(cornerRadius: 36))
-        .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
+        .frame(maxWidth: .infinity)
+        .frame(height: 160)
+        .background(cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(cardBorder, lineWidth: 1)
+        }
+        .shadow(
+            color: cardShadow,
+            radius: colorScheme == .dark ? 10 : 12,
+            x: 0,
+            y: colorScheme == .dark ? 6 : 5
+        )
         .contentShape(Rectangle())
         .onTapGesture {
             onTap()

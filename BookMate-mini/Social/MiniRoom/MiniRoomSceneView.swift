@@ -14,10 +14,37 @@ struct MiniRoomSceneView: View {
     let books: [Book]
     let showsExploreButtons: Bool
     let isSurfing: Bool
+    let onBack: (() -> Void)?
     let onSearchUsers: () -> Void
     let onSurfRandomUser: () -> Void
     let onOpenGuestbook: () -> Void
     let onBookTap: (Book) -> Void
+
+    init(
+        nickname: String,
+        profileImageUrl: String?,
+        theme: MiniRoomTheme,
+        books: [Book],
+        showsExploreButtons: Bool,
+        isSurfing: Bool,
+        onBack: (() -> Void)? = nil,
+        onSearchUsers: @escaping () -> Void,
+        onSurfRandomUser: @escaping () -> Void,
+        onOpenGuestbook: @escaping () -> Void,
+        onBookTap: @escaping (Book) -> Void
+    ) {
+        self.nickname = nickname
+        self.profileImageUrl = profileImageUrl
+        self.theme = theme
+        self.books = books
+        self.showsExploreButtons = showsExploreButtons
+        self.isSurfing = isSurfing
+        self.onBack = onBack
+        self.onSearchUsers = onSearchUsers
+        self.onSurfRandomUser = onSurfRandomUser
+        self.onOpenGuestbook = onOpenGuestbook
+        self.onBookTap = onBookTap
+    }
 
     var body: some View {
         GeometryReader { proxy in
@@ -31,10 +58,12 @@ struct MiniRoomSceneView: View {
                         profileImageUrl: profileImageUrl,
                         showsExploreButtons: showsExploreButtons,
                         isSurfing: isSurfing,
+                        onBack: onBack,
                         onSearchUsers: onSearchUsers,
                         onSurfRandomUser: onSurfRandomUser
                     )
-                    .padding(.horizontal, 24)
+                    .padding(.leading, onBack == nil ? 24 : 12)
+                    .padding(.trailing, 24)
                     .padding(.top, 20)
 
                     MiniRoomCanvas(

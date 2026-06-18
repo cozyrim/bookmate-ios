@@ -116,6 +116,46 @@ struct AuthAPIService {
         let suggestion = try JSONDecoder().decode(NicknameSuggestionResponse.self, from: data)
         return suggestion.nickname
     }
+
+    func checkEmailAvailability(email: String) async throws -> EmailAvailabilityResponse {
+        let url = baseURL
+            .appendingPathComponent("api")
+            .appendingPathComponent("auth")
+            .appendingPathComponent("email-availability")
+
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        components.queryItems = [
+            URLQueryItem(name: "email", value: email)
+        ]
+
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "GET"
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try client.validate(response)
+
+        return try JSONDecoder().decode(EmailAvailabilityResponse.self, from: data)
+    }
+
+    func checkNicknameAvailability(nickname: String) async throws -> NicknameAvailabilityResponse {
+        let url = baseURL
+            .appendingPathComponent("api")
+            .appendingPathComponent("auth")
+            .appendingPathComponent("nickname-availability")
+
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        components.queryItems = [
+            URLQueryItem(name: "nickname", value: nickname)
+        ]
+
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "GET"
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try client.validate(response)
+
+        return try JSONDecoder().decode(NicknameAvailabilityResponse.self, from: data)
+    }
     
     
     func fetchProfile(token: String) async throws -> ProfileResponse {

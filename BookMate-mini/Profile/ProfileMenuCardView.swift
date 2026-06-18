@@ -8,8 +8,44 @@
 import SwiftUI
 
 struct ProfileMenuCardView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let rows: [ProfileMenuItem]
     var onTap: (ProfileMenuItem) -> Void = { _ in }
+
+    private var cardGradient: LinearGradient {
+        LinearGradient(
+            colors: colorScheme == .dark
+            ? [
+                Color("SurfaceElevated").opacity(0.94),
+                Color("SurfaceElevated").opacity(0.84)
+            ]
+            : [
+                Color.white.opacity(0.98),
+                Color(red: 0.985, green: 0.982, blue: 0.965).opacity(0.94)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var cardBorderColor: Color {
+        colorScheme == .dark
+        ? Color.white.opacity(0.08)
+        : Color.white.opacity(0.92)
+    }
+
+    private var dividerColor: Color {
+        colorScheme == .dark
+        ? Color.white.opacity(0.08)
+        : Color(red: 0.86, green: 0.86, blue: 0.82).opacity(0.45)
+    }
+
+    private var cardShadowColor: Color {
+        colorScheme == .dark
+        ? Color.black.opacity(0.22)
+        : Color(red: 0.62, green: 0.60, blue: 0.55).opacity(0.16)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -22,7 +58,7 @@ struct ProfileMenuCardView: View {
                 
                 if row.id != rows.last?.id {
                     Rectangle()
-                        .fill(Color("Surface").opacity(0.38))
+                        .fill(dividerColor)
                         .frame(height: 1)
                         .padding(.leading, 36)
                 }
@@ -37,31 +73,14 @@ struct ProfileMenuCardView: View {
          .shadow(color: Color("Shadow").opacity(0.04), radius: 8, x: 0, y: 4)
          */
         .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Color("Surface").opacity(0.72))
-                .background {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                }
-                .overlay {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color("Surface").opacity(0.38),
-                                    Color(red: 0.92, green: 0.98, blue: 1.0).opacity(0.22)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                }
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(cardGradient)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(Color("Surface").opacity(0.82), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .stroke(cardBorderColor, lineWidth: 1)
         }
-        .shadow(color: Color("Shadow").opacity(0.04), radius: 16, x: 0, y: 8)
+        .shadow(color: cardShadowColor, radius: colorScheme == .dark ? 14 : 20, x: 0, y: 10)
         
     }
 }

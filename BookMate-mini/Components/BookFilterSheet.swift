@@ -26,6 +26,7 @@ struct BookFilterSheet: View {
                         Text("책 선택")
                             .font(.headline)
                             .fontWeight(.bold)
+                            .foregroundStyle(Color("TextPrimary"))
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, 24)
                             .padding(.bottom, 20)
@@ -60,6 +61,7 @@ struct BookFilterSheet: View {
             }
         }
     }
+        .foregroundStyle(Color("TextPrimary"))
         .presentationBackground(Color("AppBackground"))
 }
 

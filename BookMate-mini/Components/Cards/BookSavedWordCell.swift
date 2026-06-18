@@ -52,9 +52,40 @@ import SwiftUI
 
 
     struct BookSavedWordCell: View {
+        @Environment(\.colorScheme) private var colorScheme
+
         let text: String
         let partOfSpeech: String
         let meaning: String
+
+        private var cardBackgroundColors: [Color] {
+            if colorScheme == .dark {
+                return [
+                    Color("SurfaceElevated").opacity(0.92),
+                    Color("SurfaceElevated").opacity(0.82)
+                ]
+            }
+
+            return [
+                Color("Surface").opacity(0.86),
+                Color("Surface").opacity(0.66),
+                Color(red: 0.92, green: 0.98, blue: 1.0).opacity(0.18)
+            ]
+        }
+
+        private var cardBorderColors: [Color] {
+            if colorScheme == .dark {
+                return [
+                    Color.white.opacity(0.08),
+                    Color.white.opacity(0.03)
+                ]
+            }
+
+            return [
+                Color("Surface").opacity(0.9),
+                Color("Surface").opacity(0.35)
+            ]
+        }
 
         var body: some View {
             VStack(alignment: .leading, spacing: 10) {
@@ -70,8 +101,7 @@ import SwiftUI
                         .foregroundStyle(Color("TextPrimary").opacity(0.45))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color("Surface").opacity(0.45))
-//                        .background(Color.blue.opacity(0.11))
+                        .background(Color("Primary").opacity(colorScheme == .dark ? 0.18 : 0.11))
                         .clipShape(Capsule())
                 }
 
@@ -86,38 +116,37 @@ import SwiftUI
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color("Surface").opacity(0.82),
-                                        Color("Surface").opacity(0.48),
-                                        Color(red: 0.92, green: 0.98, blue: 1.0).opacity(0.34)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    }
+                    .fill(
+                        LinearGradient(
+                            colors: cardBackgroundColors,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
             }
             .overlay {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .stroke(
                         LinearGradient(
-                            colors: [
-                                Color("Surface").opacity(0.95),
-                                Color("Surface").opacity(0.28)
-                            ],
+                            colors: cardBorderColors,
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         lineWidth: 1
                     )
             }
-            .shadow(color: .white.opacity(0.45), radius: 8, x: -3, y: -3)
-            .shadow(color: Color("Shadow").opacity(0.04), radius: 16, x: 0, y: 8)
+            .shadow(
+                color: colorScheme == .dark ? .clear : .white.opacity(0.45),
+                radius: 8,
+                x: -3,
+                y: -3
+            )
+            .shadow(
+                color: colorScheme == .dark ? .black.opacity(0.28) : Color("Shadow").opacity(0.04),
+                radius: colorScheme == .dark ? 10 : 16,
+                x: 0,
+                y: colorScheme == .dark ? 6 : 8
+            )
             .padding(.horizontal, 28)
         }
     }
