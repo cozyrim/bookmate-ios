@@ -12,31 +12,16 @@ struct MiniRoomHeaderView: View {
 
     let nickname: String
     let profileImageUrl: String?
-    let showsExploreButtons: Bool
-    let isSurfing: Bool
     let onBack: (() -> Void)?
-    let onSearchUsers: () -> Void
-    let onSurfRandomUser: () -> Void
-    let onChangeTheme: (() -> Void)?
 
     init(
         nickname: String,
         profileImageUrl: String?,
-        showsExploreButtons: Bool,
-        isSurfing: Bool,
-        onBack: (() -> Void)? = nil,
-        onSearchUsers: @escaping () -> Void,
-        onSurfRandomUser: @escaping () -> Void,
-        onChangeTheme: (() -> Void)? = nil
+        onBack: (() -> Void)? = nil
     ) {
         self.nickname = nickname
         self.profileImageUrl = profileImageUrl
-        self.showsExploreButtons = showsExploreButtons
-        self.isSurfing = isSurfing
         self.onBack = onBack
-        self.onSearchUsers = onSearchUsers
-        self.onSurfRandomUser = onSurfRandomUser
-        self.onChangeTheme = onChangeTheme
     }
 
     private var chipBackground: Color {
@@ -51,11 +36,13 @@ struct MiniRoomHeaderView: View {
         : Color("Border").opacity(0.3)
     }
 
-    private var controlForeground: Color {
-        colorScheme == .dark ? Color("TextPrimary") : Color("PrimaryDeep")
+    var body: some View {
+        identityRow
+        .padding(.horizontal, 16)
+        .padding(.bottom, 10)
     }
 
-    var body: some View {
+    private var identityRow: some View {
         HStack(spacing: 10) {
             if let onBack {
                 CircleIconButton(systemName: "chevron.left") {
@@ -86,65 +73,7 @@ struct MiniRoomHeaderView: View {
                 }
                 .layoutPriority(2)
 
-            Spacer(minLength: 4)
-
-            if showsExploreButtons {
-                HStack(spacing: 6) {
-                    if let onChangeTheme {
-                        headerButton(title: "배경", systemImage: "paintpalette", action: onChangeTheme)
-                    }
-
-                    headerButton(title: "검색", systemImage: "magnifyingglass", action: onSearchUsers)
-
-                    Button(action: onSurfRandomUser) {
-                        VStack(spacing: 3) {
-                            if isSurfing {
-                                ProgressView()
-                                    .tint(controlForeground)
-                                    .frame(width: 20, height: 20)
-                            } else {
-                                Image(systemName: "water.waves")
-                                    .font(.headline)
-                            }
-
-                            Text("파도타기")
-                                .font(.system(size: 10, weight: .semibold))
-                                .lineLimit(1)
-                        }
-                        .foregroundStyle(controlForeground)
-                        .frame(width: 58, height: 48)
-                        .background(headerButtonBackground, in: RoundedRectangle(cornerRadius: 18))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isSurfing)
-                }
-                .fixedSize()
-            }
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 10)
-    }
-
-    private func headerButton(title: String, systemImage: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 3) {
-                Image(systemName: systemImage)
-                    .font(.headline)
-
-                Text(title)
-                    .font(.system(size: 10, weight: .semibold))
-                    .lineLimit(1)
-            }
-            .foregroundStyle(controlForeground)
-            .frame(width: 48, height: 48)
-            .background(headerButtonBackground, in: RoundedRectangle(cornerRadius: 16))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var headerButtonBackground: AnyShapeStyle {
-        colorScheme == .dark
-        ? AnyShapeStyle(Color("SurfaceElevated").opacity(0.82))
-        : AnyShapeStyle(.ultraThinMaterial)
     }
 }

@@ -66,14 +66,25 @@ enum MiniRoomTheme: String, CaseIterable, Identifiable {
         }
     }
 
-    var sceneOverlayColor: Color {
+    var sceneTintColor: Color {
         switch self {
         case .pink:
-            return Color(red: 255/255, green: 191/255, blue: 211/255).opacity(0.16)
+            return Color(red: 255/255, green: 174/255, blue: 202/255)
         case .mint:
-            return Color(red: 149/255, green: 218/255, blue: 199/255).opacity(0.15)
+            return Color(red: 128/255, green: 220/255, blue: 199/255)
         case .dark, .basic:
             return .clear
+        }
+    }
+
+    var sceneTintOpacity: Double {
+        switch self {
+        case .pink:
+            return 0.34
+        case .mint:
+            return 0.32
+        case .dark, .basic:
+            return 0
         }
     }
 

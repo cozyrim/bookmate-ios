@@ -155,11 +155,16 @@ private struct MiniRoomThemeOptionCard: View {
                 Image("MiniRoomLayeredRoomBackground")
                     .resizable()
                     .scaledToFill()
-                    .opacity(0.74)
 
-                theme.backgroundColor
-                    .opacity(0.44)
+                theme.sceneTintColor
+                    .opacity(theme.sceneTintOpacity)
+                    .blendMode(.softLight)
+
+                theme.sceneTintColor
+                    .opacity(theme.sceneTintOpacity * 0.42)
+                    .blendMode(.color)
             }
+            .compositingGroup()
         }
     }
 }
