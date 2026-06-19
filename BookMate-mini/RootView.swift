@@ -20,6 +20,7 @@ import SwiftUI
 
 struct RootView: View {
     @StateObject private var authViewModel = AuthSessionViewModel()
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
 //    RootView가 AuthSessionViewModel을 처음 만들고 소유한다.
 //    앱의 로그인 상태는 RootView가 들고 있는다.
 
@@ -36,6 +37,10 @@ struct RootView: View {
             } else if authViewModel.isLoggedIn {
                 MainTabView(authViewModel: authViewModel)
                     .environmentObject(authViewModel)
+            } else if !hasSeenOnboarding {
+                OnboardingView {
+                    hasSeenOnboarding = true
+                }
             } else {
                 LoginView(authViewModel: authViewModel)
             }

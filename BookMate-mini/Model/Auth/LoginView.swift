@@ -114,11 +114,17 @@ struct LoginView: View {
                     NavigationLink {
                         SignupView(authViewModel: authViewModel)
                     } label: {
-                        Text("아직 계정이 없나요? 회원가입")
-                            .font(.callout)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Color("TextSecondary"))
+                        HStack(spacing: 0) {
+                            Text("아직 계정이 없나요? ")
+
+                            Text("회원가입")
+                                .underline()
+                        }
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color("TextSecondary"))
                     }
+                    .accessibilityLabel("아직 계정이 없나요? 회원가입")
                     
                 }
                 .padding(28)
