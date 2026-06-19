@@ -13,15 +13,18 @@ struct MiniRoomHeaderView: View {
     let nickname: String
     let profileImageUrl: String?
     let onBack: (() -> Void)?
+    let onMoreActions: (() -> Void)?
 
     init(
         nickname: String,
         profileImageUrl: String?,
-        onBack: (() -> Void)? = nil
+        onBack: (() -> Void)? = nil,
+        onMoreActions: (() -> Void)? = nil
     ) {
         self.nickname = nickname
         self.profileImageUrl = profileImageUrl
         self.onBack = onBack
+        self.onMoreActions = onMoreActions
     }
 
     private var chipBackground: Color {
@@ -73,7 +76,11 @@ struct MiniRoomHeaderView: View {
                 }
                 .layoutPriority(2)
 
-            Spacer(minLength: 0)
+            if let onMoreActions {
+                CircleIconButton(systemName: "ellipsis") {
+                    onMoreActions()
+                }
+            }
         }
     }
 }

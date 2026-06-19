@@ -18,6 +18,7 @@ struct MiniRoomSceneView: View {
     let onSearchUsers: () -> Void
     let onSurfRandomUser: () -> Void
     let onChangeTheme: (() -> Void)?
+    let onMoreActions: (() -> Void)?
     let onOpenGuestbook: () -> Void
     let onBookTap: (Book) -> Void
 
@@ -32,6 +33,7 @@ struct MiniRoomSceneView: View {
         onSearchUsers: @escaping () -> Void,
         onSurfRandomUser: @escaping () -> Void,
         onChangeTheme: (() -> Void)? = nil,
+        onMoreActions: (() -> Void)? = nil,
         onOpenGuestbook: @escaping () -> Void,
         onBookTap: @escaping (Book) -> Void
     ) {
@@ -45,6 +47,7 @@ struct MiniRoomSceneView: View {
         self.onSearchUsers = onSearchUsers
         self.onSurfRandomUser = onSurfRandomUser
         self.onChangeTheme = onChangeTheme
+        self.onMoreActions = onMoreActions
         self.onOpenGuestbook = onOpenGuestbook
         self.onBookTap = onBookTap
     }
@@ -59,7 +62,8 @@ struct MiniRoomSceneView: View {
                     MiniRoomHeaderView(
                         nickname: nickname,
                         profileImageUrl: profileImageUrl,
-                        onBack: onBack
+                        onBack: onBack,
+                        onMoreActions: onMoreActions
                     )
                     .padding(.leading, onBack == nil ? 24 : 12)
                     .padding(.trailing, 24)
