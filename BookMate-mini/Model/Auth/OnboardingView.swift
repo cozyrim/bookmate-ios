@@ -35,7 +35,6 @@ struct OnboardingView: View {
             .padding(.top, 18)
             .padding(.bottom, 22)
         }
-        .animation(.spring(response: 0.32, dampingFraction: 0.86), value: selectedPage)
     }
 
     private var onboardingBackground: some View {
@@ -66,7 +65,9 @@ struct OnboardingView: View {
     private var topBar: some View {
         HStack {
             Button {
-                selectedPage = max(0, selectedPage - 1)
+                withAnimation(.easeOut(duration: 0.18)) {
+                    selectedPage = max(0, selectedPage - 1)
+                }
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.title3.weight(.semibold))
@@ -97,12 +98,12 @@ struct OnboardingView: View {
                 if selectedPage == pages.count - 1 {
                     onFinish()
                 } else {
-                    selectedPage += 1
+                    withAnimation(.easeOut(duration: 0.18)) {
+                        selectedPage += 1
+                    }
                 }
             } label: {
-                HStack(spacing: 10) {
-                    Text(selectedPage == pages.count - 1 ? "시작하기" : "다음으로")
-                }
+                Text(selectedPage == pages.count - 1 ? "시작하기" : "다음으로")
                 .font(.headline.weight(.bold))
                 .foregroundStyle(Color("PrimaryButtonText"))
                 .frame(maxWidth: .infinity)
@@ -123,6 +124,7 @@ struct OnboardingView: View {
             }
         }
         .frame(height: 10)
+        .animation(.easeOut(duration: 0.18), value: selectedPage)
         .accessibilityLabel("\(selectedPage + 1)번째 온보딩")
     }
 }

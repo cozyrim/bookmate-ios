@@ -471,7 +471,7 @@ struct HomeView: View {
     private var homeIntroHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 7) {
-                Text("오늘의 단어장")
+                Text("오늘의 발견")
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundStyle(Color("TextSecondary"))
@@ -488,7 +488,7 @@ struct HomeView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(Color("TextPrimary"))
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 24) 
         .padding(.top, 18)
         .padding(.bottom, 2)
     }

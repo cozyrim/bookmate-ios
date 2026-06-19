@@ -67,8 +67,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ZStack{
-                Color("AppBackground")
-                    .ignoresSafeArea()
+                AppBackgroundView()
                 
                 ScrollView(showsIndicators: false){
                     VStack(spacing: 16){
