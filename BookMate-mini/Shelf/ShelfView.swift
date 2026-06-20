@@ -233,7 +233,9 @@ struct ShelfView: View {
                     PublicBookshelfView(targetUser: user)
 
                 case .searchUsers:
-                    UserSearchView()
+                    UserSearchView { user in
+                        path.append(ShelfRoute.publicRoom(user))
+                    }
                 }
             }
         }

@@ -93,12 +93,8 @@ struct PublicBookshelfView: View {
             isPresented: $showingUserActions,
             titleVisibility: .visible
         ) {
-            Button("프로필 신고하기", role: .destructive) {
-                selectedReportTarget = profileReportTarget
-            }
-
-            Button("공개 책장 신고하기", role: .destructive) {
-                selectedReportTarget = bookshelfReportTarget
+            Button("신고하기", role: .destructive) {
+                selectedReportTarget = userReportTarget
             }
 
             Button("이 사용자 차단", role: .destructive) {
@@ -107,7 +103,7 @@ struct PublicBookshelfView: View {
 
             Button("취소", role: .cancel) { }
         } message: {
-            Text("부적절한 콘텐츠를 신고하거나 사용자를 차단할 수 있어요.")
+            Text("부적절한 콘텐츠를 신고하거나 이 사용자를 내 화면에서 숨길 수 있어요.")
         }
         .alert("이 사용자를 차단할까요?", isPresented: $showingBlockConfirmation) {
             Button("취소", role: .cancel) { }
@@ -120,29 +116,16 @@ struct PublicBookshelfView: View {
         }
     }
 
-    private var profileReportTarget: ModerationTarget {
-        ModerationTarget(
-            targetType: .publicProfile,
-            targetId: targetUser.id.uuidString,
-            targetUserId: targetUser.id,
-            title: "프로필 신고",
-            subtitle: "\(targetUser.nickname)님의 프로필을 신고합니다.",
-            snapshot: [
-                "nickname": targetUser.nickname,
-                "profileImageUrl": targetUser.profileImageUrl ?? ""
-            ]
-        )
-    }
-
-    private var bookshelfReportTarget: ModerationTarget {
+    private var userReportTarget: ModerationTarget {
         ModerationTarget(
             targetType: .publicBookshelf,
             targetId: targetUser.id.uuidString,
             targetUserId: targetUser.id,
-            title: "공개 책장 신고",
-            subtitle: "\(targetUser.nickname)님의 공개 책장을 신고합니다.",
+            title: "신고하기",
+            subtitle: "\(targetUser.nickname)님의 공개 프로필과 책장을 신고합니다.",
             snapshot: [
                 "nickname": targetUser.nickname,
+                "profileImageUrl": targetUser.profileImageUrl ?? "",
                 "bookCount": "\(books.count)"
             ]
         )

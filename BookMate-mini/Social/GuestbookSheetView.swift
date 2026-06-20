@@ -82,12 +82,23 @@ struct GuestbookSheetView: View {
                     systemImage: "heart.text.square",
                     description: Text("첫 방명록을 남겨보세요.")
                 )
+                .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 44, leading: 18, bottom: 44, trailing: 18))
             } else {
                 ForEach(messages) { message in
-                    messageRow(message)
+                    VStack(spacing: 0) {
+                        messageRow(message)
+
+                        if message.id != messages.last?.id {
+                            Rectangle()
+                                .fill(Color("Border").opacity(0.34))
+                                .frame(height: 0.7)
+                        }
+                    }
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 18, bottom: 0, trailing: 18))
                 }
             }
         }
@@ -144,13 +155,13 @@ struct GuestbookSheetView: View {
                 size: 34
             )
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(message.writerNickname)
                     .font(.subheadline.bold())
                     .foregroundStyle(Color("TextPrimary"))
 
                 Text(message.content)
-                    .font(.body)
+                    .font(.callout)
                     .foregroundStyle(Color("TextPrimary"))
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -163,9 +174,8 @@ struct GuestbookSheetView: View {
 
             messageActions(for: message)
         }
-        .padding(14)
-        .background(Color("Surface").opacity(0.76), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .padding(.vertical, 4)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
     }
 
     @ViewBuilder

@@ -8,6 +8,11 @@
 import SwiftUI
 
 struct MiniRoomSceneView: View {
+    private enum Layout {
+        static let headerHorizontalPadding: CGFloat = 20
+        static let headerTopSpacing: CGFloat = 84
+    }
+
     let nickname: String
     let profileImageUrl: String?
     let theme: MiniRoomTheme
@@ -65,9 +70,8 @@ struct MiniRoomSceneView: View {
                         onBack: onBack,
                         onMoreActions: onMoreActions
                     )
-                    .padding(.leading, onBack == nil ? 24 : 12)
-                    .padding(.trailing, 24)
-                    .padding(.top, 20)
+                    .padding(.horizontal, Layout.headerHorizontalPadding)
+                    .padding(.top, Layout.headerTopSpacing)
                     .background(theme.backgroundColor)
 
                     MiniRoomCanvas(
@@ -87,7 +91,7 @@ struct MiniRoomSceneView: View {
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
             }
         }
-        .ignoresSafeArea(.container, edges: .bottom)
+        .ignoresSafeArea(.container, edges: [.top, .bottom])
         .toolbarColorScheme(.light, for: .navigationBar)
         .toolbarBackground(.hidden, for: .tabBar)
         .onAppear {

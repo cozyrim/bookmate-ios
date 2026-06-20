@@ -30,7 +30,9 @@ struct RoomTabView: View {
                     case .publicRoom(let user):
                         PublicBookshelfView(targetUser: user)
                     case .searchUsers:
-                        UserSearchView()
+                        UserSearchView { user in
+                            path.append(ShelfView.ShelfRoute.publicRoom(user))
+                        }
                     }
                 }
         }
