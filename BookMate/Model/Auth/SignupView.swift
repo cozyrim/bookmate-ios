@@ -125,6 +125,7 @@ struct SignupView: View {
             .padding(.bottom, 28)
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .scrollDismissesKeyboard(.interactively)
         .onChange(of: email) { _, newValue in
             let normalized = AuthValidation.normalizedEmail(newValue)

@@ -60,6 +60,10 @@ struct MainTabView: View {
             await viewModel.loadBooks()
             await viewModel.loadSavedWords()
         }
+        .onChange(of: tabIndex) { _, newValue in
+            guard newValue == 0 else { return }
+            viewModel.clearSearchState(searchMode: .dictionary)
+        }
         .onChange(of: viewModel.didReceiveUnauthorized) { _, expired in
             guard expired else { return }
             authViewModel.logout()

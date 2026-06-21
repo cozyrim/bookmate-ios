@@ -94,10 +94,10 @@ final class BookMateViewModel: ObservableObject {
 
     // MARK: - Quote, Memo & Review State
 
-    // 현재 열람 중인 책의 구절 목록이다.
+    // 현재 열람 중인 책의 문장 목록이다.
     @Published var quotes: [Quote] = []
 
-    // 구절 목록 조회 실패 메시지다.
+    // 문장 목록 조회 실패 메시지다.
     @Published var quoteLoadErrorMessage: String?
 
     // 현재 열람 중인 책의 독서 메모 목록이다.

@@ -14,10 +14,12 @@ struct MoreOptionsSheet: View {
     let editTitle: String
     let deleteTitle: String
     let moveTitle: String?
+    let memoTitle: String?
     
     let onEdit: () -> Void
     let onDelete: () -> Void
     let onMove: () -> Void
+    let onMemo: () -> Void
 
     private var normalOptionColor: Color {
         colorScheme == .dark ? Color.white.opacity(0.9) : Color("TextPrimary")
@@ -31,16 +33,20 @@ struct MoreOptionsSheet: View {
             editTitle: String = "단어 수정하기",
             deleteTitle: String = "단어 삭제하기",
             moveTitle: String? = "다른 책으로 이동",
+            memoTitle: String? = nil,
             onEdit: @escaping () -> Void,
             onDelete: @escaping () -> Void,
-            onMove: @escaping () -> Void = {}
+            onMove: @escaping () -> Void = {},
+            onMemo: @escaping () -> Void = {}
         ) {
             self.editTitle = editTitle
             self.deleteTitle = deleteTitle
             self.moveTitle = moveTitle
+            self.memoTitle = memoTitle
             self.onEdit = onEdit
             self.onDelete = onDelete
             self.onMove = onMove
+            self.onMemo = onMemo
         }
     
     
@@ -91,6 +97,18 @@ struct MoreOptionsSheet: View {
                         systemImage: "rectangle.portrait.and.arrow.right",
                         color: normalOptionColor,
                         action: onMove
+                    )
+                }
+
+                if let memoTitle {
+                    Divider()
+                        .padding(.leading, 24)
+
+                    optionRow(
+                        title: memoTitle,
+                        systemImage: "note.text.badge.plus",
+                        color: normalOptionColor,
+                        action: onMemo
                     )
                 }
                 

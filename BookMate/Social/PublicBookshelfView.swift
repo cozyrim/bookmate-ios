@@ -57,6 +57,7 @@ struct PublicBookshelfView: View {
         }
         .appToast($toast)
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .navigationBarHidden(true)

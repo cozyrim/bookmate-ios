@@ -177,6 +177,8 @@ struct BookRegistrationPreviewView: View {
 
                             do {
                                 savedBook = try await viewModel.registerBook(draft: draft)
+                            } catch BookRegistrationError.duplicate {
+                                errorMessage = nil
                             } catch {
                                 errorMessage = "책 등록에 실패했습니다."
                                 DebugLogger.log("책 등록 실패:", error)
@@ -226,6 +228,7 @@ struct BookRegistrationPreviewView: View {
             
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .task {
             guard !draft.isbn.isEmpty else { return }
 

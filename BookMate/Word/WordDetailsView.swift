@@ -99,6 +99,7 @@ struct WordDetailsView: View {
             .presentationDragIndicator(.visible)
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .alert("단어를 삭제할까요?", isPresented: $isShowingDeleteAlert) {
             Button("취소", role: .cancel) { }
             
@@ -125,16 +126,6 @@ struct WordDetailsView: View {
             
             Spacer()
             
-            Button {
-            } label: {
-                Image(systemName: "bookmark.fill")
-                    .font(.system(size: 19, weight: .semibold))
-                    .foregroundStyle(Color("TextPrimary").opacity(0.68))
-                    .frame(width: 50, height: 50)
-                    .background(Color("Surface").opacity(0.18))
-                    .clipShape(Circle())
-            }
-            
             MoreOptionsMenu(
                 onEdit: {
                     isShowingEditSheet = true
@@ -154,20 +145,9 @@ struct WordDetailsView: View {
     
     private var wordHeader: some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .center, spacing: 12) {
-                Text(currentWord.text)
-                    .font(.system(size: 44, weight: .bold))
-                    .foregroundStyle(Color("TextPrimary").opacity(0.82))
-                
-                Text("저장됨")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color("Success"))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(Color("SuccessSoft"))
-                    .clipShape(Capsule())
-            }
+            Text(currentWord.text)
+                .font(.system(size: 44, weight: .bold))
+                .foregroundStyle(Color("TextPrimary").opacity(0.82))
             
             Text(currentWord.partOfSpeech)
                 .font(.callout)

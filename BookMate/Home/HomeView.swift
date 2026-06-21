@@ -24,6 +24,7 @@ struct HomeView: View {
     private enum HomeRoute: Hashable {
         case bookSearch
         case bookDetail(UUID)
+        case bookDetailMemo(UUID)
     }
 
     private var isSearchActive: Bool {
@@ -236,11 +237,15 @@ struct HomeView: View {
                         editTitle: "책 수정하기",
                         deleteTitle: "책 삭제하기",
                         moveTitle: "읽은 쪽수 업데이트",
+                        memoTitle: "메모하기",
                         onEdit: {
                             activeBookSheet = nil
 
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                                activeBookSheet = .edit(book)
+                                Task {
+                                    await viewModel.loadMyReview(bookId: book.id)
+                                    activeBookSheet = .edit(book)
+                                }
                             }
                         },
                         onDelete: {
@@ -257,32 +262,59 @@ struct HomeView: View {
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                                     activeBookSheet = .progress(book)
                                 }
+                            },
+                        onMemo: {
+                            activeBookSheet = nil
+
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                path.append(HomeRoute.bookDetailMemo(book.id))
                             }
+                        }
                     )
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
                     .presentationBackground(Color("AppBackground"))
 
                 case .edit(let book):
-                    BookEditSheet(book: book) { selectedCategory in
+                    BookEditSheet(
+                        book: book,
+                        isReviewPublic: viewModel.myReview(for: book.id)?.isPublic ?? false
+                    ) { editValues in
                         let latestBook = viewModel.books.first(where: { $0.id == book.id }) ?? book
+                        let progress = editValues.readingStatus == .completed ? 1.0 : latestBook.progress
+                        let currentPage = editValues.readingStatus == .completed
+                            ? latestBook.totalPages ?? latestBook.currentPage
+                            : latestBook.currentPage
 
                         let updatedBook = Book(
                             id: latestBook.id,
                             title: latestBook.title,
                             author: latestBook.author,
                             imageName: latestBook.imageName,
-                            category: selectedCategory,
-                            progress: latestBook.progress
+                            category: editValues.category,
+                            progress: progress,
+                            totalPages: latestBook.totalPages,
+                            currentPage: currentPage,
+                            rating: editValues.rating,
+                            review: editValues.review,
+                            readingStatus: editValues.readingStatus,
+                            startDate: editValues.startDate,
+                            endDate: editValues.endDate
                         )
 
                         activeBookSheet = nil
 
                         Task {
-                            await viewModel.updateBook(updatedBook)
+                            _ = await viewModel.updateBook(updatedBook)
+                            _ = await viewModel.saveReview(
+                                bookId: updatedBook.id,
+                                rating: editValues.rating ?? 0,
+                                content: editValues.review ?? "",
+                                isPublic: editValues.isReviewPublic
+                            )
                         }
                     }
-                    .presentationDetents([.height(420)])
+                    .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
 
                 case .progress(let book):
@@ -299,7 +331,12 @@ struct HomeView: View {
                             category: latestBook.category,
                             progress: progress,
                             totalPages: totalPages,
-                            currentPage: currentPage
+                            currentPage: currentPage,
+                            rating: latestBook.rating,
+                            review: latestBook.review,
+                            readingStatus: latestBook.readingStatus,
+                            startDate: latestBook.startDate,
+                            endDate: latestBook.endDate
                         )
 
                         activeBookSheet = nil
@@ -343,6 +380,17 @@ struct HomeView: View {
                 case .bookDetail(let bookId):
                     if let book = viewModel.book(for: bookId) {
                         BookDetailView(viewModel: viewModel, book: book)
+                    } else {
+                        Text("책 정보를 찾을 수 없습니다.")
+                    }
+                case .bookDetailMemo(let bookId):
+                    if let book = viewModel.book(for: bookId) {
+                        BookDetailView(
+                            viewModel: viewModel,
+                            book: book,
+                            initialTab: .diary,
+                            opensMemoComposerOnAppear: true
+                        )
                     } else {
                         Text("책 정보를 찾을 수 없습니다.")
                     }
@@ -483,7 +531,7 @@ struct HomeView: View {
     private var homeIntroHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 7) {
-                Text("오늘의 발견")
+                Text("BookMate 오늘 만난 문장")
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundStyle(Color("TextSecondary"))

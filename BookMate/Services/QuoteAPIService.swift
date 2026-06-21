@@ -44,7 +44,7 @@ struct QuoteAPIService {
     private let baseURL = APIEnvironment.baseURL
     private let client = APIClient() // ← 공통 네트워크 헬퍼
 
-    // 특정 책의 구절 목록 가져오기
+    // 특정 책의 문장 목록 가져오기
     // GET /api/books/{bookId}/quotes
     func fetchQuotes(bookId: UUID) async throws -> [Quote] {
         let url = baseURL
@@ -61,7 +61,7 @@ struct QuoteAPIService {
         return quoteResponses.map { $0.toQuote() }
     }
 
-    // 구절 저장하기
+    // 문장 저장하기
     // POST /api/quotes
     func saveQuote(
         bookId: UUID,
@@ -91,7 +91,7 @@ struct QuoteAPIService {
         return quoteResponse.toQuote()
     }
 
-    // 구절 수정하기
+    // 문장 수정하기
     // PATCH /api/quotes/{quoteId}
     func updateQuote(_ quote: Quote) async throws -> Quote {
         let url = baseURL
@@ -117,7 +117,7 @@ struct QuoteAPIService {
         return quoteResponse.toQuote()
     }
 
-    // 구절 삭제하기
+    // 문장 삭제하기
     // DELETE /api/quotes/{quoteId}
     func deleteQuote(id: UUID) async throws {
         let url = baseURL

@@ -47,16 +47,6 @@ struct ReadingProgressSheet: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            Capsule()
-//                .fill(Color.gray.opacity(0.25))
-//                .frame(width: 46, height: 5)
-//                .frame(maxWidth: .infinity)
-                .fill(Color("TextSecondary").opacity(0.28))
-                        .frame(width: 44, height: 5)
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 14)
-                        .padding(.bottom, 4)
-            
             VStack(alignment: .leading, spacing: 8) {
                 Text("읽은 쪽수 업데이트")
                     .font(.title2)

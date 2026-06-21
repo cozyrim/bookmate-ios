@@ -142,6 +142,7 @@ struct ProfileEditView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .toolbar(.hidden, for: .tabBar)
         .onAppear {
             nickname = currentNickname

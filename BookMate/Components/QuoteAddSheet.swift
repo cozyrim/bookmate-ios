@@ -24,7 +24,7 @@ struct QuoteAddSheet: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("구절").font(.subheadline).fontWeight(.semibold).foregroundStyle(Color("TextMuted"))
+                            Text("문장").font(.subheadline).fontWeight(.semibold).foregroundStyle(Color("TextMuted"))
                             TextEditor(text: $text)
                                 .scrollContentBackground(.hidden).padding(16).frame(minHeight: 140)
                                 .background(Color("Surface")).clipShape(RoundedRectangle(cornerRadius: 16))
@@ -55,7 +55,7 @@ struct QuoteAddSheet: View {
                     .padding(24)
                 }
             }
-            .navigationTitle("새 구절 추가").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("새 문장 추가").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } } }
         }
     }

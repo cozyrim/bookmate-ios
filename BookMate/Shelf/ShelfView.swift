@@ -39,6 +39,7 @@ struct ShelfView: View {
     enum ShelfRoute: Hashable {
         case bookSearch
         case bookDetail(UUID)
+        case bookDetailMemo(UUID)
         case publicRoom(PublicUserResponse)
         case searchUsers
     } // 책장 화면에서 이동할 수 있는 목적지 목록
@@ -57,31 +58,7 @@ struct ShelfView: View {
                 AppBackgroundView()
 
                 VStack(spacing: 8){
-                    HStack(alignment: .top) {
-                        Text("내 책장")
-                            .font(.title)
-                            .fontWeight(.bold)
-
-                        Spacer()
-
-                        VStack(alignment: .trailing, spacing: 6) {
-                            NavigationLink(value: ShelfRoute.bookSearch) {
-                                Text(" + 새 책 추가") // 이 버튼을 누르면 NavigationStack의 path에 ShelfRoute.bookSearch라는 값을 넣어줘.
-                                    .font(.caption2)
-                                    .foregroundStyle(Color("PrimaryButtonText"))
-                                    .fontWeight(.semibold)
-                                    .padding(.horizontal, 18)
-                                    .padding(.vertical, 11)
-                                    .background(Color("Primary"))
-                                    .clipShape(RoundedRectangle(cornerRadius: 18))
-
-                            }
-
-                            layoutToggleButton
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 24)
+                    shelfHeader
 
                     if let errorMessage = viewModel.bookLoadErrorMessage {
                         Spacer()
@@ -129,11 +106,15 @@ struct ShelfView: View {
                         editTitle: "책 수정하기",
                         deleteTitle: "책 삭제하기",
                         moveTitle: "읽은 쪽수 업데이트",
+                        memoTitle: "메모하기",
                         onEdit: {
                             activeBookSheet = nil
 
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                                activeBookSheet = .edit(book)
+                                Task {
+                                    await viewModel.loadMyReview(bookId: book.id)
+                                    activeBookSheet = .edit(book)
+                                }
                             }
                         },
                         onDelete: {
@@ -150,6 +131,13 @@ struct ShelfView: View {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                                 activeBookSheet = .progress(book)
                             }
+                        },
+                        onMemo: {
+                            activeBookSheet = nil
+
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                path.append(ShelfRoute.bookDetailMemo(book.id))
+                            }
                         }
                     )
                     .presentationDetents([.medium])
@@ -157,27 +145,45 @@ struct ShelfView: View {
                     .presentationBackground(Color("AppBackground"))
 
                 case .edit(let book):
-                    BookEditSheet(book: book) { selectedCategory in
+                    BookEditSheet(
+                        book: book,
+                        isReviewPublic: viewModel.myReview(for: book.id)?.isPublic ?? false
+                    ) { editValues in
                         let latestBook = viewModel.books.first(where: { $0.id == book.id }) ?? book
+                        let progress = editValues.readingStatus == .completed ? 1.0 : latestBook.progress
+                        let currentPage = editValues.readingStatus == .completed
+                            ? latestBook.totalPages ?? latestBook.currentPage
+                            : latestBook.currentPage
 
                         let updatedBook = Book(
                             id: latestBook.id,
                             title: latestBook.title,
                             author: latestBook.author,
                             imageName: latestBook.imageName,
-                            category: selectedCategory,
-                            progress: latestBook.progress,
+                            category: editValues.category,
+                            progress: progress,
                             totalPages: latestBook.totalPages,
-                            currentPage: latestBook.currentPage
+                            currentPage: currentPage,
+                            rating: editValues.rating,
+                            review: editValues.review,
+                            readingStatus: editValues.readingStatus,
+                            startDate: editValues.startDate,
+                            endDate: editValues.endDate
                         )
 
                         activeBookSheet = nil
 
                         Task {
-                            await viewModel.updateBook(updatedBook)
+                            _ = await viewModel.updateBook(updatedBook)
+                            _ = await viewModel.saveReview(
+                                bookId: updatedBook.id,
+                                rating: editValues.rating ?? 0,
+                                content: editValues.review ?? "",
+                                isPublic: editValues.isReviewPublic
+                            )
                         }
                     }
-                    .presentationDetents([.height(420)])
+                    .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
 
                 case .progress(let book):
@@ -193,7 +199,12 @@ struct ShelfView: View {
                             category: latestBook.category,
                             progress: progress,
                             totalPages: totalPages,
-                            currentPage: currentPage
+                            currentPage: currentPage,
+                            rating: latestBook.rating,
+                            review: latestBook.review,
+                            readingStatus: latestBook.readingStatus,
+                            startDate: latestBook.startDate,
+                            endDate: latestBook.endDate
                         )
 
                         activeBookSheet = nil
@@ -234,6 +245,18 @@ struct ShelfView: View {
                 case .bookDetail(let bookId):
                     if let book = viewModel.book(for: bookId){
                         BookDetailView(viewModel: viewModel, book: book)
+                    } else {
+                        Text("책 정보를 찾을 수 없습니다.")
+                    }
+
+                case .bookDetailMemo(let bookId):
+                    if let book = viewModel.book(for: bookId){
+                        BookDetailView(
+                            viewModel: viewModel,
+                            book: book,
+                            initialTab: .diary,
+                            opensMemoComposerOnAppear: true
+                        )
                     } else {
                         Text("책 정보를 찾을 수 없습니다.")
                     }
@@ -284,6 +307,52 @@ struct ShelfView: View {
         }
     }
 
+    private var shelfHeader: some View {
+        HStack(alignment: .center) {
+            Text("내 책장")
+                .font(.title)
+                .fontWeight(.bold)
+
+            Spacer()
+
+            shelfHeaderControls
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 24)
+    }
+
+    private var shelfHeaderControls: some View {
+        HStack(spacing: 0) {
+            NavigationLink(value: ShelfRoute.bookSearch) {
+                HStack(spacing: 4) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .bold))
+
+                    Text("새 책 추가")
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                }
+                .foregroundStyle(Color("Primary"))
+                .frame(height: 40)
+                .padding(.leading, 12)
+                .padding(.trailing, 16)
+            }
+            .buttonStyle(.plain)
+
+            Rectangle()
+                .fill(Color("Border").opacity(0.45))
+                .frame(width: 1, height: 22)
+
+            layoutToggleButton
+        }
+        .background(Color("Surface").opacity(0.96), in: Capsule())
+        .overlay {
+            Capsule()
+                .stroke(Color("Border").opacity(0.36), lineWidth: 1)
+        }
+        .shadow(color: Color("Shadow").opacity(0.045), radius: 10, x: 0, y: 4)
+    }
+
     private var layoutToggleButton: some View {
         Button {
             withAnimation(.spring(response: 0.32, dampingFraction: 0.88)) {
@@ -293,13 +362,7 @@ struct ShelfView: View {
             Image(systemName: shelfLayoutStyle.toggleIconName)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Color("Primary"))
-                .frame(width: 38, height: 38)
-                .background(Color("Surface").opacity(0.92), in: Circle())
-                .overlay {
-                    Circle()
-                        .stroke(Color("Border").opacity(0.28), lineWidth: 1)
-                }
-                .shadow(color: Color("Shadow").opacity(0.04), radius: 8, x: 0, y: 3)
+                .frame(width: 44, height: 40)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(shelfLayoutStyle.toggleAccessibilityLabel)
@@ -354,7 +417,6 @@ struct ShelfView: View {
         }
     }
 }
-
 
 
 #Preview {

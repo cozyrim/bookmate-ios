@@ -151,6 +151,7 @@ struct ThemeSettingsView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .toolbar(.hidden, for: .tabBar)
     }
 }

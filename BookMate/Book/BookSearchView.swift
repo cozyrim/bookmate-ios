@@ -61,6 +61,7 @@ struct BookSearchView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
     }
 
     @ViewBuilder

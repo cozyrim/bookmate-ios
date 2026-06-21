@@ -63,6 +63,7 @@ struct DarkModeSettingsView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .toolbar(.hidden, for: .tabBar)
     }
 }

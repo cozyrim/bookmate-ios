@@ -93,6 +93,7 @@ struct DictionarySettingsView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .toolbar(.hidden, for: .tabBar)
         
     }

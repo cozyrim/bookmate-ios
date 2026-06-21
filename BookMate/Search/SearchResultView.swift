@@ -52,6 +52,7 @@ struct SearchResultView: View {
                                 viewModel: viewModel,
                                 showingSheet: false
                             )
+                            .id(word.targetCode)
                         }
                     }
                     .padding(.bottom, 28)
@@ -182,7 +183,7 @@ struct SearchResultView: View {
         isSearchFocused = false
 
         Task { @MainActor in
-            await viewModel.searchDictionaryEntry()
+            await viewModel.selectDictionaryEntry(suggestion)
         }
     }
 

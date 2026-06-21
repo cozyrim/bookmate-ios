@@ -27,6 +27,17 @@ struct RoomTabView: View {
                         } else {
                             Text("책 정보를 찾을 수 없습니다.")
                         }
+                    case .bookDetailMemo(let bookId):
+                        if let book = viewModel.book(for: bookId) {
+                            BookDetailView(
+                                viewModel: viewModel,
+                                book: book,
+                                initialTab: .diary,
+                                opensMemoComposerOnAppear: true
+                            )
+                        } else {
+                            Text("책 정보를 찾을 수 없습니다.")
+                        }
                     case .publicRoom(let user):
                         PublicBookshelfView(targetUser: user)
                     case .searchUsers:

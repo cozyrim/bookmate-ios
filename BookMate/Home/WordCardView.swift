@@ -15,6 +15,10 @@ struct WordCardView: View {
 //    let onEdit: () -> Void
 //    let onDelete: () -> Void
 //    let onMove: () -> Void
+
+    init(word: Word) {
+        self.word = word
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -24,13 +28,6 @@ struct WordCardView: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(Color("TextPrimary"))
                 Spacer()
-                Text("저장됨")
-                    .font(.caption2)
-                    .foregroundStyle(Color("TextSecondary"))
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .background(Color("SuccessSoft"))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
                 
 //                MoreOptionsMenu(
 //                    onEdit: onEdit,

@@ -9,10 +9,10 @@ import Foundation
 
 struct Quote: Identifiable, Hashable {
     let id: UUID
-    let text: String // 구절 내용
+    let text: String // 문장 내용
     let page: Int?
-    let memo: String? // 구절에 대한 내 메모
-    let bookId: UUID // 어느 책에서 나온 구절인지
+    let memo: String? // 문장에 대한 내 메모
+    let bookId: UUID // 어느 책에서 나온 문장인지
     
     init(
         id: UUID = UUID(),

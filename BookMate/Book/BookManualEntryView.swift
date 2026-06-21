@@ -276,6 +276,7 @@ struct BookManualEntryView: View {
             await fillTotalPagesIfNeeded()
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .toolbar(.hidden, for: .tabBar)
     }
 
@@ -310,6 +311,8 @@ struct BookManualEntryView: View {
                 do {
                     let savedBook = try await viewModel.registerBook(draft: draft)
                     registrationResult = RegistrationResult(draft: draft, book: savedBook)
+                } catch BookRegistrationError.duplicate {
+                    errorMessage = nil
                 } catch {
                     errorMessage = "책 등록에 실패했습니다."
                     DebugLogger.log("책 등록 실패:", error)

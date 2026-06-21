@@ -93,16 +93,22 @@ extension BookMateViewModel {
         startDate: String?,
         endDate: String?
     ) async -> Bool {
+        let normalizedRating = rating.flatMap { $0 > 0 ? $0 : nil }
+        let progress = readingStatus == .completed ? 1.0 : book.progress
+        let currentPage = readingStatus == .completed
+            ? book.totalPages ?? book.currentPage
+            : book.currentPage
+
         let updatedBook = Book(
             id: book.id,
             title: book.title,
             author: book.author,
             imageName: book.imageName,
             category: book.category,
-            progress: book.progress,
+            progress: progress,
             totalPages: book.totalPages,
-            currentPage: book.currentPage,
-            rating: rating,
+            currentPage: currentPage,
+            rating: normalizedRating,
             review: review,
             readingStatus: readingStatus,
             startDate: startDate,

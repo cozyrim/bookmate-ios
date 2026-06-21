@@ -91,6 +91,7 @@ struct AppInfoView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .toolbar(.hidden, for: .tabBar)
     }
 

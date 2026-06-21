@@ -102,6 +102,7 @@ struct AccountManagementView: View {
                 }
         
                 .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
                 .toolbar(.hidden, for: .tabBar)
                 .task {
                     if authViewModel.profile == nil {

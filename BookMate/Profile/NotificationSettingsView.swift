@@ -158,6 +158,7 @@ struct NotificationSettingsView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .toolbar(.hidden, for: .tabBar)
         .alert("알림 권한이 꺼져 있어요", isPresented: $isShowingPermissionAlert) {
             Button("취소", role: .cancel) { }

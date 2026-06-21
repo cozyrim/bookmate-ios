@@ -66,6 +66,24 @@ extension BookMateViewModel {
             }
     }
 
+    // 화면 전환 뒤에도 남아 있을 수 있는 임시 검색 결과를 비운다.
+    func clearSearchState(searchMode mode: SearchMode? = nil) {
+        if let mode {
+            searchMode = mode
+        }
+
+        searchText = ""
+        dictionarySearchResult = nil
+        dictionarySuggestions = []
+        savedWordSearchResults = []
+        savedBookSearchResults = []
+        bookSearchResults = []
+        searchErrorMessage = nil
+        bookSearchErrorMessage = nil
+        isLoading = false
+        isBookSearchLoading = false
+    }
+
     // 저장된 단어와 책 목록에서 검색어가 포함된 항목을 찾는다.
     func searchSavedWords() {
         let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -241,6 +259,31 @@ extension BookMateViewModel {
         }
     }
 
+    // 같은 표제어의 다른 뜻을 선택해도 targetCode 기준으로 결과 카드를 즉시 갱신한다.
+    func selectDictionaryEntry(_ entry: DictionaryEntry) async {
+        dictionarySearchResult = entry
+        searchErrorMessage = nil
+        dictionarySuggestions = []
+        addRecentSearch(entry.text)
+
+        guard entry.exampleSentence == nil else { return }
+
+        let exampleSentence = await dictionaryExampleLookupService.fetchExample(
+            word: entry.text,
+            targetCode: entry.targetCode
+        )
+
+        guard dictionarySearchResult?.targetCode == entry.targetCode else { return }
+
+        dictionarySearchResult = DictionaryEntry(
+            text: entry.text,
+            meaning: entry.meaning,
+            partOfSpeech: entry.partOfSpeech,
+            exampleSentence: exampleSentence,
+            targetCode: entry.targetCode
+        )
+    }
+
     // MARK: - Word CRUD
 
     // 로컬 메모리에 단어를 임시 추가한다.
@@ -342,7 +385,7 @@ extension BookMateViewModel {
     }
 
     // 서버에서 단어를 삭제하고 로컬 목록에서도 제거한다.
-    func deleteWord(_ word: Word) async -> Bool {
+    func deleteWord(_ word: Word, successMessage: String = "단어를 삭제했어요.") async -> Bool {
         let signpostID = PerformanceLogger.makeSignpostID()
         PerformanceLogger.begin("DeleteWordAPI", id: signpostID)
 
@@ -357,7 +400,7 @@ extension BookMateViewModel {
             savedWordSearchResults.removeAll { $0.id == word.id }
 
             operationErrorMessage = nil
-            showToast("단어를 삭제했어요.", style: .success)
+            showToast(successMessage, style: .success)
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }

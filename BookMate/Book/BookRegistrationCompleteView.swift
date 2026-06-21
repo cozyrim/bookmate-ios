@@ -91,8 +91,7 @@ struct BookRegistrationCompleteView: View {
                 
                 VStack(spacing: 12){
                     Button{
-                        viewModel.searchMode = .dictionary
-                        viewModel.searchText = ""
+                        viewModel.clearSearchState(searchMode: .dictionary)
                         onFinishRegistration(0)
                     } label: {
                         Label("단어 검색 시작하기", systemImage: "magnifyingglass")
@@ -106,6 +105,7 @@ struct BookRegistrationCompleteView: View {
                             .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
                     }
                     Button{
+                        viewModel.clearSearchState()
                         onFinishRegistration(1)
                     } label: {
                         Text("내 책장으로 이동")

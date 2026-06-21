@@ -9,7 +9,7 @@ import SwiftUI
 
 enum BookDetailTab: String, CaseIterable {
     case words = "단어"
-    case quotes = "구절"
+    case quotes = "문장"
     case diary = "다이어리"
 }
 
@@ -19,12 +19,16 @@ struct BookDetailView: View {
     @ObservedObject var viewModel: BookMateViewModel
 
     let book: Book // 어떤 책인지
+    private let initialTab: BookDetailTab
+    private let opensMemoComposerOnAppear: Bool
 
     // 탭 상태
-    @State private var selectedTab: BookDetailTab = .words
+    @State private var selectedTab: BookDetailTab
 
     // 단어 탭 전용 상태
     @State private var bookWordSearchText = ""
+    @State private var bookWordSortOrder: BookMateViewModel.ArchiveSortOrder = .latest
+    @State private var isShowingBookWordSortOrder = false
 
     // 다이어리 탭 전용 상태
     @State private var rating: Int = 0
@@ -38,13 +42,28 @@ struct BookDetailView: View {
     // 다이어리 메모 전용 상태
     @State private var isShowingMemoAddSheet = false
     @State private var editingMemo: ReadingMemo? = nil
+    @State private var didApplyInitialTab = false
+    @State private var didOpenInitialMemoComposer = false
 
-    // 구절 탭 전용 상태
+    // 문장 탭 전용 상태
     @State private var editingQuote: Quote? = nil
-    @State private var isShowingQuoteAddSheet = false // 새 구절 시트 띄우기용
+    @State private var isShowingQuoteAddSheet = false // 새 문장 시트 띄우기용
     @State private var isReviewPublic: Bool = false
     @State private var quoteToDelete: Quote?
     @State private var isShowingQuoteDeleteAlert = false
+
+    init(
+        viewModel: BookMateViewModel,
+        book: Book,
+        initialTab: BookDetailTab = .words,
+        opensMemoComposerOnAppear: Bool = false
+    ) {
+        self.viewModel = viewModel
+        self.book = book
+        self.initialTab = initialTab
+        self.opensMemoComposerOnAppear = opensMemoComposerOnAppear
+        _selectedTab = State(initialValue: initialTab)
+    }
 
     // MARK: - Computed Properties
 
@@ -53,7 +72,7 @@ struct BookDetailView: View {
     }
 
     private var filteredWordsForBook: [Word] {
-        let words = viewModel.savedWords(for: book.id)
+        let words = sortedWordsForBook(viewModel.savedWords(for: book.id))
         let trimmed = bookWordSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         let filtered = trimmed.isEmpty ? words : words.filter { word in
@@ -61,8 +80,21 @@ struct BookDetailView: View {
             || word.meaning.localizedCaseInsensitiveContains(trimmed)
             || word.partOfSpeech.localizedCaseInsensitiveContains(trimmed)
         }
-        return Array(filtered.reversed())
+        return filtered
     } // 현재 책 id와 같은 bookId를 가진 단어만 가져옴
+
+    private func sortedWordsForBook(_ words: [Word]) -> [Word] {
+        switch bookWordSortOrder {
+        case .latest:
+            return words
+        case .oldest:
+            return Array(words.reversed())
+        case .alphabetical:
+            return words.sorted {
+                $0.text.localizedStandardCompare($1.text) == .orderedAscending
+            }
+        }
+    }
 
     private var  savedQuotesForBook: [Quote] {
         viewModel.savedQuotes(for: book.id)
@@ -119,8 +151,14 @@ struct BookDetailView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .onAppear {
             PerformanceLogger.event("BookDetailAppear")
+
+            if !didApplyInitialTab {
+                didApplyInitialTab = true
+                selectedTab = initialTab
+            }
 
             // 다이어리 탭의 초기값 세팅
             applyMyReviewToForm()
@@ -128,7 +166,16 @@ struct BookDetailView: View {
             self.startDate = BookMateDateFormatter.date(from: book.startDate)
             self.endDate = BookMateDateFormatter.date(from: book.endDate)
 
-            // 진입 시 이 책의 구절 데이터 로드
+            if opensMemoComposerOnAppear && !didOpenInitialMemoComposer {
+                didOpenInitialMemoComposer = true
+                selectedTab = .diary
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    isShowingMemoAddSheet = true
+                }
+            }
+
+            // 진입 시 이 책의 문장 데이터 로드
             Task {
                 await viewModel.loadMyReview(bookId: book.id)
                 applyMyReviewToForm()
@@ -152,7 +199,17 @@ struct BookDetailView: View {
             ReadingPeriodPickerSheet(startDate: $startDate, endDate: $endDate)
                 .presentationDetents([.large])
         }
-        .alert("구절을 삭제할까요?", isPresented: $isShowingQuoteDeleteAlert) {
+        .sheet(isPresented: $isShowingBookWordSortOrder) {
+            SortOrderSheet(
+                currentOrder: bookWordSortOrder,
+                onSelect: { selectedOrder in
+                    bookWordSortOrder = selectedOrder
+                }
+            )
+            .presentationDetents([.height(280)])
+            .presentationDragIndicator(.visible)
+        }
+        .alert("문장을 삭제할까요?", isPresented: $isShowingQuoteDeleteAlert) {
             Button("취소", role: .cancel) {
                 quoteToDelete = nil
             }
@@ -166,7 +223,7 @@ struct BookDetailView: View {
                 }
             }
         } message: {
-            Text("삭제한 구절은 되돌릴 수 없어요.")
+            Text("삭제한 문장은 되돌릴 수 없어요.")
         }
     }
 
@@ -260,9 +317,27 @@ struct BookDetailView: View {
                 .padding(.horizontal, 24)
 
             HStack{
-                Text("최근 추가됨")
+                Text("저장한 단어")
                 Spacer()
-                Text("최신순")
+
+                Button {
+                    isShowingBookWordSortOrder = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(bookWordSortOrder.rawValue)
+
+                        Image(systemName: "chevron.down")
+                            .font(.caption2)
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color("TextMuted"))
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(Color("SurfaceElevated").opacity(0.72))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
             }
             .font(.subheadline)
             .foregroundStyle(Color("TextMuted"))
@@ -294,17 +369,17 @@ struct BookDetailView: View {
 
 
 
-    // 구절 탭
+    // 문장 탭
     private var quotesTabContent: some View {
         VStack(spacing: 16) {
-            // 새 구절 추가 버튼 ( 추후 시트 연결용)
+            // 새 문장 추가 버튼 ( 추후 시트 연결용)
             Button {
-                // TODO: 구절 추가 시트 연결 액션
+                // TODO: 문장 추가 시트 연결 액션
                 isShowingQuoteAddSheet = true
             } label: {
                 HStack {
                     Image(systemName: "plus.circle.fill")
-                    Text("새 구절 추가하기")
+                    Text("새 문장 추가하기")
                 }
                 .font(.subheadline.bold())
                 .foregroundStyle(Color("Primary"))
@@ -320,7 +395,7 @@ struct BookDetailView: View {
                 ContentStateView(
                     type: .empty,
                     iconName: "quote.bubble",
-                    title: "저장된 구절이 없어요.",
+                    title: "저장된 문장이 없어요.",
                     message: "기억하고 싶은 문장을 기록해보세요.",
                     buttonTitle: nil, buttonIconName: nil, buttonAction: nil
                 )
@@ -393,7 +468,7 @@ struct BookDetailView: View {
 
                 // 1-1. 독서 상태 선택
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("독서 상태")
+                    Text("독서 상태 (선택)")
                         .font(.headline)
                         .foregroundStyle(Color("TextMuted"))
 
@@ -425,7 +500,7 @@ struct BookDetailView: View {
                 // 1-2. 별점 (이전 코드를 활용해 자연스럽게 배치)
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Text("이 책, 어땠나요?")
+                        Text("이 책, 어땠나요? (선택)")
                             .font(.headline)
                             .foregroundStyle(Color("TextMuted"))
 
@@ -450,7 +525,7 @@ struct BookDetailView: View {
 
                 // 1-3. 읽은 기간
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("읽은 기간")
+                    Text("읽은 기간 (선택)")
                         .font(.headline)
                         .foregroundStyle(Color("TextMuted"))
 
@@ -490,7 +565,7 @@ struct BookDetailView: View {
                 }
                     // 1-4. 나만의 감상평
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("나만의 감상평")
+                        Text("나만의 감상평 (선택)")
                             .font(.headline)
                             .foregroundStyle(Color("TextMuted"))
 

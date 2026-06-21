@@ -375,10 +375,12 @@ struct HomeSearchSection: View {
                 ForEach(viewModel.dictionarySuggestions, id: \.targetCode) { suggestion in
                     Button {
                         viewModel.searchText = suggestion.text
-                        viewModel.dictionarySearchResult = suggestion
                         viewModel.dictionarySuggestions = []
-                        viewModel.addRecentSearch(suggestion.text)
                         isShowingSearchResult = true
+
+                        Task { @MainActor in
+                            await viewModel.selectDictionaryEntry(suggestion)
+                        }
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(suggestion.text)

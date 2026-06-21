@@ -8,6 +8,10 @@
 
 import Foundation
 
+enum BookRegistrationError: Error {
+    case duplicate
+}
+
 extension BookMateViewModel {
     // 서버에서 내 책 목록을 불러오고 책장 표시용 상태를 동기화한다.
     func loadBooks() async {
@@ -20,6 +24,7 @@ extension BookMateViewModel {
         
         do {
             books = try await bookAPIService.fetchBooks()
+                .map { normalizedBookForReadingState($0) }
             syncShelfBooksFromBooks()
             bookLoadErrorMessage = nil
         } catch {
@@ -64,6 +69,12 @@ extension BookMateViewModel {
 
     // 등록 초안으로 서버에 새 책을 저장하고 화면 상태에 즉시 반영한다.
     func registerBook(draft: BookRegistrationDraft) async throws -> Book {
+        guard !isBookAlreadyRegistered(draft) else {
+            operationErrorMessage = nil
+            showToast("이미 등록된 책입니다.", style: .info)
+            throw BookRegistrationError.duplicate
+        }
+
         let registrationKey = bookRegistrationKey(for: draft)
 
         if let inFlightTask = inFlightBookRegistrationTasks[registrationKey] {
@@ -109,17 +120,18 @@ extension BookMateViewModel {
                 currentPage: totalPages == nil ? nil : 0,
                 isbn: draft.isbn
             )
+            let normalizedSavedBook = normalizedBookForReadingState(savedBook)
 
-            if let existingIndex = books.firstIndex(where: { $0.id == savedBook.id }) {
-                books[existingIndex] = savedBook
+            if let existingIndex = books.firstIndex(where: { $0.id == normalizedSavedBook.id }) {
+                books[existingIndex] = normalizedSavedBook
             } else {
-                books.insert(savedBook, at: 0)
+                books.insert(normalizedSavedBook, at: 0)
             }
 
             syncShelfBooksFromBooks()
             operationErrorMessage = nil
             showToast("책을 등록했어요.", style: .success)
-            return savedBook
+            return normalizedSavedBook
         } catch {
             if handleUnauthorizedIfNeeded(error) {
                 throw error
@@ -142,6 +154,25 @@ extension BookMateViewModel {
         let normalizedTitle = normalizeBookIdentityText(draft.title)
         let normalizedAuthor = normalizeBookIdentityText(draft.author)
         return "title:\(normalizedTitle)|author:\(normalizedAuthor)"
+    }
+
+    private func isBookAlreadyRegistered(_ draft: BookRegistrationDraft) -> Bool {
+        let draftTitle = normalizeBookIdentityText(draft.title)
+        let draftAuthor = normalizeBookIdentityText(draft.author)
+
+        guard !draftTitle.isEmpty else { return false }
+
+        return books.contains { book in
+            let bookTitle = normalizeBookIdentityText(book.title)
+            let bookAuthor = normalizeBookIdentityText(book.author)
+            let authorMatches = draftAuthor.isEmpty
+                || bookAuthor.isEmpty
+                || bookAuthor == draftAuthor
+                || bookAuthor.contains(draftAuthor)
+                || draftAuthor.contains(bookAuthor)
+
+            return bookTitle == draftTitle && authorMatches
+        }
     }
 
     private func normalizeISBN(_ isbn: String) -> String {
@@ -168,6 +199,7 @@ extension BookMateViewModel {
         text
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
+            .filter { !$0.isWhitespace && $0 != "," && $0 != "." && $0 != "·" }
     }
 
     // 서버에서 책을 삭제하고 관련 로컬 상태도 함께 제거한다.
@@ -201,10 +233,14 @@ extension BookMateViewModel {
 
     // 책 정보와 독서 상태를 서버에 수정 요청하고 로컬 상태를 갱신한다.
     func updateBook(_ book: Book, successMessage: String = "책 정보를 수정했어요.") async -> Bool {
+        let bookToUpdate = normalizedBookForReadingState(book)
+
         if isRunningForPreview {
-            if let index = books.firstIndex(where: { $0.id == book.id }) {
-                books[index] = book
+            if let index = books.firstIndex(where: { $0.id == bookToUpdate.id }) {
+                books[index] = bookToUpdate
             }
+
+            syncShelfBooksFromBooks()
             operationErrorMessage = nil
             showToast(successMessage, style: .success)
             return true
@@ -218,14 +254,16 @@ extension BookMateViewModel {
         }
 
         do {
-            let updatedBook = try await bookAPIService.updateBook(book)
+            let updatedBook = normalizedBookForReadingState(
+                try await bookAPIService.updateBook(bookToUpdate)
+            )
 
             if let index = books.firstIndex(where: { $0.id == updatedBook.id }) {
                 books[index] = updatedBook
 
                 if let shelfIndex = shelfBooks.firstIndex(where: { $0.bookId == updatedBook.id }) {
                     shelfBooks[shelfIndex].progress = updatedBook.progress
-                    shelfBooks[shelfIndex].status = updatedBook.readingStatus ?? shelfBooks[shelfIndex].status
+                    shelfBooks[shelfIndex].status = updatedBook.readingStatus ?? .reading
                     shelfBooks[shelfIndex].updatedAt = Date()
                 }
             }
@@ -265,12 +303,14 @@ extension BookMateViewModel {
 
     // REST Book 데이터를 책장 렌더링용 ShelfBook 상태로 변환한다.
     private func makeShelfBook(from book: Book) -> ShelfBook {
-        ShelfBook(
-            id: "shelf-\(book.id.uuidString)",
+        let normalizedBook = normalizedBookForReadingState(book)
+
+        return ShelfBook(
+            id: "shelf-\(normalizedBook.id.uuidString)",
             ownerId: "current-user",
-            bookId: book.id,
-            progress: book.progress,
-            status: book.readingStatus ?? .reading,
+            bookId: normalizedBook.id,
+            progress: normalizedBook.progress,
+            status: normalizedBook.readingStatus ?? .reading,
             isPublic: true,
             createdAt: Date(),
             updatedAt: Date()
@@ -282,6 +322,40 @@ extension BookMateViewModel {
         shelfBooks = books.map { book in
             makeShelfBook(from: book)
         }
+    }
+
+    private func normalizedBookForReadingState(_ book: Book) -> Book {
+        let clampedProgress = min(max(book.progress, 0), 1)
+        let isCompleted = clampedProgress >= 0.999
+        let normalizedStatus: ReadingStatus?
+
+        if isCompleted {
+            normalizedStatus = .completed
+        } else if book.readingStatus == .completed {
+            normalizedStatus = .reading
+        } else {
+            normalizedStatus = book.readingStatus
+        }
+
+        let normalizedCurrentPage = isCompleted
+            ? book.totalPages ?? book.currentPage
+            : book.currentPage
+
+        return Book(
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            imageName: book.imageName,
+            category: book.category,
+            progress: clampedProgress,
+            totalPages: book.totalPages,
+            currentPage: normalizedCurrentPage,
+            rating: book.rating,
+            review: book.review,
+            readingStatus: normalizedStatus,
+            startDate: book.startDate,
+            endDate: book.endDate
+        )
     }
 
     // 책장에 표시할 Book 목록을 ShelfBook 순서에 맞춰 만든다.

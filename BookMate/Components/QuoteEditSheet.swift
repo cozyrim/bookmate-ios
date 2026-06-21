@@ -22,9 +22,9 @@ struct QuoteEditSheet: View {
                 
                 ScrollView(showsIndicators: false) {
                                     VStack(alignment: .leading, spacing: 24) {
-                                        // 구절 내용
+                                        // 문장 내용
                                                                 VStack(alignment: .leading, spacing: 8) {
-                                                                    Text("구절")
+                                                                    Text("문장")
                                                                         .font(.subheadline)
                                                                         .fontWeight(.semibold)
                                                                         .foregroundStyle(Color("TextMuted"))
@@ -94,7 +94,7 @@ struct QuoteEditSheet: View {
                                                             .padding(24)
                                                         }
                                                     }
-                                                    .navigationTitle("구절 수정")
+                                                    .navigationTitle("문장 수정")
                                                     .navigationBarTitleDisplayMode(.inline)
                                                     .toolbar {
                                                         ToolbarItem(placement: .cancellationAction) {

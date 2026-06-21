@@ -22,30 +22,30 @@ struct ContentStateView: View {
         let buttonAction: (() -> Void)?
     
     var body: some View {
-        VStack(spacing: 26) {
+        VStack(spacing: 18) {
             ZStack {
                 Circle()
                     .fill(Color("Primary").opacity(0.16))
-                    .frame(width: 230, height: 230)
-                    .blur(radius: 22)
+                    .frame(width: 178, height: 178)
+                    .blur(radius: 18)
                 
                 RoundedRectangle(cornerRadius: 42)
                                     .fill(Color("Surface").opacity(0.78))
-                                    .frame(width: 130, height: 130)
+                                    .frame(width: 104, height: 104)
                                     .shadow(color: Color("Shadow").opacity(0.05), radius: 14, x: 0, y: 8)
 
                                 RoundedRectangle(cornerRadius: 28)
                                     .fill(type == .empty ? Color("Primary").opacity(0.12) : Color.red.opacity(0.08))
-                                    .frame(width: 82, height: 82)
+                                    .frame(width: 64, height: 64)
 
                                 Image(systemName: iconName)
-                                    .font(.system(size: 42, weight: .semibold))
+                                    .font(.system(size: 32, weight: .semibold))
                                     .foregroundStyle(type == .empty ? Color("TextSecondary") : .red.opacity(0.8))
             }
             
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                             Text(title)
-                                .font(.title2)
+                                .font(.title3)
                                 .fontWeight(.bold)
                                 .foregroundStyle(Color("TextPrimary"))
 
