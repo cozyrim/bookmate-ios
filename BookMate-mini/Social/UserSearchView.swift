@@ -11,7 +11,9 @@ struct UserSearchView: View {
     @State private var searchText = ""
     @State private var searchResults: [PublicUserResponse] = []
     @State private var blockedUserIDs: Set<UUID> = []
-
+    @State private var searchTask: Task<Void, Never>?
+    @State private var isSearching = false
+    
     let onSelectUser: ((PublicUserResponse) -> Void)?
 
     private let socialService = SocialAPIService()
@@ -25,7 +27,7 @@ struct UserSearchView: View {
     var body: some View {
         ZStack {
             Color("AppBackground").ignoresSafeArea()
-
+            
             VStack {
                 if searchResults.isEmpty {
                     ContentUnavailableView(
@@ -45,13 +47,13 @@ struct UserSearchView: View {
                                     showsEditIcon: false,
                                     size: 40
                                 )
-
+                                
                                 Text(user.nickname)
                                     .font(.body)
                                     .fontWeight(.medium)
-
+                                
                                 Spacer()
-
+                                
                                 Image(systemName: "chevron.right")
                                     .font(.caption.weight(.bold))
                                     .foregroundStyle(Color("TextMuted"))
@@ -65,27 +67,60 @@ struct UserSearchView: View {
         }
         .navigationTitle("유저 검색")
         .searchable(text: $searchText, prompt: "닉네임을 검색하세요")
-        .onChange(of: searchText) { _, _ in
-            Task {
-                await performSearch()
-            }
+        .onChange(of: searchText) { _, newValue in
+            scheduleSearch(for: newValue)
         }
-        .task {
-            await loadBlockedUsers()
+        .onDisappear {
+            searchTask?.cancel()
         }
+        //            Task {
+        //                await performSearch()
+        //            }
+        //        }
+        //        .task {
+        //            await loadBlockedUsers()
+        //        }
     }
 
-    private func performSearch() async {
-        guard let token = tokenStore.load(), !searchText.isEmpty else {
-            searchResults = []
-            return
-        }
+    @MainActor
+    private func scheduleSearch(for rawText: String) {
+        searchTask?.cancel()
+        
+        let query = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard query.count >= 1 else {
+                searchResults = []
+                isSearching = false
+                return
+            }
+        
+        searchTask = Task {
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                if Task.isCancelled { return }
+
+                await performSearch(query: query)
+            }
+    }
+    
+    @MainActor
+    private func performSearch(query: String) async {
+        guard let token = tokenStore.load() else { return }
+
+            isSearching = true
+            defer { isSearching = false }
 
         do {
-            let users = try await socialService.searchUsers(token: token, nickname: searchText)
+            let users = try await socialService.searchUsers(token: token, nickname: query)
+            
+            guard query == searchText.trimmingCharacters(in: .whitespacesAndNewlines) else {
+                        return
+                    }
+            
             searchResults = users.filter { !blockedUserIDs.contains($0.id) }
         } catch {
-            print("유저 검색 실패:", error)
+            if !Task.isCancelled {
+                        print("유저 검색 실패:", error)
+                    }
         }
     }
 

@@ -14,6 +14,7 @@
 		E29F41A72FCF592500021309 /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = E29F41A62FCF592500021309 /* KakaoSDKCommon */; };
 		E29F41A92FCF592500021309 /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = E29F41A82FCF592500021309 /* KakaoSDKUser */; };
 		E2A46C992FB1D7640094CD4E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2A46C952FB1D7640094CD4E /* Assets.xcassets */; };
+		E2CBCD312FE7B13200CFC0CF /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = E2CBCD302FE7B13200CFC0CF /* Kingfisher */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -66,6 +67,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2CBCD312FE7B13200CFC0CF /* Kingfisher in Frameworks */,
 				E29F41A72FCF592500021309 /* KakaoSDKCommon in Frameworks */,
 				E29F41A52FCF592500021309 /* KakaoSDKAuth in Frameworks */,
 				E282F6732FDC115500709518 /* FirebaseCore in Frameworks */,
@@ -148,6 +150,7 @@
 				E29F41A82FCF592500021309 /* KakaoSDKUser */,
 				E282F6722FDC115500709518 /* FirebaseCore */,
 				E282F6742FDC115500709518 /* FirebaseFirestore */,
+				E2CBCD302FE7B13200CFC0CF /* Kingfisher */,
 			);
 			productName = "BookMate-mini";
 			productReference = E286E4852FB1B48400F1715A /* BookMate-mini.app */;
@@ -234,6 +237,7 @@
 			packageReferences = (
 				E29F41A32FCF592500021309 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */,
 				E282F6712FDC115500709518 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				E2CBCD2F2FE7B13200CFC0CF /* XCRemoteSwiftPackageReference "kingfisher" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E286E4862FB1B48400F1715A /* Products */;
@@ -671,6 +675,14 @@
 				minimumVersion = 2.27.3;
 			};
 		};
+		E2CBCD2F2FE7B13200CFC0CF /* XCRemoteSwiftPackageReference "kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/kingfisher";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.10.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -698,6 +710,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E29F41A32FCF592500021309 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
 			productName = KakaoSDKUser;
+		};
+		E2CBCD302FE7B13200CFC0CF /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2CBCD2F2FE7B13200CFC0CF /* XCRemoteSwiftPackageReference "kingfisher" */;
+			productName = Kingfisher;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

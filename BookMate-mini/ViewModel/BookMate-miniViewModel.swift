@@ -138,6 +138,7 @@ final class BookMateViewModel: ObservableObject {
     var currentUserId: UUID?
 
     private var currentUserNickname: String = "나"
+    var inFlightBookRegistrationTasks: [String: Task<Book, Error>] = [:]
     private var currentUserProfileImageURL: String?
 
     // MARK: - Common Helpers

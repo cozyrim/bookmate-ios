@@ -281,6 +281,8 @@ struct BookManualEntryView: View {
 
     private var registrationButton: some View {
         Button {
+            guard !isSaving else { return }
+
             dismissKeyboard()
 
             let trimmedTotalPages = totalPagesText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -297,9 +299,13 @@ struct BookManualEntryView: View {
                 totalPages: manualTotalPages ?? initialDraft?.totalPages
             )
 
-            Task {
-                isSaving = true
-                errorMessage = nil
+            isSaving = true
+            errorMessage = nil
+
+            Task { @MainActor in
+                defer {
+                    isSaving = false
+                }
 
                 do {
                     let savedBook = try await viewModel.registerBook(draft: draft)
@@ -308,8 +314,6 @@ struct BookManualEntryView: View {
                     errorMessage = "책 등록에 실패했습니다."
                     DebugLogger.log("책 등록 실패:", error)
                 }
-
-                isSaving = false
             }
 
         } label: {
@@ -324,6 +328,7 @@ struct BookManualEntryView: View {
                 .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
         }
         .disabled(isSaving)
+        .opacity(isSaving ? 0.7 : 1)
     }
 
     private func dismissKeyboard() {

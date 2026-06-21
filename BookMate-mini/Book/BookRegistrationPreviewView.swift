@@ -165,16 +165,22 @@ struct BookRegistrationPreviewView: View {
                     .padding()
 
                     Button {
-                        Task {
-                            isSaving = true
-                            
+                        guard !isSaving else { return }
+
+                        isSaving = true
+                        errorMessage = nil
+
+                        Task { @MainActor in
+                            defer {
+                                isSaving = false
+                            }
+
                             do {
                                 savedBook = try await viewModel.registerBook(draft: draft)
                             } catch {
                                 errorMessage = "책 등록에 실패했습니다."
                                 DebugLogger.log("책 등록 실패:", error)
                             }
-                            isSaving = false
                         }
                     } label: {
                         Text(isSaving ? "저장 중..." : "이 책으로 등록하기")
@@ -187,6 +193,9 @@ struct BookRegistrationPreviewView: View {
                             .clipShape(Capsule())
                             .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
                     }
+                    .disabled(isSaving)
+                    .opacity(isSaving ? 0.7 : 1)
+
                     if let errorMessage {
                         Text(errorMessage)
                             .font(.caption)

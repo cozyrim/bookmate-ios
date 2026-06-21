@@ -8,7 +8,6 @@ struct GuestbookSheetView: View {
     let targetUser: PublicUserResponse
     let socialService: SocialAPIService
 
-    @State private var newMessageContent = ""
     @State private var isPosting = false
     @State private var selectedReportTarget: ModerationTarget?
     @State private var pendingBlockMessage: GuestbookMessageResponse?
@@ -24,7 +23,9 @@ struct GuestbookSheetView: View {
             VStack(spacing: 0) {
                 header
                 messageList
-                composer
+                GuestbookComposerView(isPosting: isPosting) { content in
+                    await postMessage(content)
+                }
             }
         }
         .appToast($toast)
@@ -106,45 +107,7 @@ struct GuestbookSheetView: View {
         .scrollContentBackground(.hidden)
     }
 
-    private var composer: some View {
-        VStack(spacing: 0) {
-            Divider()
 
-            HStack(spacing: 10) {
-                TextField("방명록을 남겨보세요...", text: $newMessageContent, axis: .vertical)
-                    .lineLimit(1...3)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 11)
-                    .background(Color("Surface").opacity(0.88), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-
-                Button {
-                    postMessage()
-                } label: {
-                    if isPosting {
-                        ProgressView()
-                            .tint(Color("Primary"))
-                            .frame(width: 36, height: 36)
-                    } else {
-                        Image(systemName: "paperplane.fill")
-                            .font(.headline)
-                            .foregroundStyle(Color("PrimaryButtonText"))
-                            .frame(width: 36, height: 36)
-                            .background(Color("Primary"), in: Circle())
-                    }
-                }
-                .buttonStyle(.plain)
-                .disabled(trimmedMessage.isEmpty || isPosting)
-                .opacity(trimmedMessage.isEmpty || isPosting ? 0.45 : 1)
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 14)
-        }
-        .background(Color("AppBackground").opacity(0.92))
-    }
-
-    private var trimmedMessage: String {
-        newMessageContent.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
 
     private func messageRow(_ message: GuestbookMessageResponse) -> some View {
         HStack(alignment: .top, spacing: 10) {
@@ -240,53 +203,34 @@ struct GuestbookSheetView: View {
         )
     }
 
-    private func postMessage() {
-        guard let token = tokenStore.load(), !trimmedMessage.isEmpty else { return }
+    @MainActor
+    private func postMessage(_ content: String) async -> Bool {
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let token = tokenStore.load(), !trimmedContent.isEmpty else { return false }
+        
         isPosting = true
-
-        Task {
-            let signpostID = PerformanceLogger.makeSignpostID()
-            PerformanceLogger.begin("PostGuestbookAPI", id: signpostID)
-
-            defer {
-                PerformanceLogger.end("PostGuestbookAPI", id: signpostID)
-            }
-
-            do {
-                let contentCheck = try await moderationService.checkContent(
-                    trimmedMessage,
-                    context: .guestbook
-                )
-
-                guard contentCheck.allowed else {
-                    await MainActor.run {
-                        toast = AppToast(
-                            message: contentCheck.reasons.first ?? "방명록 내용을 확인해주세요.",
-                            style: .error
-                        )
-                        isPosting = false
-                    }
-                    return
-                }
-
-                let newMessage = try await socialService.writeGuestbook(
-                    token: token,
-                    userId: targetUser.id,
-                    content: trimmedMessage
-                )
-
-                await MainActor.run {
-                    messages.insert(newMessage, at: 0)
-                    newMessageContent = ""
-                    isPosting = false
-                }
-            } catch {
-                print("방명록 작성 실패: \(error)")
-                await MainActor.run {
-                    toast = AppToast(message: "방명록 작성에 실패했어요.", style: .error)
-                    isPosting = false
-                }
-            }
+        let signpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("PostGuestbookAPI", id: signpostID)
+        
+        
+        defer {
+            isPosting = false
+            PerformanceLogger.end("PostGuestbookAPI", id: signpostID)
+        }
+        
+        do {
+            let newMessage = try await socialService.writeGuestbook(
+                token: token,
+                userId: targetUser.id,
+                content: trimmedContent
+            )
+            
+            messages.insert(newMessage, at: 0)
+            return true
+        } catch {
+            print("방명록 작성 실패: \(error)")
+            toast = AppToast(message: "방명록 작성에 실패했어요.", style: .error)
+            return false
         }
     }
 
@@ -341,4 +285,58 @@ struct GuestbookSheetView: View {
             messages.removeAll { $0.id == messageId }
         }
     }
+}
+
+private struct GuestbookComposerView: View {
+    @State private var draft = ""
+    
+    let isPosting: Bool
+    let onSubmit: (String) async -> Bool
+    
+    private var trimmedDraft: String {
+        draft.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    var body: some View {
+            VStack(spacing: 0) {
+                Divider()
+
+                HStack(spacing: 10) {
+                    TextField("방명록을 남겨보세요...", text: $draft, axis: .vertical)
+                        .lineLimit(1...3)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        .background(Color("Surface").opacity(0.88), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                    Button {
+                        let content = trimmedDraft
+                        Task {
+                            let didPost = await onSubmit(content)
+                            if didPost {
+                                draft = ""
+                            }
+                        }
+                    } label: {
+                        if isPosting {
+                            ProgressView()
+                                .tint(Color("Primary"))
+                                .frame(width: 36, height: 36)
+                        } else {
+                            Image(systemName: "paperplane.fill")
+                                .font(.headline)
+                                .foregroundStyle(Color("PrimaryButtonText"))
+                                .frame(width: 36, height: 36)
+                                .background(Color("Primary"), in: Circle())
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(trimmedDraft.isEmpty || isPosting)
+                    .opacity(trimmedDraft.isEmpty || isPosting ? 0.45 : 1)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+            }
+            .background(Color("AppBackground").opacity(0.92))
+        }
+
 }

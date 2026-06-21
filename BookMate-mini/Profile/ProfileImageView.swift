@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UIKit
+import Kingfisher
 
 struct ProfileImageView: View {
     let imageName: String
@@ -72,18 +73,16 @@ struct ProfileImageView: View {
         } else if let imageURLString,
                   imageURLString.hasPrefix("http"),
         let url = displayImageURL(from: imageURLString){
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                default:
+            KFImage(url)
+                .placeholder {
                     Image(imageName)
                         .resizable()
                         .scaledToFill()
                 }
-            }
+                .cancelOnDisappear(true)
+                .fade(duration: 0.15)
+                .resizable()
+                .scaledToFill()
         } else {
             Image(imageName)
                 .resizable()

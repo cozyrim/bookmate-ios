@@ -64,6 +64,26 @@ extension BookMateViewModel {
 
     // 등록 초안으로 서버에 새 책을 저장하고 화면 상태에 즉시 반영한다.
     func registerBook(draft: BookRegistrationDraft) async throws -> Book {
+        let registrationKey = bookRegistrationKey(for: draft)
+
+        if let inFlightTask = inFlightBookRegistrationTasks[registrationKey] {
+            return try await inFlightTask.value
+        }
+
+        let registrationTask = Task { @MainActor in
+            try await performBookRegistration(draft: draft)
+        }
+
+        inFlightBookRegistrationTasks[registrationKey] = registrationTask
+
+        defer {
+            inFlightBookRegistrationTasks[registrationKey] = nil
+        }
+
+        return try await registrationTask.value
+    }
+
+    private func performBookRegistration(draft: BookRegistrationDraft) async throws -> Book {
         let signpostID = PerformanceLogger.makeSignpostID()
         PerformanceLogger.begin("RegisterBookAPI", id: signpostID)
 
@@ -89,7 +109,13 @@ extension BookMateViewModel {
                 currentPage: totalPages == nil ? nil : 0,
                 isbn: draft.isbn
             )
-            books.insert(savedBook, at: 0)
+
+            if let existingIndex = books.firstIndex(where: { $0.id == savedBook.id }) {
+                books[existingIndex] = savedBook
+            } else {
+                books.insert(savedBook, at: 0)
+            }
+
             syncShelfBooksFromBooks()
             operationErrorMessage = nil
             showToast("책을 등록했어요.", style: .success)
@@ -104,6 +130,44 @@ extension BookMateViewModel {
             DebugLogger.log("책 등록 실패:", error)
             throw error
         }
+    }
+
+    private func bookRegistrationKey(for draft: BookRegistrationDraft) -> String {
+        let normalizedISBN = normalizeISBN(draft.isbn)
+
+        if !normalizedISBN.isEmpty {
+            return "isbn:\(normalizedISBN)"
+        }
+
+        let normalizedTitle = normalizeBookIdentityText(draft.title)
+        let normalizedAuthor = normalizeBookIdentityText(draft.author)
+        return "title:\(normalizedTitle)|author:\(normalizedAuthor)"
+    }
+
+    private func normalizeISBN(_ isbn: String) -> String {
+        var bestCandidate = ""
+
+        for candidate in isbn.split(whereSeparator: \.isWhitespace) {
+            let cleaned = candidate
+                .uppercased()
+                .filter { $0.isNumber || $0 == "X" }
+
+            if cleaned.count == 13 {
+                return cleaned
+            }
+
+            if bestCandidate.isEmpty, cleaned.count == 10 {
+                bestCandidate = cleaned
+            }
+        }
+
+        return bestCandidate
+    }
+
+    private func normalizeBookIdentityText(_ text: String) -> String {
+        text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
     }
 
     // 서버에서 책을 삭제하고 관련 로컬 상태도 함께 제거한다.
