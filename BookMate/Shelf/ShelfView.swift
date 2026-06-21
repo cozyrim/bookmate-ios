@@ -17,6 +17,24 @@ struct ShelfView: View {
 
 
     @State private var activeBookSheet: BookActionSheet?
+    @State private var shelfLayoutStyle: ShelfLayoutStyle = .grid
+
+    private enum ShelfLayoutStyle {
+        case grid
+        case list
+
+        var toggled: ShelfLayoutStyle {
+            self == .grid ? .list : .grid
+        }
+
+        var toggleIconName: String {
+            self == .grid ? "list.bullet" : "square.grid.2x2"
+        }
+
+        var toggleAccessibilityLabel: String {
+            self == .grid ? "가로형 보기로 전환" : "세로형 보기로 전환"
+        }
+    }
 
     enum ShelfRoute: Hashable {
         case bookSearch
@@ -38,22 +56,28 @@ struct ShelfView: View {
             ZStack{
                 AppBackgroundView()
 
-                VStack(spacing: 20){
-                    HStack{
+                VStack(spacing: 8){
+                    HStack(alignment: .top) {
                         Text("내 책장")
                             .font(.title)
                             .fontWeight(.bold)
-                        Spacer()
-                        NavigationLink(value: ShelfRoute.bookSearch) {
-                            Text(" + 새 책 추가") // 이 버튼을 누르면 NavigationStack의 path에 ShelfRoute.bookSearch라는 값을 넣어줘.
-                                .font(.caption2)
-                                .foregroundStyle(Color("PrimaryButtonText"))
-                                .fontWeight(.semibold)
-                                .padding(.horizontal, 18)
-                                .padding(.vertical, 11)
-                                .background(Color("Primary"))
-                                .clipShape(RoundedRectangle(cornerRadius: 18))
 
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 6) {
+                            NavigationLink(value: ShelfRoute.bookSearch) {
+                                Text(" + 새 책 추가") // 이 버튼을 누르면 NavigationStack의 path에 ShelfRoute.bookSearch라는 값을 넣어줘.
+                                    .font(.caption2)
+                                    .foregroundStyle(Color("PrimaryButtonText"))
+                                    .fontWeight(.semibold)
+                                    .padding(.horizontal, 18)
+                                    .padding(.vertical, 11)
+                                    .background(Color("Primary"))
+                                    .clipShape(RoundedRectangle(cornerRadius: 18))
+
+                            }
+
+                            layoutToggleButton
                         }
                     }
                     .padding(.horizontal, 24)
@@ -93,22 +117,7 @@ struct ShelfView: View {
                         Spacer()
                     } else {
                         ScrollView(showsIndicators: false) {
-                            VStack(spacing: 16){
-                                ForEach(viewModel.shelfBooks) { shelfBook in
-                                    if let book = viewModel.book(for: shelfBook) {
-                                        ShelfBookCardView(imageName: book.imageName, author: book.author, title: book.title, category: book.category, progress: shelfBook.progress, wordCount: viewModel.savedWords(for: book.id).count, readingStatus: shelfBook.status,
-                                                          onTap: {
-                                            path.append(ShelfRoute.bookDetail(book.id))
-                                        },
-                                                          onMoreTap: {
-                                            activeBookSheet = .options(book)
-                                        })
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                            }
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 110)
+                            shelfContent
                         }
                     }
                 }
@@ -237,6 +246,110 @@ struct ShelfView: View {
                         path.append(ShelfRoute.publicRoom(user))
                     }
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var shelfContent: some View {
+        switch shelfLayoutStyle {
+        case .grid:
+            HStack(alignment: .top, spacing: 16) {
+                LazyVStack(spacing: 18) {
+                    ForEach(shelfBooksForColumn(isLeftColumn: true)) { shelfBook in
+                        shelfBookCard(for: shelfBook, style: .grid)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+
+                LazyVStack(spacing: 18) {
+                    ForEach(shelfBooksForColumn(isLeftColumn: false)) { shelfBook in
+                        shelfBookCard(for: shelfBook, style: .grid)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 42)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 2)
+            .padding(.bottom, 110)
+
+        case .list:
+            LazyVStack(spacing: 16) {
+                ForEach(viewModel.shelfBooks) { shelfBook in
+                    shelfBookCard(for: shelfBook, style: .list)
+                }
+            }
+            .padding(.bottom, 110)
+        }
+    }
+
+    private var layoutToggleButton: some View {
+        Button {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.88)) {
+                shelfLayoutStyle = shelfLayoutStyle.toggled
+            }
+        } label: {
+            Image(systemName: shelfLayoutStyle.toggleIconName)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color("Primary"))
+                .frame(width: 38, height: 38)
+                .background(Color("Surface").opacity(0.92), in: Circle())
+                .overlay {
+                    Circle()
+                        .stroke(Color("Border").opacity(0.28), lineWidth: 1)
+                }
+                .shadow(color: Color("Shadow").opacity(0.04), radius: 8, x: 0, y: 3)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(shelfLayoutStyle.toggleAccessibilityLabel)
+    }
+
+    private func shelfBooksForColumn(isLeftColumn: Bool) -> [ShelfBook] {
+        viewModel.shelfBooks.enumerated().compactMap { index, shelfBook in
+            index.isMultiple(of: 2) == isLeftColumn ? shelfBook : nil
+        }
+    }
+
+    @ViewBuilder
+    private func shelfBookCard(for shelfBook: ShelfBook, style: ShelfLayoutStyle) -> some View {
+        if let book = viewModel.book(for: shelfBook) {
+            switch style {
+            case .grid:
+                ShelfBookCardView(
+                    imageName: book.imageName,
+                    author: book.author,
+                    title: book.title,
+                    category: book.category,
+                    progress: shelfBook.progress,
+                    wordCount: viewModel.savedWords(for: book.id).count,
+                    readingStatus: shelfBook.status,
+                    onTap: {
+                        path.append(ShelfRoute.bookDetail(book.id))
+                    },
+                    onMoreTap: {
+                        activeBookSheet = .options(book)
+                    }
+                )
+                .buttonStyle(.plain)
+
+            case .list:
+                ShelfBookListCardView(
+                    imageName: book.imageName,
+                    author: book.author,
+                    title: book.title,
+                    category: book.category,
+                    progress: shelfBook.progress,
+                    wordCount: viewModel.savedWords(for: book.id).count,
+                    readingStatus: shelfBook.status,
+                    onTap: {
+                        path.append(ShelfRoute.bookDetail(book.id))
+                    },
+                    onMoreTap: {
+                        activeBookSheet = .options(book)
+                    }
+                )
+                .buttonStyle(.plain)
             }
         }
     }

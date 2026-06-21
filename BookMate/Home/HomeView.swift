@@ -41,10 +41,22 @@ struct HomeView: View {
     }
 
 
-    private let recentWordRows = [
-        GridItem(.fixed(90), spacing: 12),
-        GridItem(.fixed(90), spacing: 12)
-    ]
+    private var recentWordRows: [GridItem] {
+        let rowCount = min(max(viewModel.savedWords.prefix(8).count, 1), 2)
+
+        return Array(
+            repeating: GridItem(.fixed(90), spacing: 12),
+            count: rowCount
+        )
+    }
+
+    private var recentWordsSectionHeight: CGFloat {
+        if viewModel.savedWords.isEmpty {
+            return 115
+        }
+
+        return viewModel.savedWords.prefix(8).count == 1 ? 90 : 192
+    }
 
 
     var body: some View {
@@ -134,7 +146,7 @@ struct HomeView: View {
                                 }
                             }
                             //                        .frame(height: 90)
-                            .frame(height: viewModel.savedWords.isEmpty ? 115 : 192, alignment: .top)
+                            .frame(height: recentWordsSectionHeight, alignment: .top)
 
                             HStack {
                                 Text("내 책장")
