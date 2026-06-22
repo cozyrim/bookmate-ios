@@ -149,6 +149,11 @@ struct SearchResultView: View {
             return
         }
 
+        guard isSearchFocused, trimmed.count >= 2 else {
+            viewModel.dictionarySuggestions = []
+            return
+        }
+
         viewModel.searchMode = .dictionary
 
         suggestionTask = Task { @MainActor in

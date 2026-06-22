@@ -28,6 +28,10 @@ struct MoreOptionsSheet: View {
     private var sheetRowBackground: Color {
         colorScheme == .dark ? Color.white.opacity(0.06) : Color("Surface")
     }
+
+    private var sheetCornerRadius: CGFloat {
+        24
+    }
     
     init(
             editTitle: String = "단어 수정하기",
@@ -59,19 +63,24 @@ struct MoreOptionsSheet: View {
         Button {
             action()
         } label: {
-            HStack {
+            HStack(spacing: 12) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 14, weight: .semibold))
+                    .frame(width: 30, height: 30)
+                    .background(color.opacity(colorScheme == .dark ? 0.16 : 0.08), in: Circle())
+
                 Text(title)
-                    .font(.title3)
+                    .font(.callout)
+                    .fontWeight(.semibold)
                 
                 Spacer()
-                
-                Image(systemName: systemImage)
-                    .font(.title3)
             }
             .foregroundStyle(color)
-            .padding(.horizontal, 24)
-            .frame(height: 72)
+            .padding(.horizontal, 14)
+            .frame(height: 56)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 
 //    얘는 “수정”, “삭제” 같은 버튼만 보여준다.
@@ -79,7 +88,7 @@ struct MoreOptionsSheet: View {
 
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 10) {
             VStack(spacing: 0) {
                 optionRow(
                     title: editTitle,
@@ -90,7 +99,7 @@ struct MoreOptionsSheet: View {
             
                 if let moveTitle {
                     Divider()
-                        .padding(.leading, 24)
+                        .padding(.leading, 56)
 
                     optionRow(
                         title: moveTitle,
@@ -102,7 +111,7 @@ struct MoreOptionsSheet: View {
 
                 if let memoTitle {
                     Divider()
-                        .padding(.leading, 24)
+                        .padding(.leading, 56)
 
                     optionRow(
                         title: memoTitle,
@@ -112,53 +121,57 @@ struct MoreOptionsSheet: View {
                     )
                 }
                 
-                Divider()
-                    .padding(.leading, 24)
-                
 //                optionRow(title: "목록에서 숨기기", systemImage: "eye.slash", color: .black, action: {
 //                        DebugLogger.log("숨기기")
 //                    }
 //                )
             }
             .background(sheetRowBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 28))
+            .clipShape(RoundedRectangle(cornerRadius: sheetCornerRadius, style: .continuous))
             
             Button { // 여기서 onDelete()는 “삭제 버튼이 눌렸다”는 사실을 바깥에 알려주는 역할
                 onDelete() // 부모가 넘겨준 행동 실행
             } label: {
-                HStack {
+                HStack(spacing: 12) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14, weight: .semibold))
+                        .frame(width: 30, height: 30)
+                        .background(Color("Error").opacity(colorScheme == .dark ? 0.16 : 0.08), in: Circle())
+
                     Text(deleteTitle)
-                        .font(.title3)
+                        .font(.callout)
+                        .fontWeight(.semibold)
                     
                     Spacer()
-                    
-                    Image(systemName: "trash")
-                        .font(.title3)
                 }
                 .foregroundStyle(Color("Error"))
-                .padding(.horizontal, 24)
-                .frame(height: 72)
+                .padding(.horizontal, 14)
+                .frame(height: 56)
                 .background(sheetRowBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 28))
+                .clipShape(RoundedRectangle(cornerRadius: sheetCornerRadius, style: .continuous))
+                .contentShape(Rectangle())
             }
-            .padding(.top, moveTitle == nil ? 28 : 0)
+            .buttonStyle(.plain)
+            .padding(.top, moveTitle == nil ? 18 : 0)
             
             Button{
                 // sheet 닫기는 부모에서 처리하거나 dismiss 사용 가능
                 dismiss()
             } label: {
                 Text("취소")
-                    .font(.title3)
+                    .font(.callout)
                     .fontWeight(.bold)
                     .foregroundStyle(normalOptionColor)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 72)
+                    .frame(height: 56)
                     .background(sheetRowBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 28))
+                    .clipShape(RoundedRectangle(cornerRadius: sheetCornerRadius, style: .continuous))
             }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 24)
-        .padding(.top, 24)
+        .padding(.top, 18)
+        .padding(.bottom, 10)
         .foregroundStyle(Color("TextPrimary"))
 
     }

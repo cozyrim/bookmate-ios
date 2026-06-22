@@ -232,6 +232,7 @@ extension BookMateViewModel {
             guard let url = components.url else { return }
 
             let (data, response) = try await URLSession.shared.data(from: url)
+            if Task.isCancelled { return }
 
             if let httpResponse = response as? HTTPURLResponse {
                 DebugLogger.log("후보 검색 상태 코드:", httpResponse.statusCode)
@@ -244,6 +245,12 @@ extension BookMateViewModel {
             }
 
             let decodedResponse = try JSONDecoder().decode(StdDictSearchResponse.self, from: data)
+            guard !Task.isCancelled,
+                  searchMode == .dictionary,
+                  searchText.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed else {
+                return
+            }
+
             dictionarySuggestions = decodedResponse.channel.item.prefix(5).map { item in
                 DictionaryEntry(
                     text: item.word.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -254,6 +261,7 @@ extension BookMateViewModel {
                 )
             }
         } catch {
+            if Task.isCancelled { return }
             dictionarySuggestions = []
             DebugLogger.log("사전 후보 검색 실패:", error)
         }

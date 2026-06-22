@@ -77,14 +77,7 @@ struct ShelfBookCardView: View {
                 }
 
                 HStack(spacing: 6) {
-                    Text(readingStatus.displayName)
-                        .font(.caption2)
-                        .fontWeight(.medium)
-                        .foregroundStyle(Color("PrimaryDeep"))
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 5)
-                        .background(Color("Primary").opacity(0.12))
-                        .clipShape(Capsule())
+                    ReadingStatusBadge(status: readingStatus)
 
                     Spacer(minLength: 0)
                 }
@@ -268,13 +261,11 @@ struct ShelfBookListCardView: View {
                     .foregroundStyle(Color("TextSecondary").opacity(0.82))
                     .lineLimit(1)
 
-                Text(readingStatus.displayName)
-                    .font(.caption2)
-                    .fontWeight(.medium)
-                    .foregroundStyle(Color("PrimaryDeep"))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color("Primary").opacity(0.12), in: Capsule())
+                ReadingStatusBadge(
+                    status: readingStatus,
+                    horizontalPadding: 10,
+                    verticalPadding: 6
+                )
                     .padding(.top, 8)
 
                 VStack(spacing: 4) {

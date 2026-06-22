@@ -95,14 +95,7 @@ import SwiftUI
                         .fontWeight(.bold)
                         .foregroundStyle(Color("TextPrimary").opacity(0.88))
 
-                    Text(partOfSpeech)
-                        .font(.caption2)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color("TextPrimary").opacity(0.45))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color("Primary").opacity(colorScheme == .dark ? 0.18 : 0.11))
-                        .clipShape(Capsule())
+                    PartOfSpeechBadge(text: partOfSpeech)
                 }
 
                 Text(meaning)

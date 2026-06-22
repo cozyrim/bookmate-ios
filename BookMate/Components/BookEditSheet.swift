@@ -143,18 +143,20 @@ struct BookEditSheet: View {
                     Button {
                         selectedReadingStatus = selectedReadingStatus == status ? nil : status
                     } label: {
+                        let isSelected = selectedReadingStatus == status
+
                         Text(status.displayName)
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .lineLimit(1)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 10)
-                            .background(selectedReadingStatus == status ? Color("Primary") : Color("Surface"))
-                            .foregroundStyle(selectedReadingStatus == status ? .white : Color("TextPrimary"))
+                            .background(isSelected ? status.badgeBackgroundColor : Color("Surface"))
+                            .foregroundStyle(isSelected ? status.badgeForegroundColor : Color("TextPrimary"))
                             .clipShape(Capsule())
                             .overlay(
                                 Capsule()
-                                    .stroke(selectedReadingStatus == status ? Color.clear : Color("TextMuted").opacity(0.2), lineWidth: 1)
+                                    .stroke(isSelected ? status.badgeForegroundColor.opacity(0.35) : Color("TextMuted").opacity(0.2), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)

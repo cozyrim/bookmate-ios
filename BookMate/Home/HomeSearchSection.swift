@@ -16,6 +16,7 @@ struct HomeSearchSection: View {
     @State private var isShowingDeleteAlert = false
     @Binding var selectedTab: Int
     @State private var bookSearchTask: Task<Void, Never>?
+    @State private var dictionarySuggestionTask: Task<Void, Never>?
     @FocusState private var isSearchFocused: Bool
 
     let onRegisterBookTap: () -> Void
@@ -29,10 +30,6 @@ struct HomeSearchSection: View {
 
         withAnimation(.easeInOut(duration: 0.2)) {
                 isShowingSearchResult = true
-            }
-
-        Task { @MainActor in
-                await viewModel.performSearch()
             }
     }
 
@@ -54,11 +51,15 @@ struct HomeSearchSection: View {
 
         bookSearchTask?.cancel()
         bookSearchTask = nil
+        dictionarySuggestionTask?.cancel()
+        dictionarySuggestionTask = nil
     }
 
     private func selectSearchMode(_ mode: BookMateViewModel.SearchMode) {
         viewModel.searchMode = mode
         viewModel.loadRecentSearches()
+        dictionarySuggestionTask?.cancel()
+        dictionarySuggestionTask = nil
 
         let trimmed = viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -197,6 +198,8 @@ struct HomeSearchSection: View {
                     if trimmed.isEmpty {
                             bookSearchTask?.cancel()
                             bookSearchTask = nil
+                            dictionarySuggestionTask?.cancel()
+                            dictionarySuggestionTask = nil
 
                             viewModel.dictionarySuggestions = []
                             viewModel.dictionarySearchResult = nil
@@ -213,13 +216,19 @@ struct HomeSearchSection: View {
                             return
                         }
 
+                    guard !isShowingSearchResult else {
+                        dictionarySuggestionTask?.cancel()
+                        dictionarySuggestionTask = nil
+                        return
+                    }
+
                     switch viewModel.searchMode{
                     case .dictionary:
-                        Task {
-                            await viewModel.fetchDictionarySuggestions()
-                        }
+                        scheduleDictionarySuggestions(for: trimmed)
 
                     case .book:
+                        dictionarySuggestionTask?.cancel()
+                        dictionarySuggestionTask = nil
                         bookSearchTask?.cancel()
                         viewModel.bookSearchErrorMessage = nil
 
@@ -235,6 +244,8 @@ struct HomeSearchSection: View {
                         }
 
                     case .savedWords:
+                        dictionarySuggestionTask?.cancel()
+                        dictionarySuggestionTask = nil
                         viewModel.searchSavedWords()
                     }
                 }
@@ -292,8 +303,30 @@ struct HomeSearchSection: View {
             }
         }
         .onDisappear {
+            dictionarySuggestionTask?.cancel()
+            dictionarySuggestionTask = nil
             guard !isShowingSearchResult else { return }
             clearSearchText()
+        }
+    }
+
+    private func scheduleDictionarySuggestions(for trimmed: String) {
+        dictionarySuggestionTask?.cancel()
+
+        guard trimmed.count >= 2 else {
+            dictionarySuggestionTask = nil
+            viewModel.dictionarySuggestions = []
+            return
+        }
+
+        dictionarySuggestionTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            if Task.isCancelled { return }
+
+            let latest = viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard viewModel.searchMode == .dictionary, latest == trimmed else { return }
+
+            await viewModel.fetchDictionarySuggestions()
         }
     }
 
@@ -374,6 +407,8 @@ struct HomeSearchSection: View {
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(viewModel.dictionarySuggestions, id: \.targetCode) { suggestion in
                     Button {
+                        dictionarySuggestionTask?.cancel()
+                        dictionarySuggestionTask = nil
                         viewModel.searchText = suggestion.text
                         viewModel.dictionarySuggestions = []
                         isShowingSearchResult = true
@@ -538,6 +573,8 @@ struct HomeSearchSection: View {
     private func clearDictionarySearchState() {
         guard viewModel.searchMode == .dictionary else { return }
 
+        dictionarySuggestionTask?.cancel()
+        dictionarySuggestionTask = nil
         viewModel.searchText = ""
         viewModel.dictionarySuggestions = []
         viewModel.dictionarySearchResult = nil
@@ -561,6 +598,8 @@ struct HomeSearchSection: View {
 
         switch viewModel.searchMode {
         case .dictionary:
+            dictionarySuggestionTask?.cancel()
+            dictionarySuggestionTask = nil
             viewModel.dictionarySearchResult = nil
             viewModel.searchErrorMessage = nil
             viewModel.isLoading = true

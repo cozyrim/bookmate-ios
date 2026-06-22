@@ -140,7 +140,7 @@ struct ShelfView: View {
                             }
                         }
                     )
-                    .presentationDetents([.medium])
+                    .presentationDetents([.height(360)])
                     .presentationDragIndicator(.visible)
                     .presentationBackground(Color("AppBackground"))
 

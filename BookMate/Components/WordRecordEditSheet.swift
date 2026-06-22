@@ -140,14 +140,12 @@ struct WordRecordEditSheet: View {
                 .font(.system(size: 34, weight: .bold))
                 .foregroundStyle(Color("TextPrimary").opacity(0.88))
             
-            Text(word.partOfSpeech)
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundStyle(Color("Primary").opacity(0.78))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(Color("Primary").opacity(0.10))
-                .clipShape(Capsule())
+            PartOfSpeechBadge(
+                text: word.partOfSpeech,
+                font: .caption,
+                horizontalPadding: 10,
+                verticalPadding: 6
+            )
 
             Text(word.meaning)
                         .font(.callout)

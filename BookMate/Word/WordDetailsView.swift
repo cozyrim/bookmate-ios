@@ -149,14 +149,12 @@ struct WordDetailsView: View {
                 .font(.system(size: 44, weight: .bold))
                 .foregroundStyle(Color("TextPrimary").opacity(0.82))
             
-            Text(currentWord.partOfSpeech)
-                .font(.callout)
-                .fontWeight(.semibold)
-                .foregroundStyle(Color("Primary").opacity(0.75))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color("Surface").opacity(0.18))
-                .clipShape(Capsule())
+            PartOfSpeechBadge(
+                text: currentWord.partOfSpeech,
+                font: .callout,
+                horizontalPadding: 12,
+                verticalPadding: 8
+            )
             
             Text(currentWord.meaning)
                 .font(.title3)

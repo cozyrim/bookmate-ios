@@ -71,7 +71,7 @@ struct MoreOptionsMenu: View {
                         closeSheetThen(onMove)
                     }
                 )
-                .presentationDetents([.medium]) // sheet 높이
+                .presentationDetents([.height(320)]) // sheet 높이
                 .presentationDragIndicator(.visible) // 위쪽 손잡이 표시 여부
                 .presentationBackground(Color("AppBackground")) // sheet 배경색
             }

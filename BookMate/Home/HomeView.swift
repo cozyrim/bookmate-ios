@@ -20,6 +20,7 @@ struct HomeView: View {
 //    }
 
     @State private var selectedBookToEdit: Book?
+    @State private var reviewWordFocusID: UUID?
 
     private enum HomeRoute: Hashable {
         case bookSearch
@@ -42,23 +43,24 @@ struct HomeView: View {
     }
 
 
-    private var recentWordRows: [GridItem] {
-        let rowCount = min(max(viewModel.savedWords.prefix(8).count, 1), 2)
-
-        return Array(
-            repeating: GridItem(.fixed(90), spacing: 12),
-            count: rowCount
-        )
+    private var wordsToReview: [Word] {
+        viewModel.savedWords
     }
 
-    private var recentWordsSectionHeight: CGFloat {
-        if viewModel.savedWords.isEmpty {
-            return 115
+    private var reviewWordIDs: [UUID] {
+        wordsToReview.map(\.id)
+    }
+
+    private var reviewWordsScrollHeight: CGFloat? {
+        switch wordsToReview.count {
+        case 0...1:
+            return nil
+        case 2:
+            return 202
+        default:
+            return 292
         }
-
-        return viewModel.savedWords.prefix(8).count == 1 ? 90 : 192
     }
-
 
     var body: some View {
         NavigationStack(path: $path){
@@ -92,90 +94,16 @@ struct HomeView: View {
                                     .padding(.bottom, 8)
                             }
 
-                            VStack(alignment: .leading, spacing: 18){
-                                HStack {
-                                    Text("최근 저장한 단어")
-                                        .font(.title2)
-                                        .fontWeight(.medium)
+                            reviewWordsSection
 
-                                    Spacer()
-
-                                    if !viewModel.savedWords.isEmpty {
-                                        Button {
-                                            selectedTab = 2
-                                        } label: {
-                                            HStack(spacing: 4) {
-                                                Text("더보기")
-                                                    .font(.caption)
-                                                    .fontWeight(.semibold)
-
-                                                Image(systemName: "chevron.right")
-                                                    .font(.caption2)
-                                                    .fontWeight(.semibold)
-
-                                            }
-                                            .foregroundStyle(Color("TextSecondary"))
-                                            .padding(.vertical, 8)
-                                            .contentShape(Rectangle())
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                                .padding(.horizontal, 24)
-                                .padding(.top, 22)
-                                .padding(.bottom, 16)
-                            }
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack {
-                                    if viewModel.savedWords.isEmpty {
-                                        HStack {
-                                            recentWordsPlaceholderCard
-                                        }
-                                        .padding(.horizontal, 24)
-                                    } else {
-                                        LazyHGrid(rows: recentWordRows, spacing: 12) {
-                                            ForEach(viewModel.savedWords.prefix(8)) { word in
-                                                NavigationLink {
-                                                    WordDetailsView(viewModel: viewModel, word: word)
-                                                } label: {
-                                                    WordCardView(word: word)
-                                                }
-                                            }
-                                        }
-                                        .padding(.horizontal, 24)
-                                    }
-                                }
-                            }
-                            //                        .frame(height: 90)
-                            .frame(height: recentWordsSectionHeight, alignment: .top)
-
-                            HStack {
+                            HStack(spacing: 10) {
                                 Text("내 책장")
                                     .font(.title3)
                                     .fontWeight(.medium)
 
                                 Spacer()
 
-                                if !viewModel.shelfBooks.isEmpty {
-                                    Button {
-
-                                        selectedTab = 1
-                                    } label: {
-                                        HStack(spacing: 4) {
-                                            Text("더보기")
-                                                .font(.caption)
-                                                .fontWeight(.semibold)
-
-                                            Image(systemName: "chevron.right")
-                                                .font(.caption2)
-                                                .fontWeight(.semibold)
-                                        }
-                                        .foregroundStyle(Color("TextSecondary"))
-                                        .padding(.vertical, 8)
-                                        .contentShape(Rectangle())
-                                    }
-                                    .buttonStyle(.plain)
-                                }
+                                shelfHeaderActions
                             }
                             .padding(.horizontal, 24)
                             .padding(.top, 24)
@@ -193,6 +121,7 @@ struct HomeView: View {
                                             author: book.author,
                                             progress: shelfBook.progress,
                                             category: book.category,
+                                            readingStatus: shelfBook.status,
                                             onTap: {
                                                 path.append(HomeRoute.bookDetail(book.id))
                                             }, // 카드 눌렀을 때 상세 이동.
@@ -207,23 +136,6 @@ struct HomeView: View {
 
                     }
                     .buttonStyle(.plain)
-
-                    HStack {
-                        Spacer()
-
-                        NavigationLink(value: HomeRoute.bookSearch) {
-                            //                                BookSearchView(viewModel: viewModel, selectedTab: $selectedTab)
-                            Image(systemName: "plus.circle.fill")
-                                .resizable()
-                                .frame(width: 50, height: 50)
-                                .foregroundStyle(Color("Primary"))
-                                .shadow(color: Color("Primary").opacity(0.08), radius: 14, x: 0, y: 8)
-                                .padding()
-                        } // 이 버튼을 누르면 path에 HomeRoute.bookSearch 라는 값을 넣어줘.
-                        // 그 값을 받으면 어디로 갈지는 아래에서 정함
-                        .padding(.trailing, 24)
-
-                    }
 
                 }
                 .buttonStyle(.plain)
@@ -271,7 +183,7 @@ struct HomeView: View {
                             }
                         }
                     )
-                    .presentationDetents([.medium])
+                    .presentationDetents([.height(360)])
                     .presentationDragIndicator(.visible)
                     .presentationBackground(Color("AppBackground"))
 
@@ -399,6 +311,140 @@ struct HomeView: View {
         }
     }
 
+    private var reviewWordsSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("최근 저장 단어")
+                    .font(.title2)
+                    .fontWeight(.medium)
+
+                Spacer()
+
+                if !viewModel.savedWords.isEmpty {
+                    Button {
+                        selectedTab = 2
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("더보기")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption2)
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundStyle(Color("TextSecondary"))
+                        .padding(.vertical, 8)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if wordsToReview.isEmpty {
+                recentWordsPlaceholderCard
+            } else {
+                ScrollViewReader { proxy in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 10) {
+                            ForEach(Array(wordsToReview.enumerated()), id: \.element.id) { index, word in
+                                NavigationLink {
+                                    WordDetailsView(viewModel: viewModel, word: word)
+                                } label: {
+                                    WordCardView(word: word, isFeatured: isFocusedReviewWord(word, at: index))
+                                }
+                                .buttonStyle(.plain)
+                                .id(word.id)
+                            }
+                        }
+                        .padding(.vertical, 2)
+                        .scrollTargetLayout()
+                    }
+                    .scrollTargetBehavior(.viewAligned)
+                    .scrollPosition(id: $reviewWordFocusID)
+                    .frame(height: reviewWordsScrollHeight, alignment: .top)
+                    .animation(.snappy(duration: 0.22), value: reviewWordFocusID)
+                    .onAppear {
+                        scrollToFirstReviewWord(proxy)
+                    }
+                    .onChange(of: reviewWordIDs) { _, _ in
+                        scrollToFirstReviewWord(proxy)
+                    }
+                }
+                .overlay(alignment: .bottom) {
+                    if wordsToReview.count > 3 {
+                        LinearGradient(
+                            colors: [Color("AppBackground").opacity(0), Color("AppBackground").opacity(0.75)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(height: 28)
+                        .allowsHitTesting(false)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 22)
+    }
+
+    private var shelfHeaderActions: some View {
+        HStack(spacing: 10) {
+            NavigationLink(value: HomeRoute.bookSearch) {
+                Image(systemName: "plus")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color("TextSecondary"))
+                    .frame(width: 30, height: 30)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("책 추가")
+
+            if !viewModel.shelfBooks.isEmpty {
+                Rectangle()
+                    .fill(Color("TextSecondary").opacity(0.28))
+                    .frame(width: 1, height: 13)
+
+                Button {
+                    selectedTab = 1
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("더보기")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                    }
+                    .foregroundStyle(Color("TextSecondary"))
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("책장 더보기")
+            }
+        }
+    }
+
+    private func isFocusedReviewWord(_ word: Word, at index: Int) -> Bool {
+        reviewWordFocusID == word.id || (reviewWordFocusID == nil && index == 0)
+    }
+
+    private func scrollToFirstReviewWord(_ proxy: ScrollViewProxy) {
+        guard let firstID = reviewWordIDs.first else {
+            reviewWordFocusID = nil
+            return
+        }
+
+        reviewWordFocusID = firstID
+
+        DispatchQueue.main.async {
+            withAnimation(.snappy(duration: 0.22)) {
+                proxy.scrollTo(firstID, anchor: .top)
+            }
+        }
+    }
+
     private var recentWordsPlaceholderCard: some View {
         HStack(spacing: 12) {
             Image(systemName: "bookmark")
@@ -423,7 +469,8 @@ struct HomeView: View {
             Spacer()
         }
         .padding(.horizontal, 18)
-        .frame(width: 285, height: 90)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 90)
         .background(Color("Surface").opacity(0.92))
         .clipShape(RoundedRectangle(cornerRadius: 34))
         .shadow(color: Color("Shadow").opacity(0.045), radius: 9, x: 0, y: 3)

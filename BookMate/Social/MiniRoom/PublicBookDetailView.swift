@@ -50,13 +50,13 @@ struct PublicBookDetailView: View {
                             .foregroundStyle(Color("TextSecondary"))
 
                             if let readingStatus = book.readingStatus {
-                                Text(readingStatus.displayName)
-                                    .font(.caption.bold())
-                                    .foregroundStyle(Color("Primary"))
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
-                                    .background(Color("Primary").opacity(0.12))
-                                    .clipShape(Capsule())
+                                ReadingStatusBadge(
+                                    status: readingStatus,
+                                    font: .caption,
+                                    fontWeight: .bold,
+                                    horizontalPadding: 10,
+                                    verticalPadding: 6
+                                )
                             }
 
                             Divider()
@@ -86,4 +86,3 @@ struct PublicBookDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
 }
-
