@@ -12,6 +12,7 @@ struct ThemeSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("selectedBackgroundTheme") private var selectedThemeRawValue = AppBackgroundTheme.skyblue.rawValue
     
+    private let showsCustomPhotoOption = false
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var imageSaveErrorMessage: String?
     @AppStorage("customBackgroundImageFileName") private var customBackgroundImageFileName = ""
@@ -50,94 +51,10 @@ struct ThemeSettingsView: View {
                                 }
                             }
                         }
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("내 사진으로 설정")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                                .foregroundStyle(Color("TextSecondary"))
-                            
-                            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                                HStack(spacing: 14) {
-                                    Image(systemName: "photo.on.rectangle")
-                                        .font(.system(size: 21, weight: .semibold))
-                                        .foregroundStyle(Color("Primary").opacity(0.16))
-                                        .clipShape(Circle())
-                                    
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("사진 선택하기")
-                                            .font(.callout)
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(Color("TextPrimary"))
-                                        
-                                        Text(
-                                                            selectedTheme == .customPhoto
-                                                            ? "선택한 사진을 배경으로 사용 중이에요."
-                                                            : "앨범에서 고른 사진을 배경으로 사용할 수 있어요."
-                                                        )
-                                                        .font(.caption)
-                                                        .foregroundStyle(Color("TextSecondary").opacity(0.75))
-                                    }
-                                    Spacer()
-                                    
-                                    if selectedTheme == .customPhoto {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .font(.system(size: 22, weight: .bold))
-                                            .foregroundStyle(Color("PrimaryDeep"))
-                                    } else {
-                                        Image(systemName: "chevron.right")
-                                                            .font(.system(size: 13, weight: .semibold))
-                                                            .foregroundStyle(Color("TextSecondary").opacity(0.65))
-                                    }
-                                }
-                                .padding(.horizontal, 18)
-                                .frame(height: 86)
-                                .background(Color("Surface").opacity(0.88))
-                                .clipShape(RoundedRectangle(cornerRadius: 24))
-                                .shadow(color: Color("Shadow").opacity(0.045), radius: 14, x: 0, y: 6)
-                            }
-                            .buttonStyle(.plain)
-                            
-                            if let imageSaveErrorMessage {
-                                    Text(imageSaveErrorMessage)
-                                        .font(.caption)
-                                        .foregroundStyle(Color("Error"))
-                                        .padding(.horizontal, 4)
-                                }
-                        }
-                        .padding(.top, 12)
-                        .onChange(of: selectedPhotoItem) { _, newItem in
-                            guard let newItem else { return }
-                            
-                            Task {
-                                do {
-                                    guard let data = try await newItem.loadTransferable(type: Data.self) else {
-                                        await MainActor.run {
-                                            imageSaveErrorMessage = "사진 데이터를 불러오지 못했습니다."
-                                        }
-                                        return
-                                    }
-                                    
-                                    let fileName = try BackgroundImageStore.saveImageData(data)
-                                    
-                                    await MainActor.run {
-                                        customBackgroundImageFileName = fileName
-                                        selectedThemeRawValue = AppBackgroundTheme.customPhoto.rawValue
-                                        imageSaveErrorMessage = nil
-                                    }
-                                } catch {
-                                    await MainActor.run {
-                                        imageSaveErrorMessage = "사진을 저장하지 못했습니다."
-                                    }
-                                    DebugLogger.log("배경 사진 저장 실패:", error)
-                                }
-                            }
-                                }
-                        Button("사진 배경 제거") {
-                            BackgroundImageStore.deleteImage(fileName: customBackgroundImageFileName)
-                            customBackgroundImageFileName = ""
-                            selectedThemeRawValue = AppBackgroundTheme.skyblue.rawValue
-                        }
                         
+                        if showsCustomPhotoOption {
+                            customPhotoSettingsSection
+                        }
                         
                         SettingsPrimaryButton(title: "저장하기") {
                             dismiss()
@@ -153,6 +70,98 @@ struct ThemeSettingsView: View {
         .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
         .toolbar(.hidden, for: .tabBar)
+    }
+    
+    private var customPhotoSettingsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("내 사진으로 설정")
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundStyle(Color("TextSecondary"))
+            
+            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                HStack(spacing: 14) {
+                    Image(systemName: "photo.on.rectangle")
+                        .font(.system(size: 21, weight: .semibold))
+                        .foregroundStyle(Color("Primary").opacity(0.16))
+                        .clipShape(Circle())
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("사진 선택하기")
+                            .font(.callout)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Color("TextPrimary"))
+                        
+                        Text(
+                            selectedTheme == .customPhoto
+                            ? "선택한 사진을 배경으로 사용 중이에요."
+                            : "앨범에서 고른 사진을 배경으로 사용할 수 있어요."
+                        )
+                        .font(.caption)
+                        .foregroundStyle(Color("TextSecondary").opacity(0.75))
+                    }
+                    
+                    Spacer()
+                    
+                    if selectedTheme == .customPhoto {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(Color("PrimaryDeep"))
+                    } else {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color("TextSecondary").opacity(0.65))
+                    }
+                }
+                .padding(.horizontal, 18)
+                .frame(height: 86)
+                .background(Color("Surface").opacity(0.88))
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+                .shadow(color: Color("Shadow").opacity(0.045), radius: 14, x: 0, y: 6)
+            }
+            .buttonStyle(.plain)
+            
+            if let imageSaveErrorMessage {
+                Text(imageSaveErrorMessage)
+                    .font(.caption)
+                    .foregroundStyle(Color("Error"))
+                    .padding(.horizontal, 4)
+            }
+            
+            Button("사진 배경 제거") {
+                BackgroundImageStore.deleteImage(fileName: customBackgroundImageFileName)
+                customBackgroundImageFileName = ""
+                selectedThemeRawValue = AppBackgroundTheme.skyblue.rawValue
+            }
+        }
+        .padding(.top, 12)
+        .onChange(of: selectedPhotoItem) { _, newItem in
+            guard let newItem else { return }
+            
+            Task {
+                do {
+                    guard let data = try await newItem.loadTransferable(type: Data.self) else {
+                        await MainActor.run {
+                            imageSaveErrorMessage = "사진 데이터를 불러오지 못했습니다."
+                        }
+                        return
+                    }
+                    
+                    let fileName = try BackgroundImageStore.saveImageData(data)
+                    
+                    await MainActor.run {
+                        customBackgroundImageFileName = fileName
+                        selectedThemeRawValue = AppBackgroundTheme.customPhoto.rawValue
+                        imageSaveErrorMessage = nil
+                    }
+                } catch {
+                    await MainActor.run {
+                        imageSaveErrorMessage = "사진을 저장하지 못했습니다."
+                    }
+                    DebugLogger.log("배경 사진 저장 실패:", error)
+                }
+            }
+        }
     }
 }
 
@@ -212,43 +221,44 @@ struct ThemeOptionCard: View {
         switch theme {
         case .skyblue:
             LinearGradient(
+                colors: [
+                    Color("PrimarySoft").opacity(0.96),
+                    Color("Skyblue").opacity(0.98),
+                    Color("AppBackground").opacity(0.94)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            
+            
+        case .softPink:
+            LinearGradient(
+                colors: [
+                    Color(red: 1.00, green: 0.90, blue: 0.93),
+                    Color(red: 0.98, green: 0.95, blue: 0.97),
+                    Color("Surface").opacity(0.82)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            
+            
+        case .peach:
+            LinearGradient(
                 gradient: Gradient(stops: [
-                    .init(color: Color("PrimarySoft").opacity(0.58), location: 0.00),
-                    .init(color: Color("AppBackgroundSoft").opacity(0.95), location: 0.42),
+                    .init(color: Color("PrimarySoft").opacity(0.48), location: 0.00),
+                    .init(color: Color("AppBackgroundSoft").opacity(0.95), location: 0.44),
                     .init(color: Color("AppBackground").opacity(0.98), location: 1.00)
                 ]),
                 startPoint: .top,
                 endPoint: .bottom
             )
             
-            
-            // 테마가 자연 배경일 때 패딩이 풀리는 것 같음,,
-        case .nature:
-            ZStack {
-                Image("자연4")
-                    .resizable()
-                    .scaledToFill()
-                
-                Color("Surface").opacity(0.15)
-                    .ignoresSafeArea()
-            }
-            
-            
-        case .peach:
-            LinearGradient(
-                colors: [
-                    Color("Primary").opacity(0.5),
-                    Color("Surface").opacity(0.8)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            
         case .green:
             LinearGradient(
                 colors: [
-                    Color(red: 0.72, green: 0.91, blue: 0.76),
-                    Color("Surface").opacity(0.86)
+                    Color(red: 0.90, green: 0.97, blue: 0.91),
+                    Color("Surface").opacity(0.9)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing

@@ -326,31 +326,31 @@ struct ShelfView: View {
             NavigationLink(value: ShelfRoute.bookSearch) {
                 HStack(spacing: 4) {
                     Image(systemName: "plus")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 12, weight: .semibold))
 
                     Text("새 책 추가")
                         .font(.caption2)
                         .fontWeight(.semibold)
                 }
-                .foregroundStyle(Color("Primary"))
-                .frame(height: 40)
-                .padding(.leading, 12)
-                .padding(.trailing, 16)
+                .foregroundStyle(Color("PrimaryDeep").opacity(0.82))
+                .frame(height: 36)
+                .padding(.leading, 11)
+                .padding(.trailing, 14)
             }
             .buttonStyle(.plain)
 
             Rectangle()
-                .fill(Color("Border").opacity(0.45))
-                .frame(width: 1, height: 22)
+                .fill(Color("Border").opacity(0.32))
+                .frame(width: 1, height: 18)
 
             layoutToggleButton
         }
-        .background(Color("Surface").opacity(0.96), in: Capsule())
+        .background(Color("Surface").opacity(0.78), in: Capsule())
         .overlay {
             Capsule()
-                .stroke(Color("Border").opacity(0.36), lineWidth: 1)
+                .stroke(Color("Border").opacity(0.24), lineWidth: 1)
         }
-        .shadow(color: Color("Shadow").opacity(0.045), radius: 10, x: 0, y: 4)
+        .shadow(color: Color("Shadow").opacity(0.025), radius: 8, x: 0, y: 3)
     }
 
     private var layoutToggleButton: some View {
@@ -360,9 +360,9 @@ struct ShelfView: View {
             }
         } label: {
             Image(systemName: shelfLayoutStyle.toggleIconName)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Color("Primary"))
-                .frame(width: 44, height: 40)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color("PrimaryDeep").opacity(0.82))
+                .frame(width: 40, height: 36)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(shelfLayoutStyle.toggleAccessibilityLabel)

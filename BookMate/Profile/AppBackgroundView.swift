@@ -20,38 +20,40 @@ struct AppBackgroundView: View {
         switch selectedTheme {
         case .skyblue:
             LinearGradient(
+                colors: [
+                    Color("PrimarySoft").opacity(0.96),
+                    Color("Skyblue").opacity(0.98),
+                    Color("AppBackground").opacity(0.94)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .softPink:
+            LinearGradient(
+                colors: [
+                    Color(red: 1.00, green: 0.90, blue: 0.93),
+                    Color(red: 0.98, green: 0.95, blue: 0.97),
+                    Color("Surface").opacity(0.82)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .peach:
+            LinearGradient(
                 gradient: Gradient(stops: [
-                    .init(color: Color("PrimarySoft").opacity(0.58), location: 0.00),
-                    .init(color: Color("AppBackgroundSoft").opacity(0.95), location: 0.42),
+                    .init(color: Color("PrimarySoft").opacity(0.48), location: 0.00),
+                    .init(color: Color("AppBackgroundSoft").opacity(0.95), location: 0.44),
                     .init(color: Color("AppBackground").opacity(0.98), location: 1.00)
                 ]),
                 startPoint: .top,
                 endPoint: .bottom
             )
-        case .nature:
-            ZStack {
-                Image("자연4")
-                    .resizable()
-                    .scaledToFill()
-                
-                Color("Surface").opacity(0.15)
-            }
-        case .peach:
-            LinearGradient(
-                colors: [
-                    Color("Primary").opacity(0.28),
-                    Color("AppBackground"),
-                    Color("Surface").opacity(0.75)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
         case .green:
             LinearGradient(
                 colors: [
-                    Color(red: 0.83, green: 0.94, blue: 0.86),
-                    Color("AppBackground"),
-                    Color("Surface").opacity(0.8)
+                    Color(red: 0.90, green: 0.97, blue: 0.91),
+                    Color("AppBackground").opacity(0.96),
+                    Color("Surface").opacity(0.86)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -80,13 +82,13 @@ struct AppBackgroundView: View {
                 }
             } else {
                 LinearGradient(
-                    gradient: Gradient(stops: [
-                        .init(color: Color("PrimarySoft").opacity(0.58), location: 0.00),
-                        .init(color: Color("AppBackgroundSoft").opacity(0.95), location: 0.42),
-                        .init(color: Color("AppBackground").opacity(0.98), location: 1.00)
-                    ]),
-                    startPoint: .top,
-                    endPoint: .bottom
+                    colors: [
+                        Color("PrimarySoft").opacity(0.96),
+                        Color("Skyblue").opacity(0.98),
+                        Color("AppBackground").opacity(0.94)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
             }
         }

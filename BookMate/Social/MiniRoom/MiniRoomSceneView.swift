@@ -116,7 +116,9 @@ private struct MiniRoomCanvas: View {
     private let backgroundAspectRatio: CGFloat = 1024 / 1536
 
     private var controlForeground: Color {
-        colorScheme == .dark || theme == .dark ? Color("TextPrimary") : Color("PrimaryDeep")
+        colorScheme == .dark || theme == .dark
+            ? Color("TextPrimary").opacity(0.86)
+            : Color("PrimaryDeep").opacity(0.82)
     }
 
     var body: some View {
@@ -128,7 +130,7 @@ private struct MiniRoomCanvas: View {
             let canvasTop = max(0, availableHeight - canvasHeight)
             let guestbookX = min(width - 88, max(88, width / 2 - canvasWidth * 0.25))
             let guestbookY = min(canvasTop + canvasHeight * 0.81, availableHeight - 64)
-            let actionButtonsX = min(width - 92, max(170, width / 2 + canvasWidth * 0.22))
+            let actionButtonsX = min(width - 104, max(178, width / 2 + canvasWidth * 0.20))
             let actionButtonsY = canvasTop + min(max(52, canvasHeight * 0.073), 66)
 
             ZStack(alignment: .top) {
@@ -213,56 +215,70 @@ private struct MiniRoomFloatingActions: View {
     let onChangeTheme: (() -> Void)?
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 0) {
             if let onChangeTheme {
                 actionButton(title: "배경", systemImage: "paintpalette", action: onChangeTheme)
+                divider
             }
 
             actionButton(title: "검색", systemImage: "magnifyingglass", action: onSearchUsers)
+            divider
 
             Button(action: onSurfRandomUser) {
-                VStack(spacing: 3) {
+                VStack(spacing: 2) {
                     if isSurfing {
                         ProgressView()
                             .tint(controlForeground)
-                            .frame(width: 20, height: 20)
+                            .frame(width: 17, height: 17)
                     } else {
                         Image(systemName: "water.waves")
-                            .font(.headline)
+                            .font(.system(size: 15, weight: .semibold))
                     }
 
                     Text("파도타기")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 9, weight: .semibold))
                         .lineLimit(1)
                 }
                 .foregroundStyle(controlForeground)
-                .frame(width: 58, height: 48)
-                .background(actionBackground, in: RoundedRectangle(cornerRadius: 18))
+                .frame(width: 52, height: 40)
             }
             .buttonStyle(.plain)
             .disabled(isSurfing)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .background(
+            Capsule()
+                .fill(.ultraThinMaterial)
+                .shadow(color: Color("Shadow").opacity(0.14), radius: 10, y: 4)
+        )
+        .overlay {
+            Capsule()
+                .stroke(Color("Surface").opacity(0.36), lineWidth: 1)
         }
         .fixedSize()
     }
 
     private func actionButton(title: String, systemImage: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 3) {
+            VStack(spacing: 2) {
                 Image(systemName: systemImage)
-                    .font(.headline)
+                    .font(.system(size: 15, weight: .semibold))
 
                 Text(title)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 9, weight: .semibold))
                     .lineLimit(1)
             }
             .foregroundStyle(controlForeground)
-            .frame(width: 48, height: 48)
-            .background(actionBackground, in: RoundedRectangle(cornerRadius: 16))
+            .frame(width: 42, height: 40)
         }
         .buttonStyle(.plain)
     }
 
-    private var actionBackground: AnyShapeStyle {
-        AnyShapeStyle(.ultraThinMaterial)
+    private var divider: some View {
+        Rectangle()
+            .fill(controlForeground.opacity(0.15))
+            .frame(width: 1, height: 20)
+            .padding(.horizontal, 2)
     }
 }
