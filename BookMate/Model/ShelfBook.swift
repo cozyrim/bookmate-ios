@@ -32,6 +32,10 @@ enum ReadingStatus: String, CaseIterable {
         case .completed:    return "완독"
         }
     }
+
+    var showsReadingProgress: Bool {
+        self != .wantToRead
+    }
 }
 
 extension ShelfBook {

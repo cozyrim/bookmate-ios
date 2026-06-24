@@ -116,8 +116,12 @@ private struct MiniRoomCanvas: View {
     private let backgroundAspectRatio: CGFloat = 1024 / 1536
 
     private var controlForeground: Color {
-        colorScheme == .dark || theme == .dark
-            ? Color("TextPrimary").opacity(0.86)
+        if theme == .dark {
+            return Color(red: 173.0 / 255.0, green: 193.0 / 255.0, blue: 228.0 / 255.0)
+        }
+
+        return colorScheme == .dark
+            ? Color("TabBarSelected")
             : Color("PrimaryDeep").opacity(0.82)
     }
 

@@ -222,9 +222,8 @@ struct ThemeOptionCard: View {
         case .skyblue:
             LinearGradient(
                 colors: [
-                    Color("PrimarySoft").opacity(0.96),
-                    Color("Skyblue").opacity(0.98),
-                    Color("AppBackground").opacity(0.94)
+                    Color("Primary").opacity(0.5),
+                    Color("Surface").opacity(0.8)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -246,8 +245,8 @@ struct ThemeOptionCard: View {
         case .peach:
             LinearGradient(
                 gradient: Gradient(stops: [
-                    .init(color: Color("PrimarySoft").opacity(0.48), location: 0.00),
-                    .init(color: Color("AppBackgroundSoft").opacity(0.95), location: 0.44),
+                    .init(color: Color("PrimarySoft").opacity(0.58), location: 0.00),
+                    .init(color: Color("AppBackgroundSoft").opacity(0.95), location: 0.42),
                     .init(color: Color("AppBackground").opacity(0.98), location: 1.00)
                 ]),
                 startPoint: .top,

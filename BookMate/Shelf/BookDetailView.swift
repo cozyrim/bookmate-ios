@@ -589,26 +589,44 @@ struct BookDetailView: View {
                 .buttonStyle(.plain)
             }
 
-            VStack(alignment: .leading, spacing: 8) {
-                ProgressView(value: book.progress)
-                    .tint(Color("Primary"))
+            if readingStatus?.showsReadingProgress ?? true {
+                VStack(alignment: .leading, spacing: 8) {
+                    ProgressView(value: book.progress)
+                        .tint(Color("Primary"))
 
+                    HStack {
+                        Text("\(Int(book.progress * 100))% 읽음")
+                            .font(.caption.bold())
+                            .foregroundStyle(Color("PrimaryDeep"))
+
+                        Spacer()
+
+                        if let readingStatus {
+                            ReadingStatusBadge(
+                                status: readingStatus,
+                                font: .caption,
+                                fontWeight: .bold,
+                                horizontalPadding: 10,
+                                verticalPadding: 5
+                            )
+                        }
+                    }
+                }
+            } else if let readingStatus {
                 HStack {
-                    Text("\(Int(book.progress * 100))% 읽음")
-                        .font(.caption.bold())
-                        .foregroundStyle(Color("PrimaryDeep"))
+                    ReadingStatusBadge(
+                        status: readingStatus,
+                        font: .caption,
+                        fontWeight: .bold,
+                        horizontalPadding: 10,
+                        verticalPadding: 5
+                    )
 
                     Spacer()
 
-                    if let readingStatus {
-                        ReadingStatusBadge(
-                            status: readingStatus,
-                            font: .caption,
-                            fontWeight: .bold,
-                            horizontalPadding: 10,
-                            verticalPadding: 5
-                        )
-                    }
+                    Text("독서 시작 전")
+                        .font(.caption.bold())
+                        .foregroundStyle(Color("TextSecondary"))
                 }
             }
         }

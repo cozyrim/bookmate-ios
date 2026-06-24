@@ -326,10 +326,13 @@ extension BookMateViewModel {
 
     private func normalizedBookForReadingState(_ book: Book) -> Book {
         let clampedProgress = min(max(book.progress, 0), 1)
+        let isWantToRead = book.readingStatus == .wantToRead
         let isCompleted = clampedProgress >= 0.999
         let normalizedStatus: ReadingStatus?
 
-        if isCompleted {
+        if isWantToRead {
+            normalizedStatus = .wantToRead
+        } else if isCompleted {
             normalizedStatus = .completed
         } else if book.readingStatus == .completed {
             normalizedStatus = .reading
@@ -337,9 +340,16 @@ extension BookMateViewModel {
             normalizedStatus = book.readingStatus
         }
 
-        let normalizedCurrentPage = isCompleted
-            ? book.totalPages ?? book.currentPage
-            : book.currentPage
+        let normalizedProgress = isWantToRead ? 0 : clampedProgress
+        let normalizedCurrentPage: Int?
+
+        if isWantToRead {
+            normalizedCurrentPage = book.totalPages == nil ? nil : 0
+        } else if isCompleted {
+            normalizedCurrentPage = book.totalPages ?? book.currentPage
+        } else {
+            normalizedCurrentPage = book.currentPage
+        }
 
         return Book(
             id: book.id,
@@ -347,7 +357,7 @@ extension BookMateViewModel {
             author: book.author,
             imageName: book.imageName,
             category: book.category,
-            progress: clampedProgress,
+            progress: normalizedProgress,
             totalPages: book.totalPages,
             currentPage: normalizedCurrentPage,
             rating: book.rating,

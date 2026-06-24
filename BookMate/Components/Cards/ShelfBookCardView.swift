@@ -53,6 +53,9 @@ struct ShelfBookCardView: View {
         Int((min(max(progress, 0), 1) * 100).rounded())
     }
 
+    private var accessibilityProgressText: String {
+        readingStatus.showsReadingProgress ? ", \(progressPercent)% 읽음" : ""
+    }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -82,16 +85,18 @@ struct ShelfBookCardView: View {
                     Spacer(minLength: 0)
                 }
 
-                VStack(spacing: 4) {
-                    ProgressView(value: min(max(progress, 0), 1))
-                        .tint(Color("Primary"))
+                if readingStatus.showsReadingProgress {
+                    VStack(spacing: 4) {
+                        ProgressView(value: min(max(progress, 0), 1))
+                            .tint(Color("Primary"))
 
-                    HStack {
-                        Spacer(minLength: 0)
+                        HStack {
+                            Spacer(minLength: 0)
 
-                        Text("\(progressPercent)% 읽음")
-                            .font(.caption2)
-                            .foregroundStyle(Color("TextPrimary").opacity(0.68))
+                            Text("\(progressPercent)% 읽음")
+                                .font(.caption2)
+                                .foregroundStyle(Color("TextPrimary").opacity(0.68))
+                        }
                     }
                 }
             }
@@ -130,7 +135,7 @@ struct ShelfBookCardView: View {
             onTap()
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title), \(author), \(wordCount) 단어, \(readingStatus.displayName), \(progressPercent)% 읽음")
+        .accessibilityLabel("\(title), \(author), \(wordCount) 단어, \(readingStatus.displayName)\(accessibilityProgressText)")
         .accessibilityAddTraits(.isButton)
         .accessibilityHint("책 상세 화면으로 이동합니다.")
         .accessibilityAction(named: Text("책 메뉴")) {
@@ -220,6 +225,10 @@ struct ShelfBookListCardView: View {
         Int((min(max(progress, 0), 1) * 100).rounded())
     }
 
+    private var accessibilityProgressText: String {
+        readingStatus.showsReadingProgress ? ", \(progressPercent)% 읽음" : ""
+    }
+
     var body: some View {
         HStack(alignment: .center, spacing: 0) {
             BookCoverCell(imageName: imageName, width: 82)
@@ -268,15 +277,17 @@ struct ShelfBookListCardView: View {
                 )
                     .padding(.top, 8)
 
-                VStack(spacing: 4) {
-                    ProgressView(value: min(max(progress, 0), 1))
-                        .tint(Color("Primary"))
+                if readingStatus.showsReadingProgress {
+                    VStack(spacing: 4) {
+                        ProgressView(value: min(max(progress, 0), 1))
+                            .tint(Color("Primary"))
 
-                    HStack {
-                        Spacer(minLength: 0)
-                        Text("\(progressPercent)% 읽음")
-                            .font(.caption)
-                            .foregroundStyle(Color("TextPrimary").opacity(0.7))
+                        HStack {
+                            Spacer(minLength: 0)
+                            Text("\(progressPercent)% 읽음")
+                                .font(.caption)
+                                .foregroundStyle(Color("TextPrimary").opacity(0.7))
+                        }
                     }
                 }
             }
@@ -303,7 +314,7 @@ struct ShelfBookListCardView: View {
             onTap()
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title), \(author), \(wordCount) 단어, \(readingStatus.displayName), \(progressPercent)% 읽음")
+        .accessibilityLabel("\(title), \(author), \(wordCount) 단어, \(readingStatus.displayName)\(accessibilityProgressText)")
         .accessibilityAddTraits(.isButton)
         .accessibilityHint("책 상세 화면으로 이동합니다.")
         .accessibilityAction(named: Text("책 메뉴")) {

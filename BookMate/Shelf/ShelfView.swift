@@ -190,6 +190,13 @@ struct ShelfView: View {
                     ReadingProgressSheet(book: book) { totalPages, currentPage in
                         let progress = Double(currentPage) / Double(totalPages)
                         let latestBook = viewModel.books.first(where: { $0.id == book.id }) ?? book
+                        let readingStatus: ReadingStatus?
+
+                        if latestBook.readingStatus == .wantToRead && currentPage > 0 {
+                            readingStatus = progress >= 0.999 ? .completed : .reading
+                        } else {
+                            readingStatus = latestBook.readingStatus
+                        }
 
                         let updatedBook = Book(
                             id: latestBook.id,
@@ -202,7 +209,7 @@ struct ShelfView: View {
                             currentPage: currentPage,
                             rating: latestBook.rating,
                             review: latestBook.review,
-                            readingStatus: latestBook.readingStatus,
+                            readingStatus: readingStatus,
                             startDate: latestBook.startDate,
                             endDate: latestBook.endDate
                         )

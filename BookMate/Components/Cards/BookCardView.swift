@@ -88,13 +88,17 @@ struct BookCardView: View {
 
                     Spacer(minLength: 0)
 
-                    Text("\(progressPercent)% 읽음")
-                        .font(.caption)
-                        .foregroundStyle(Color("TextPrimary").opacity(0.7))
+                    if readingStatus.showsReadingProgress {
+                        Text("\(progressPercent)% 읽음")
+                            .font(.caption)
+                            .foregroundStyle(Color("TextPrimary").opacity(0.7))
+                    }
                 }
 
-                ProgressView(value: min(max(progress, 0), 1))
-                    .tint(Color("Primary"))
+                if readingStatus.showsReadingProgress {
+                    ProgressView(value: min(max(progress, 0), 1))
+                        .tint(Color("Primary"))
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
