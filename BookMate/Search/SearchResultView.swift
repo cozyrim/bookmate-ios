@@ -49,8 +49,7 @@ struct SearchResultView: View {
                                 imageName: "기본 이미지",
                                 onSaveComplete: onSaveComplete,
                                 onRegisterBookTap: onRegisterBookTap,
-                                viewModel: viewModel,
-                                showingSheet: false
+                                viewModel: viewModel
                             )
                             .id(word.targetCode)
                         }

@@ -18,7 +18,6 @@ struct DictionaryResultCard: View {
     let onRegisterBookTap: () -> Void
     
     @ObservedObject var viewModel: BookMateViewModel
-    @State var showingSheet = false
     
     
     var body: some View {
@@ -48,7 +47,8 @@ struct DictionaryResultCard: View {
                 .background(Color("SurfaceSoft").opacity(0.4))
             
             Button {
-                showingSheet.toggle()
+                viewModel.cancelWordSaveAfterBookRegistration()
+                viewModel.isWordSaveSheetPresented = true
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "bookmark")
@@ -62,7 +62,7 @@ struct DictionaryResultCard: View {
                 .background(Color("Primary"))
                 .clipShape(Capsule())
             }
-            .sheet(isPresented: $showingSheet){
+            .sheet(isPresented: $viewModel.isWordSaveSheetPresented){
                 SaveWordSheet(viewModel: viewModel, text: text, meaning: meaning, imageName: imageName, onSaveComplete: onSaveComplete, onRegisterBookTap: onRegisterBookTap)
                     .presentationDragIndicator(.visible)
             }
@@ -80,5 +80,5 @@ struct DictionaryResultCard: View {
 }
 
 #Preview {
-    DictionaryResultCard(text: Word.sampleWords[0].text, meaning: Word.sampleWords[0].meaning, partOfSpeech: Word.sampleWords[0].partOfSpeech, exampleSentence: Word.sampleWords[0].exampleSentence ?? "기본 예시문", imageName: Book.dummyBooks[0].imageName, onSaveComplete: {}, onRegisterBookTap: {}, viewModel: BookMateViewModel(), showingSheet: false)
+    DictionaryResultCard(text: Word.sampleWords[0].text, meaning: Word.sampleWords[0].meaning, partOfSpeech: Word.sampleWords[0].partOfSpeech, exampleSentence: Word.sampleWords[0].exampleSentence ?? "기본 예시문", imageName: Book.dummyBooks[0].imageName, onSaveComplete: {}, onRegisterBookTap: {}, viewModel: BookMateViewModel())
 }

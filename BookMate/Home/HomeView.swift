@@ -287,6 +287,12 @@ struct HomeView: View {
                                     onFinishRegistration: { tab in
                         selectedTab = tab
                         path = NavigationPath()
+
+                        guard viewModel.shouldResumeWordSaveAfterBookRegistration else { return }
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                            viewModel.resumeWordSaveAfterBookRegistrationIfNeeded()
+                        }
                     }
                     )
                 case .bookDetail(let bookId):

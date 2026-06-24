@@ -572,6 +572,7 @@ struct HomeSearchSection: View {
 
     private func clearDictionarySearchState() {
         guard viewModel.searchMode == .dictionary else { return }
+        guard !viewModel.shouldResumeWordSaveAfterBookRegistration else { return }
 
         dictionarySuggestionTask?.cancel()
         dictionarySuggestionTask = nil

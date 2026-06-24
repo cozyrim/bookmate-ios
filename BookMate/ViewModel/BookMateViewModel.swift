@@ -71,6 +71,12 @@ final class BookMateViewModel: ObservableObject {
     // 사전 API에서 최종 선택된 검색 결과다.
     @Published var dictionarySearchResult: DictionaryEntry?
 
+    // 단어 저장 시트 표시 상태다.
+    @Published var isWordSaveSheetPresented = false
+
+    // 단어 저장 중 책 등록을 시작했을 때, 등록 완료 후 저장 시트로 돌아갈지 나타낸다.
+    @Published var shouldResumeWordSaveAfterBookRegistration = false
+
     // 저장 단어 검색 모드에서 보여줄 검색 결과다.
     @Published var savedWordSearchResults: [Word] = []
 

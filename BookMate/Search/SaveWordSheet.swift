@@ -56,8 +56,11 @@ struct SaveWordSheet: View {
                     Spacer()
 
                         Button {
+                            viewModel.prepareWordSaveAfterBookRegistration()
                             dismiss()
-                            onRegisterBookTap()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                onRegisterBookTap()
+                            }
                         } label: {
                             Label("책 등록", systemImage: "plus")
                                 .font(.caption.bold())
@@ -151,6 +154,12 @@ struct SaveWordSheet: View {
                 .padding(.top, 8)
                 
                 SaveButton {
+                    guard !viewModel.booksOnShelf.isEmpty else {
+                        viewModel.operationErrorMessage = "책을 먼저 등록해 주세요."
+                        viewModel.showToast("책을 먼저 등록해 주세요.", style: .error)
+                        return
+                    }
+
                     guard let selectedBookId else {
                         viewModel.showToast("저장할 책을 선택해 주세요.", style: .error)
                         return
