@@ -34,6 +34,8 @@ struct SignupView: View {
     @State private var isCheckingNickname = false
     @State private var emailAvailability: EmailAvailabilityResponse?
     @State private var nicknameAvailability: NicknameAvailabilityResponse?
+    @State private var emailAvailabilityErrorMessage: String?
+    @State private var nicknameAvailabilityErrorMessage: String?
     @FocusState private var focusedField: SignupFocusField?
 
     private var normalizedEmail: String {
@@ -132,12 +134,14 @@ struct SignupView: View {
             if emailAvailability?.email != normalized {
                 emailAvailability = nil
             }
+            emailAvailabilityErrorMessage = nil
         }
         .onChange(of: nickname) { _, newValue in
             let normalized = AuthValidation.normalizedNickname(newValue)
             if nicknameAvailability?.nickname != normalized {
                 nicknameAvailability = nil
             }
+            nicknameAvailabilityErrorMessage = nil
         }
         .task(id: step) {
             guard step == 2,
@@ -282,6 +286,10 @@ struct SignupView: View {
             return emailAvailability.message
         }
 
+        if let emailAvailabilityErrorMessage {
+            return emailAvailabilityErrorMessage
+        }
+
         return AuthValidation.emailHelperText(email)
     }
 
@@ -290,6 +298,10 @@ struct SignupView: View {
         if let emailAvailability,
            emailAvailability.email == normalizedEmail {
             return emailAvailability.available ? .success : .error
+        }
+
+        if emailAvailabilityErrorMessage != nil {
+            return .error
         }
 
         return AuthValidation.isValidEmail(email) ? .neutral : .error
@@ -397,6 +409,10 @@ struct SignupView: View {
             return nicknameAvailability.message
         }
 
+        if let nicknameAvailabilityErrorMessage {
+            return nicknameAvailabilityErrorMessage
+        }
+
         return AuthValidation.nicknameHelperText(nickname)
     }
 
@@ -405,6 +421,10 @@ struct SignupView: View {
         if let nicknameAvailability,
            nicknameAvailability.nickname == normalizedNickname {
             return nicknameAvailability.available ? .success : .error
+        }
+
+        if nicknameAvailabilityErrorMessage != nil {
+            return .error
         }
 
         return AuthValidation.isValidNickname(nickname) ? .neutral : .error
@@ -534,7 +554,12 @@ struct SignupView: View {
 
         focusedField = nil
         isCheckingEmail = true
-        emailAvailability = await authViewModel.checkEmailAvailability(email: emailToCheck)
+        emailAvailabilityErrorMessage = nil
+        let availability = await authViewModel.checkEmailAvailability(email: emailToCheck)
+        emailAvailability = availability
+        if availability == nil {
+            emailAvailabilityErrorMessage = authViewModel.errorMessage ?? "이메일 중복 확인에 실패했습니다."
+        }
         isCheckingEmail = false
     }
 
@@ -545,7 +570,12 @@ struct SignupView: View {
 
         focusedField = nil
         isCheckingNickname = true
-        nicknameAvailability = await authViewModel.checkNicknameAvailability(nickname: nicknameToCheck)
+        nicknameAvailabilityErrorMessage = nil
+        let availability = await authViewModel.checkNicknameAvailability(nickname: nicknameToCheck)
+        nicknameAvailability = availability
+        if availability == nil {
+            nicknameAvailabilityErrorMessage = authViewModel.errorMessage ?? "닉네임 중복 확인에 실패했습니다."
+        }
         isCheckingNickname = false
     }
 
@@ -560,6 +590,7 @@ struct SignupView: View {
                 available: true,
                 message: "사용할 수 있는 닉네임이에요."
             )
+            nicknameAvailabilityErrorMessage = nil
         }
         isSuggestingNickname = false
     }
