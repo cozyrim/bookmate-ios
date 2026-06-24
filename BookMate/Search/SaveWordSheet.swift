@@ -133,6 +133,7 @@ struct SaveWordSheet: View {
             HStack{
                 
                 Button {
+                    viewModel.cancelWordSaveAfterBookRegistration()
                     dismiss()
                 } label: {
                     HStack(spacing: 8) {
@@ -169,6 +170,7 @@ struct SaveWordSheet: View {
                         let success = await viewModel.saveDictionaryResult(to: selectedBookId, exampleSentence: bookComment)
                         
                         if success {
+                            viewModel.cancelWordSaveAfterBookRegistration()
                             viewModel.searchText = ""
                             viewModel.dictionarySearchResult = nil
                             viewModel.dictionarySuggestions = []
@@ -183,16 +185,28 @@ struct SaveWordSheet: View {
         }
         .padding(24)
         .onAppear {
-            guard remembersLastSelectedBook,
-                  selectedBookId == nil,
-                  let lastBookUUID = UUID(uuidString: lastSelectedBookId),
-                  viewModel.booksOnShelf.contains(where: {$0.id == lastBookUUID}) else {
-                return
-            }
-            
-            selectedBookId = lastBookUUID
+            selectInitialBookIfNeeded()
         }
         
+    }
+
+    private func selectInitialBookIfNeeded() {
+        guard selectedBookId == nil else { return }
+
+        if let registeredBookId = viewModel.wordSaveBookIdToSelectAfterRegistration,
+           viewModel.booksOnShelf.contains(where: { $0.id == registeredBookId }) {
+            selectedBookId = registeredBookId
+            lastSelectedBookId = registeredBookId.uuidString
+            return
+        }
+
+        guard remembersLastSelectedBook,
+              let lastBookUUID = UUID(uuidString: lastSelectedBookId),
+              viewModel.booksOnShelf.contains(where: { $0.id == lastBookUUID }) else {
+            return
+        }
+
+        selectedBookId = lastBookUUID
     }
 
     private func selectableBookCover(_ book: Book) -> some View {

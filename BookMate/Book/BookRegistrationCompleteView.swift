@@ -99,7 +99,9 @@ struct BookRegistrationCompleteView: View {
                 
                 VStack(spacing: 12){
                     Button{
-                        if !viewModel.shouldResumeWordSaveAfterBookRegistration {
+                        if viewModel.shouldResumeWordSaveAfterBookRegistration {
+                            viewModel.wordSaveBookIdToSelectAfterRegistration = book.id
+                        } else {
                             viewModel.clearSearchState(searchMode: .dictionary)
                         }
 

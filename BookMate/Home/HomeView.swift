@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct HomeView: View {
     @ObservedObject var viewModel: BookMateViewModel // 다른 곳에서 만든 viewModel 받아서 관찰
@@ -263,6 +264,10 @@ struct HomeView: View {
 
                 }
             }
+            .sheet(isPresented: $viewModel.isWordSaveResumeSheetPresented) {
+                wordSaveResumeSheet
+                    .presentationDragIndicator(.visible)
+            }
             .alert("책을 삭제할까요?", isPresented: $isShowingDeleteAlert) {
                 Button("취소", role: .cancel) { }
 
@@ -290,8 +295,12 @@ struct HomeView: View {
 
                         guard viewModel.shouldResumeWordSaveAfterBookRegistration else { return }
 
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                            viewModel.resumeWordSaveAfterBookRegistrationIfNeeded()
+                        dismissKeyboard()
+
+                        Task { @MainActor in
+                            await viewModel.loadBooks()
+                            try? await Task.sleep(nanoseconds: 320_000_000)
+                            viewModel.presentWordSaveAfterBookRegistration(registeredBookId: nil)
                         }
                     }
                     )
@@ -315,6 +324,43 @@ struct HomeView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var wordSaveResumeSheet: some View {
+        if let word = viewModel.dictionarySearchResult {
+            SaveWordSheet(
+                viewModel: viewModel,
+                text: word.text,
+                meaning: word.meaning,
+                imageName: "기본 이미지",
+                onSaveComplete: {},
+                onRegisterBookTap: {
+                    path.append(HomeRoute.bookSearch)
+                }
+            )
+        } else {
+            VStack(spacing: 12) {
+                Text("저장할 단어를 찾지 못했습니다.")
+                    .font(.headline)
+                    .foregroundStyle(Color("TextPrimary"))
+
+                Text("단어를 다시 검색해 주세요.")
+                    .font(.callout)
+                    .foregroundStyle(Color("TextSecondary"))
+            }
+            .padding(24)
+            .presentationDetents([.height(180)])
+        }
+    }
+
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
     }
 
     private var reviewWordsSection: some View {
