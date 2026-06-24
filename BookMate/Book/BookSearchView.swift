@@ -29,6 +29,7 @@ struct BookSearchView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     CircleIconButton(systemName: "chevron.left") {
+                        viewModel.cancelWordSaveAfterBookRegistration()
                         dismiss()
                     }
 

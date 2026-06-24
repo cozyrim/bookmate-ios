@@ -82,6 +82,46 @@ extension BookMateViewModel {
         bookSearchErrorMessage = nil
         isLoading = false
         isBookSearchLoading = false
+        isWordSaveSheetPresented = false
+        shouldResumeWordSaveAfterBookRegistration = false
+        isWordSaveResumeSheetPresented = false
+        wordSaveBookIdToSelectAfterRegistration = nil
+    }
+
+    // 단어 저장 도중 원하는 책이 없어 책 등록으로 이동할 때 현재 단어 저장 맥락을 유지한다.
+    func prepareWordSaveAfterBookRegistration() {
+        operationErrorMessage = nil
+        isWordSaveSheetPresented = false
+        isWordSaveResumeSheetPresented = false
+        shouldResumeWordSaveAfterBookRegistration = true
+        wordSaveBookIdToSelectAfterRegistration = nil
+    }
+
+    // 책 등록 완료 후 기존 사전 검색 결과가 남아 있으면 홈 화면 위에 단어 저장 시트를 다시 연다.
+    func presentWordSaveAfterBookRegistration(registeredBookId: UUID?) {
+        guard shouldResumeWordSaveAfterBookRegistration else { return }
+
+        guard dictionarySearchResult != nil else {
+            shouldResumeWordSaveAfterBookRegistration = false
+            isWordSaveResumeSheetPresented = false
+            wordSaveBookIdToSelectAfterRegistration = nil
+            showToast("저장할 단어를 다시 검색해 주세요.", style: .info)
+            return
+        }
+
+        searchMode = .dictionary
+        operationErrorMessage = nil
+        wordSaveBookIdToSelectAfterRegistration = registeredBookId ?? wordSaveBookIdToSelectAfterRegistration
+        shouldResumeWordSaveAfterBookRegistration = false
+        isWordSaveResumeSheetPresented = true
+    }
+
+    // 사용자가 책 등록 후 저장 흐름으로 돌아가지 않기로 했을 때 남은 재개 상태를 정리한다.
+    func cancelWordSaveAfterBookRegistration() {
+        isWordSaveSheetPresented = false
+        isWordSaveResumeSheetPresented = false
+        shouldResumeWordSaveAfterBookRegistration = false
+        wordSaveBookIdToSelectAfterRegistration = nil
     }
 
     // 저장된 단어와 책 목록에서 검색어가 포함된 항목을 찾는다.
@@ -320,6 +360,12 @@ extension BookMateViewModel {
         guard let dictionarySearchResult else {
             operationErrorMessage = "저장할 단어를 찾지 못했습니다."
             showToast("저장할 단어를 찾지 못했어요.", style: .error)
+            return false
+        }
+
+        guard booksOnShelf.contains(where: { $0.id == bookId }) else {
+            operationErrorMessage = "책을 먼저 등록해 주세요."
+            showToast("책을 먼저 등록해 주세요.", style: .error)
             return false
         }
 

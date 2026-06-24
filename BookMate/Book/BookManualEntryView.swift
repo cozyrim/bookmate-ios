@@ -32,7 +32,7 @@ struct BookManualEntryView: View {
     private let coverHeight: CGFloat = 232
     private let coverCornerRadius: CGFloat = 26
     private let contentHorizontalPadding: CGFloat = 28
-    private let headerTopPadding: CGFloat = 52
+    private let headerTopPadding: CGFloat = 12
     private let bottomFormPadding: CGFloat = 36
 
     let onFinishRegistration: (Int) -> Void
@@ -139,8 +139,8 @@ struct BookManualEntryView: View {
                     Spacer()
 
                     Text("새 책 등록")
-                        .font(.title)
-                        .fontWeight(.semibold)
+                        .font(.title2)
+                        .fontWeight(.bold)
 
                     Spacer()
 

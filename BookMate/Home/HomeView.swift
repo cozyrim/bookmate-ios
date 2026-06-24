@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct HomeView: View {
     @ObservedObject var viewModel: BookMateViewModel // 다른 곳에서 만든 viewModel 받아서 관찰
@@ -234,6 +235,13 @@ struct HomeView: View {
                         let progress = Double(currentPage) / Double(totalPages)
 
                         let latestBook = viewModel.books.first(where: { $0.id == book.id }) ?? book
+                        let readingStatus: ReadingStatus?
+
+                        if latestBook.readingStatus == .wantToRead && currentPage > 0 {
+                            readingStatus = progress >= 0.999 ? .completed : .reading
+                        } else {
+                            readingStatus = latestBook.readingStatus
+                        }
 
                         let updatedBook = Book(
                             id: latestBook.id,
@@ -246,7 +254,7 @@ struct HomeView: View {
                             currentPage: currentPage,
                             rating: latestBook.rating,
                             review: latestBook.review,
-                            readingStatus: latestBook.readingStatus,
+                            readingStatus: readingStatus,
                             startDate: latestBook.startDate,
                             endDate: latestBook.endDate
                         )
@@ -262,6 +270,10 @@ struct HomeView: View {
 
 
                 }
+            }
+            .sheet(isPresented: $viewModel.isWordSaveResumeSheetPresented) {
+                wordSaveResumeSheet
+                    .presentationDragIndicator(.visible)
             }
             .alert("책을 삭제할까요?", isPresented: $isShowingDeleteAlert) {
                 Button("취소", role: .cancel) { }
@@ -287,6 +299,16 @@ struct HomeView: View {
                                     onFinishRegistration: { tab in
                         selectedTab = tab
                         path = NavigationPath()
+
+                        guard viewModel.shouldResumeWordSaveAfterBookRegistration else { return }
+
+                        dismissKeyboard()
+
+                        Task { @MainActor in
+                            await viewModel.loadBooks()
+                            try? await Task.sleep(nanoseconds: 320_000_000)
+                            viewModel.presentWordSaveAfterBookRegistration(registeredBookId: nil)
+                        }
                     }
                     )
                 case .bookDetail(let bookId):
@@ -309,6 +331,43 @@ struct HomeView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var wordSaveResumeSheet: some View {
+        if let word = viewModel.dictionarySearchResult {
+            SaveWordSheet(
+                viewModel: viewModel,
+                text: word.text,
+                meaning: word.meaning,
+                imageName: "기본 이미지",
+                onSaveComplete: {},
+                onRegisterBookTap: {
+                    path.append(HomeRoute.bookSearch)
+                }
+            )
+        } else {
+            VStack(spacing: 12) {
+                Text("저장할 단어를 찾지 못했습니다.")
+                    .font(.headline)
+                    .foregroundStyle(Color("TextPrimary"))
+
+                Text("단어를 다시 검색해 주세요.")
+                    .font(.callout)
+                    .foregroundStyle(Color("TextSecondary"))
+            }
+            .padding(24)
+            .presentationDetents([.height(180)])
+        }
+    }
+
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
     }
 
     private var reviewWordsSection: some View {

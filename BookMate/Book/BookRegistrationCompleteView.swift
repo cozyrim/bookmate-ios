@@ -53,6 +53,14 @@ struct BookRegistrationCompleteView: View {
                             .foregroundStyle(Color("TextMuted"))
         }
     }
+
+    private var primaryActionTitle: String {
+        viewModel.shouldResumeWordSaveAfterBookRegistration ? "단어 저장 이어가기" : "단어 검색 시작하기"
+    }
+
+    private var primaryActionIconName: String {
+        viewModel.shouldResumeWordSaveAfterBookRegistration ? "bookmark" : "magnifyingglass"
+    }
     
     
     
@@ -91,10 +99,15 @@ struct BookRegistrationCompleteView: View {
                 
                 VStack(spacing: 12){
                     Button{
-                        viewModel.clearSearchState(searchMode: .dictionary)
+                        if viewModel.shouldResumeWordSaveAfterBookRegistration {
+                            viewModel.wordSaveBookIdToSelectAfterRegistration = book.id
+                        } else {
+                            viewModel.clearSearchState(searchMode: .dictionary)
+                        }
+
                         onFinishRegistration(0)
                     } label: {
-                        Label("단어 검색 시작하기", systemImage: "magnifyingglass")
+                        Label(primaryActionTitle, systemImage: primaryActionIconName)
                             .font(.callout)
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
@@ -105,6 +118,7 @@ struct BookRegistrationCompleteView: View {
                             .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
                     }
                     Button{
+                        viewModel.cancelWordSaveAfterBookRegistration()
                         viewModel.clearSearchState()
                         onFinishRegistration(1)
                     } label: {

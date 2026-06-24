@@ -56,8 +56,11 @@ struct SaveWordSheet: View {
                     Spacer()
 
                         Button {
+                            viewModel.prepareWordSaveAfterBookRegistration()
                             dismiss()
-                            onRegisterBookTap()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                onRegisterBookTap()
+                            }
                         } label: {
                             Label("책 등록", systemImage: "plus")
                                 .font(.caption.bold())
@@ -130,6 +133,7 @@ struct SaveWordSheet: View {
             HStack{
                 
                 Button {
+                    viewModel.cancelWordSaveAfterBookRegistration()
                     dismiss()
                 } label: {
                     HStack(spacing: 8) {
@@ -151,6 +155,12 @@ struct SaveWordSheet: View {
                 .padding(.top, 8)
                 
                 SaveButton {
+                    guard !viewModel.booksOnShelf.isEmpty else {
+                        viewModel.operationErrorMessage = "책을 먼저 등록해 주세요."
+                        viewModel.showToast("책을 먼저 등록해 주세요.", style: .error)
+                        return
+                    }
+
                     guard let selectedBookId else {
                         viewModel.showToast("저장할 책을 선택해 주세요.", style: .error)
                         return
@@ -160,6 +170,7 @@ struct SaveWordSheet: View {
                         let success = await viewModel.saveDictionaryResult(to: selectedBookId, exampleSentence: bookComment)
                         
                         if success {
+                            viewModel.cancelWordSaveAfterBookRegistration()
                             viewModel.searchText = ""
                             viewModel.dictionarySearchResult = nil
                             viewModel.dictionarySuggestions = []
@@ -174,16 +185,28 @@ struct SaveWordSheet: View {
         }
         .padding(24)
         .onAppear {
-            guard remembersLastSelectedBook,
-                  selectedBookId == nil,
-                  let lastBookUUID = UUID(uuidString: lastSelectedBookId),
-                  viewModel.booksOnShelf.contains(where: {$0.id == lastBookUUID}) else {
-                return
-            }
-            
-            selectedBookId = lastBookUUID
+            selectInitialBookIfNeeded()
         }
         
+    }
+
+    private func selectInitialBookIfNeeded() {
+        guard selectedBookId == nil else { return }
+
+        if let registeredBookId = viewModel.wordSaveBookIdToSelectAfterRegistration,
+           viewModel.booksOnShelf.contains(where: { $0.id == registeredBookId }) {
+            selectedBookId = registeredBookId
+            lastSelectedBookId = registeredBookId.uuidString
+            return
+        }
+
+        guard remembersLastSelectedBook,
+              let lastBookUUID = UUID(uuidString: lastSelectedBookId),
+              viewModel.booksOnShelf.contains(where: { $0.id == lastBookUUID }) else {
+            return
+        }
+
+        selectedBookId = lastBookUUID
     }
 
     private func selectableBookCover(_ book: Book) -> some View {
