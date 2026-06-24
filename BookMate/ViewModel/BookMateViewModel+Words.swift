@@ -193,7 +193,11 @@ extension BookMateViewModel {
             var candidateItems = try await fetchDictionaryItems(query: trimmedSearchText, apiKey: apiKey)
 
             if shouldFetchPredicateVariants(for: trimmedSearchText, items: candidateItems) {
-                let predicateItems = await fetchPredicateVariantItems(for: trimmedSearchText, apiKey: apiKey)
+                let predicateItems = await fetchPredicateVariantItems(
+                    for: trimmedSearchText,
+                    items: candidateItems,
+                    apiKey: apiKey
+                )
                 candidateItems.append(contentsOf: predicateItems)
             }
 
@@ -275,7 +279,11 @@ extension BookMateViewModel {
 
             var candidateItems = decodedResponse.channel.item
             if shouldFetchPredicateVariants(for: trimmed, items: candidateItems) {
-                let predicateItems = await fetchPredicateVariantItems(for: trimmed, apiKey: apiKey)
+                let predicateItems = await fetchPredicateVariantItems(
+                    for: trimmed,
+                    items: candidateItems,
+                    apiKey: apiKey
+                )
                 guard !Task.isCancelled,
                       searchMode == .dictionary,
                       normalizedDictionaryWord(searchText) == trimmed else {
@@ -640,7 +648,11 @@ extension BookMateViewModel {
 
     // 추가 검색을 해야하는지를 판단 (~하다의 어근처럼 애매한 경우 추가 검색)
     private func shouldFetchPredicateVariants(for query: String, items: [StdDictItem]) -> Bool {
-        guard !predicateVariantQueries(for: query).isEmpty else { return false }
+        guard !predicateVariantQueries(for: query, items: items).isEmpty else { return false }
+
+        if items.contains(where: { isRootDefinition($0.sense.definition) }) {
+            return true
+        }
 
         guard let preferredItem = preferredDictionaryItems(from: items, query: query).first else {
             return true
@@ -649,10 +661,10 @@ extension BookMateViewModel {
         return isRootDefinition(preferredItem.sense.definition)
     }
 
-    private func fetchPredicateVariantItems(for query: String, apiKey: String) async -> [StdDictItem] {
+    private func fetchPredicateVariantItems(for query: String, items sourceItems: [StdDictItem], apiKey: String) async -> [StdDictItem] {
         var items: [StdDictItem] = []
 
-        for variantQuery in predicateVariantQueries(for: query) {
+        for variantQuery in predicateVariantQueries(for: query, items: sourceItems) {
             if let variantItems = try? await fetchDictionaryItems(query: variantQuery, apiKey: apiKey) {
                 items.append(contentsOf: variantItems)
             }
@@ -661,9 +673,14 @@ extension BookMateViewModel {
         return items
     }
 
-    private func predicateVariantQueries(for query: String) -> [String] {
+    private func predicateVariantQueries(for query: String, items: [StdDictItem] = []) -> [String] {
         guard !query.hasSuffix("다") else { return [] }
-        return ["\(query)하다", "\(query)다"]
+
+        var seenQueries = Set<String>()
+        var queries = items.compactMap { rootPredicateWord(from: $0.sense.definition) }
+        queries.append(contentsOf: ["\(query)하다", "\(query)다"])
+
+        return queries.filter { seenQueries.insert($0).inserted }
     }
 
     private func dictionaryEntry(from item: StdDictItem, exampleSentence: String?) -> DictionaryEntry {
@@ -688,6 +705,31 @@ extension BookMateViewModel {
 
     private func isRootDefinition(_ definition: String) -> Bool {
         definition.replacingOccurrences(of: " ", with: "").contains("의어근")
+    }
+
+    private func rootPredicateWord(from definition: String) -> String? {
+        guard isRootDefinition(definition) else { return nil }
+
+        let quotePairs: [(Character, Character)] = [
+            ("‘", "’"),
+            ("“", "”"),
+            ("'", "'"),
+            ("\"", "\"")
+        ]
+
+        for (openingQuote, closingQuote) in quotePairs {
+            guard let openingIndex = definition.firstIndex(of: openingQuote) else { continue }
+            let searchStartIndex = definition.index(after: openingIndex)
+
+            guard let closingIndex = definition[searchStartIndex...].firstIndex(of: closingQuote) else { continue }
+
+            let candidate = normalizedDictionaryWord(String(definition[searchStartIndex..<closingIndex]))
+            if candidate.hasSuffix("다") {
+                return candidate
+            }
+        }
+
+        return nil
     }
 
     private func isEmptyPartOfSpeech(_ partOfSpeech: String) -> Bool {
