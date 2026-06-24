@@ -62,6 +62,8 @@
 	<string></string>
 	<key>ALADIN_TTB_KEY</key>
 	<string>$(ALADIN_TTB_KEY)</string>
+	<key>BOOKMATE_API_ENVIRONMENT</key>
+	<string>$(BOOKMATE_API_ENVIRONMENT)</string>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

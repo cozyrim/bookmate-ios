@@ -1,4 +1,5 @@
 STDICT_API_KEY =
 KAKAO_REST_API_KEY =
 ALADIN_TTB_KEY =
+BOOKMATE_API_ENVIRONMENT = local
 #include? "../.local/Secrets.xcconfig"
