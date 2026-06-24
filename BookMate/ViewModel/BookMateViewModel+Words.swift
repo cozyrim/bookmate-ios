@@ -156,6 +156,11 @@ extension BookMateViewModel {
     // MARK: - Dictionary Lookup
 
     // 표준국어대사전 API에서 검색어에 해당하는 단어 정보를 조회한다.
+//     검색어 정리
+// → 표준국어대사전 API 호출
+// → 결과 후보 모으기
+// → 좋은 후보 고르기
+// → 화면에 보여줄 DictionaryEntry 만들기
     func searchDictionaryEntry() async {
         let trimmedSearchText = searchText
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -185,23 +190,14 @@ extension BookMateViewModel {
         }
 
         do {
-            var components = URLComponents(string: "https://stdict.korean.go.kr/api/search.do")!
-            components.queryItems = [
-                URLQueryItem(name: "key", value: apiKey),
-                URLQueryItem(name: "q", value: trimmedSearchText),
-                URLQueryItem(name: "req_type", value: "json")
-            ]
+            var candidateItems = try await fetchDictionaryItems(query: trimmedSearchText, apiKey: apiKey)
 
-            guard let url = components.url else {
-                searchErrorMessage = "URL을 만들 수 없습니다."
-                isLoading = false
-                return
+            if shouldFetchPredicateVariants(for: trimmedSearchText, items: candidateItems) {
+                let predicateItems = await fetchPredicateVariantItems(for: trimmedSearchText, apiKey: apiKey)
+                candidateItems.append(contentsOf: predicateItems)
             }
 
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let response = try JSONDecoder().decode(StdDictSearchResponse.self, from: data)
-
-            guard let firstItem = response.channel.item.first else {
+            guard let selectedItem = preferredDictionaryItems(from: candidateItems, query: trimmedSearchText).first else {
                 searchErrorMessage = "검색 결과가 없습니다."
 
                 if suggestsSimilarWordsOnFailure {
@@ -212,18 +208,13 @@ extension BookMateViewModel {
                 return
             }
 
+            let selectedText = normalizedDictionaryWord(selectedItem.word)
             let exampleSentence = await dictionaryExampleLookupService.fetchExample(
-                word: firstItem.word,
-                targetCode: firstItem.targetCode
+                word: selectedText,
+                targetCode: selectedItem.targetCode
             )
 
-            dictionarySearchResult = DictionaryEntry(
-                text: firstItem.word.trimmingCharacters(in: .whitespacesAndNewlines),
-                meaning: firstItem.sense.definition.trimmingCharacters(in: .whitespacesAndNewlines),
-                partOfSpeech: firstItem.pos,
-                exampleSentence: exampleSentence,
-                targetCode: firstItem.targetCode
-            )
+            dictionarySearchResult = dictionaryEntry(from: selectedItem, exampleSentence: exampleSentence)
 
             addRecentSearch(trimmedSearchText)
             isLoading = false
@@ -236,7 +227,7 @@ extension BookMateViewModel {
 
     // 사전 검색 실패 또는 입력 중 보조 후보로 보여줄 단어를 조회한다.
     func fetchDictionarySuggestions() async {
-        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = normalizedDictionaryWord(searchText)
 
         guard searchMode == .dictionary else {
             dictionarySuggestions = []
@@ -262,16 +253,7 @@ extension BookMateViewModel {
         }
 
         do {
-            var components = URLComponents(string: "https://stdict.korean.go.kr/api/search.do")!
-            components.queryItems = [
-                URLQueryItem(name: "key", value: apiKey),
-                URLQueryItem(name: "q", value: trimmed),
-                URLQueryItem(name: "req_type", value: "json")
-            ]
-
-            guard let url = components.url else { return }
-
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await fetchDictionaryData(query: trimmed, apiKey: apiKey)
             if Task.isCancelled { return }
 
             if let httpResponse = response as? HTTPURLResponse {
@@ -287,19 +269,25 @@ extension BookMateViewModel {
             let decodedResponse = try JSONDecoder().decode(StdDictSearchResponse.self, from: data)
             guard !Task.isCancelled,
                   searchMode == .dictionary,
-                  searchText.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed else {
+                  normalizedDictionaryWord(searchText) == trimmed else {
                 return
             }
 
-            dictionarySuggestions = decodedResponse.channel.item.prefix(5).map { item in
-                DictionaryEntry(
-                    text: item.word.trimmingCharacters(in: .whitespacesAndNewlines),
-                    meaning: item.sense.definition.trimmingCharacters(in: .whitespacesAndNewlines),
-                    partOfSpeech: item.pos,
-                    exampleSentence: nil,
-                    targetCode: item.targetCode
-                )
+            var candidateItems = decodedResponse.channel.item
+            if shouldFetchPredicateVariants(for: trimmed, items: candidateItems) {
+                let predicateItems = await fetchPredicateVariantItems(for: trimmed, apiKey: apiKey)
+                guard !Task.isCancelled,
+                      searchMode == .dictionary,
+                      normalizedDictionaryWord(searchText) == trimmed else {
+                    return
+                }
+
+                candidateItems.append(contentsOf: predicateItems)
             }
+
+            dictionarySuggestions = preferredDictionaryItems(from: candidateItems, query: trimmed)
+                .prefix(5)
+                .map { dictionaryEntry(from: $0, exampleSentence: nil) }
         } catch {
             if Task.isCancelled { return }
             dictionarySuggestions = []
@@ -581,6 +569,130 @@ extension BookMateViewModel {
     // 검색 실패 시 비슷한 단어를 제안할지 설정값을 읽는다.
     private var suggestsSimilarWordsOnFailure: Bool {
         UserDefaults.standard.object(forKey: "suggestsSimilarWordsOnFailure") as? Bool ?? true
+    }
+
+    private func fetchDictionaryItems(query: String, apiKey: String) async throws -> [StdDictItem] {
+        let (data, _) = try await fetchDictionaryData(query: query, apiKey: apiKey)
+        let response = try JSONDecoder().decode(StdDictSearchResponse.self, from: data)
+        return response.channel.item
+    }
+
+    private func fetchDictionaryData(query: String, apiKey: String) async throws -> (Data, URLResponse) {
+        var components = URLComponents(string: "https://stdict.korean.go.kr/api/search.do")!
+        components.queryItems = [
+            URLQueryItem(name: "key", value: apiKey),
+            URLQueryItem(name: "q", value: query),
+            URLQueryItem(name: "req_type", value: "json")
+        ]
+
+        guard let url = components.url else {
+            throw URLError(.badURL)
+        }
+
+        return try await URLSession.shared.data(from: url)
+    }
+
+    private func preferredDictionaryItems(from items: [StdDictItem], query: String) -> [StdDictItem] {
+        var seenTargetCodes = Set<String>()
+        let uniqueItems = items.filter { item in
+            seenTargetCodes.insert(item.targetCode).inserted
+        }
+
+        return uniqueItems
+            .enumerated()
+            .sorted { lhs, rhs in
+                let lhsScore = dictionaryItemScore(lhs.element, query: query)
+                let rhsScore = dictionaryItemScore(rhs.element, query: query)
+
+                if lhsScore == rhsScore {
+                    return lhs.offset < rhs.offset
+                }
+
+                return lhsScore > rhsScore
+            }
+            .map { $0.element }
+    }
+
+    private func dictionaryItemScore(_ item: StdDictItem, query: String) -> Int {
+        let word = normalizedDictionaryWord(item.word)
+        var score = 0
+
+        if word == query {
+            score += 120
+        } else if predicateVariantQueries(for: query).contains(word) {
+            score += 110
+        } else if word.hasPrefix(query) {
+            score += 20
+        }
+
+        if isRootDefinition(item.sense.definition) {
+            score -= 80
+        } else {
+            score += 40
+        }
+
+        if !isEmptyPartOfSpeech(item.pos) {
+            score += 20
+        }
+
+        return score
+    }
+
+    // 추가 검색을 해야하는지를 판단 (~하다의 어근처럼 애매한 경우 추가 검색)
+    private func shouldFetchPredicateVariants(for query: String, items: [StdDictItem]) -> Bool {
+        guard !predicateVariantQueries(for: query).isEmpty else { return false }
+
+        guard let preferredItem = preferredDictionaryItems(from: items, query: query).first else {
+            return true
+        }
+
+        return isRootDefinition(preferredItem.sense.definition)
+    }
+
+    private func fetchPredicateVariantItems(for query: String, apiKey: String) async -> [StdDictItem] {
+        var items: [StdDictItem] = []
+
+        for variantQuery in predicateVariantQueries(for: query) {
+            if let variantItems = try? await fetchDictionaryItems(query: variantQuery, apiKey: apiKey) {
+                items.append(contentsOf: variantItems)
+            }
+        }
+
+        return items
+    }
+
+    private func predicateVariantQueries(for query: String) -> [String] {
+        guard !query.hasSuffix("다") else { return [] }
+        return ["\(query)하다", "\(query)다"]
+    }
+
+    private func dictionaryEntry(from item: StdDictItem, exampleSentence: String?) -> DictionaryEntry {
+        DictionaryEntry(
+            text: normalizedDictionaryWord(item.word),
+            meaning: normalizedDictionaryMeaning(item.sense.definition),
+            partOfSpeech: item.pos.trimmingCharacters(in: .whitespacesAndNewlines),
+            exampleSentence: exampleSentence,
+            targetCode: item.targetCode
+        )
+    }
+
+    private func normalizedDictionaryWord(_ word: String) -> String {
+        word
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "-", with: "")
+    }
+
+    private func normalizedDictionaryMeaning(_ meaning: String) -> String {
+        meaning.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func isRootDefinition(_ definition: String) -> Bool {
+        definition.replacingOccurrences(of: " ", with: "").contains("의어근")
+    }
+
+    private func isEmptyPartOfSpeech(_ partOfSpeech: String) -> Bool {
+        let trimmed = partOfSpeech.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty || trimmed == "품사 없음"
     }
 
     // 표준국어대사전 API 키를 Info.plist에서 읽고 유효성을 확인한다.
