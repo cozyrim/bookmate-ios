@@ -11,6 +11,7 @@ struct ProfileView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
     @State private var path = NavigationPath()
     @State private var isShowingProfilePreview = false
+    @State private var toast: AppToast?
     
     
     private var userName: String {
@@ -96,7 +97,9 @@ struct ProfileView: View {
             .navigationDestination(for: ProfileRoute.self) { route in
                 switch route {
                 case .editProfile:
-                    ProfileEditView(authViewModel: authViewModel)
+                    ProfileEditView(authViewModel: authViewModel) {
+                        toast = AppToast(message: "프로필이 저장되었어요.", style: .success)
+                    }
                     
                 case .accountManagement:
                     AccountManagementView(authViewModel: authViewModel)
@@ -121,6 +124,7 @@ struct ProfileView: View {
                 fallbackImageName: "profileImage"
             )
         }
+        .appToast($toast)
         .onAppear {
             Task {
                 await authViewModel.loadProfile()

@@ -10,6 +10,8 @@ import PhotosUI
 
 struct ProfileEditView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
+    var onSaveComplete: (() -> Void)?
+
     @Environment(\.dismiss) private var dismiss
 
     @State private var nickname = ""
@@ -217,6 +219,7 @@ struct ProfileEditView: View {
             )
 
             if success {
+                onSaveComplete?()
                 dismiss()
             }
         }
