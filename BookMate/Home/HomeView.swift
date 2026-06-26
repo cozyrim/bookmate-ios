@@ -640,7 +640,7 @@ struct HomeView: View {
                 Image("HomeBrandMark")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 88, height: 20)
+                    .frame(width: 104, height: 24)
 
                 Spacer()
             }
