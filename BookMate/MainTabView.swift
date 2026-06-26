@@ -23,7 +23,7 @@ struct MainTabView: View {
 
             ShelfView(viewModel: viewModel, selectedTab: $tabIndex)
                 .tabItem {
-                    Image(systemName: "book")
+                    Image(systemName: "books.vertical")
                     Text("책장")
                 }
                 .tag(1)
@@ -38,7 +38,7 @@ struct MainTabView: View {
 
             RoomTabView(viewModel: viewModel)
                 .tabItem {
-                    Image(systemName: "door.left.hand.open")
+                    Image(systemName: "house.lodge")
                     Text("미니룸")
                 }
                 .tag(3)
@@ -46,7 +46,7 @@ struct MainTabView: View {
 
             ProfileView(authViewModel: authViewModel)
                 .tabItem{
-                    Image(systemName: "person.crop.circle.fill")
+                    Image(systemName: "person.crop.circle")
                     Text("프로필")
                 }
                 .tag(4)
