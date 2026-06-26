@@ -31,8 +31,8 @@ struct MainTabView: View {
 
             WordArchiveView(viewModel: viewModel, selectedTab: $tabIndex)
                 .tabItem {
-                    Image(systemName: "tag")
-                    Text("단어 아카이빙")
+                    Image(systemName: "text.book.closed")
+                    Text("단어장")
                 }
                 .tag(2)
 
