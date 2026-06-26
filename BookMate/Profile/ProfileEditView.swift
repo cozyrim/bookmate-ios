@@ -20,6 +20,8 @@ struct ProfileEditView: View {
     @State private var profileImageUrlToSave: String?
     @State private var isPublicToSave: Bool = true
     @State private var isCheckingNickname = false
+    @State private var isUploadingProfileImage = false
+    @State private var profileImageUploadRequestID: UUID?
     @State private var nicknameAvailability: NicknameAvailabilityResponse?
     @FocusState private var isNicknameFocused: Bool
 
@@ -47,9 +49,20 @@ struct ProfileEditView: View {
         nicknameAvailability?.nickname == normalizedNickname
     }
 
+    private var hasCustomProfileImage: Bool {
+        selectedProfileImage != nil || !(profileImageUrlToSave?.isEmpty ?? true)
+    }
+
     private var canSave: Bool {
+        guard !isUploadingProfileImage else { return false }
         guard AuthValidation.isValidNickname(nickname) else { return false }
         return !isNicknameChanged || isNicknameCheckedAndAvailable
+    }
+
+    private var saveButtonTitle: String {
+        if authViewModel.isLoading { return "저장 중..." }
+        if isUploadingProfileImage { return "업로드 중..." }
+        return "저장하기"
     }
 
     private var nicknameHelperText: String {
@@ -107,19 +120,49 @@ struct ProfileEditView: View {
                     .buttonStyle(.plain)
                     .onChange(of: selectedPhotoItem) { _, newItem in
                         Task {
+                            let requestID = UUID()
+                            profileImageUploadRequestID = requestID
+                            isUploadingProfileImage = true
+
+                            defer {
+                                if profileImageUploadRequestID == requestID {
+                                    isUploadingProfileImage = false
+                                }
+                            }
+
                             guard let data = try? await newItem?.loadTransferable(type: Data.self),
                                   let image = UIImage(data: data),
                                   let jpegData = image.jpegData(compressionQuality: 0.85) else {
                                 return
                             }
 
+                            guard profileImageUploadRequestID == requestID else { return }
                             selectedProfileImage = image
 
                             if let uploadedUrl = await authViewModel.uploadProfileImage(imageData: jpegData) {
+                                guard profileImageUploadRequestID == requestID else { return }
                                 profileImageUrlToSave = uploadedUrl
+                            } else if profileImageUploadRequestID == requestID {
+                                selectedPhotoItem = nil
+                                selectedProfileImage = nil
                             }
                         }
                     }
+
+                    Button {
+                        resetProfileImageToDefault()
+                    } label: {
+                        Label("기본 이미지로 변경", systemImage: "arrow.counterclockwise")
+                            .font(.caption.bold())
+                            .foregroundStyle(Color("PrimaryDeep"))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                            .background(Color("Primary").opacity(0.14), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!hasCustomProfileImage)
+                    .opacity(hasCustomProfileImage ? 1 : 0.45)
+                    .accessibilityHint("프로필 이미지를 기본 이미지로 되돌립니다.")
 
                     nicknameEditor
 
@@ -134,7 +177,7 @@ struct ProfileEditView: View {
 
                 Spacer()
 
-                SettingsPrimaryButton(title: authViewModel.isLoading ? "저장 중..." : "저장하기") {
+                SettingsPrimaryButton(title: saveButtonTitle) {
                     saveProfile()
                 }
                 .disabled(!canSave || authViewModel.isLoading)
@@ -223,6 +266,15 @@ struct ProfileEditView: View {
                 dismiss()
             }
         }
+    }
+
+    private func resetProfileImageToDefault() {
+        isNicknameFocused = false
+        isUploadingProfileImage = false
+        profileImageUploadRequestID = nil
+        selectedPhotoItem = nil
+        selectedProfileImage = nil
+        profileImageUrlToSave = nil
     }
 
     private func checkNicknameAvailability() async {

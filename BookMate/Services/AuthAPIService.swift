@@ -18,6 +18,26 @@ struct AuthAPIService {
         let profileImageUrl: String?
         let isPublic: Bool
         let roomTheme: String
+
+        enum CodingKeys: String, CodingKey {
+            case nickname
+            case profileImageUrl
+            case isPublic
+            case roomTheme
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(nickname, forKey: .nickname)
+            try container.encode(isPublic, forKey: .isPublic)
+            try container.encode(roomTheme, forKey: .roomTheme)
+
+            if let profileImageUrl {
+                try container.encode(profileImageUrl, forKey: .profileImageUrl)
+            } else {
+                try container.encodeNil(forKey: .profileImageUrl)
+            }
+        }
     }
     
     private struct KakaoLoginBody: Encodable {
