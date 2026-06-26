@@ -24,29 +24,30 @@ struct MainTabView: View {
             ShelfView(viewModel: viewModel, selectedTab: $tabIndex)
                 .tabItem {
                     Image(systemName: "book")
-                    Text("책장")
+                    Text("책")
                 }
                 .tag(1)
 
 
             WordArchiveView(viewModel: viewModel, selectedTab: $tabIndex)
                 .tabItem {
-                    Image(systemName: "tag")
-                    Text("단어 아카이빙")
+                    Image("TabWordIcon")
+                        .renderingMode(.template)
+                    Text("단어장")
                 }
                 .tag(2)
 
             RoomTabView(viewModel: viewModel)
                 .tabItem {
-                    Image(systemName: "door.left.hand.open")
-                    Text("미니룸")
+                    Image(systemName: "books.vertical")
+                    Text("서재")
                 }
                 .tag(3)
 
 
             ProfileView(authViewModel: authViewModel)
                 .tabItem{
-                    Image(systemName: "person.crop.circle.fill")
+                    Image(systemName: "person.crop.circle")
                     Text("프로필")
                 }
                 .tag(4)

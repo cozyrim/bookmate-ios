@@ -636,18 +636,15 @@ struct HomeView: View {
 
     private var homeIntroHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 7) {
-                Text("BookMate 오늘 만난 문장")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color("TextSecondary"))
-
-                Image("BookMateSymbolIcon")
+            HStack {
+                Image("HomeBrandMark")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 28, height: 28)
-                    .offset(y: -2)
+                    .frame(width: 104, height: 24)
+
+                Spacer()
             }
+            .frame(maxWidth: .infinity)
 
             Text("읽다가 만난 단어들")
                 .font(.title)
