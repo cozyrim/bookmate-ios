@@ -636,18 +636,11 @@ struct HomeView: View {
 
     private var homeIntroHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Image("BookMatePlainIcon")
+            HStack {
+                Image("HomeBrandMark")
                     .resizable()
-                    .scaledToFill()
-                    .frame(width: 34, height: 34)
-                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-                    .shadow(color: Color("Shadow").opacity(0.08), radius: 8, y: 3)
-
-                Text("BookMate")
-                    .font(.subheadline)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color("TextSecondary"))
+                    .scaledToFit()
+                    .frame(width: 88, height: 20)
 
                 Spacer()
             }
