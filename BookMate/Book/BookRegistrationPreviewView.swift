@@ -167,6 +167,7 @@ struct BookRegistrationPreviewView: View {
                     Button {
                         guard !isSaving else { return }
 
+                        BMAnalytics.bookCreateEntryTap(entryPoint: "book_registration_preview")
                         isSaving = true
                         errorMessage = nil
 

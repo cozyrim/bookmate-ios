@@ -43,6 +43,11 @@ extension BookMateViewModel {
             upsertReview(savedReview)
             operationErrorMessage = nil
             showToast("리뷰를 저장했어요.", style: .success)
+            BMAnalytics.reviewSaved(
+                hasRating: rating > 0,
+                hasContent: !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                isPublic: isPublic
+            )
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }

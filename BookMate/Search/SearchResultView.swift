@@ -63,6 +63,9 @@ struct SearchResultView: View {
         .onChange(of: viewModel.searchText) { _, newValue in
             scheduleSuggestions(for: newValue)
         }
+        .onAppear {
+            BMAnalytics.screenView(.dictionaryResult)
+        }
         .onDisappear {
             suggestionTask?.cancel()
         }
@@ -105,11 +108,11 @@ struct SearchResultView: View {
 
     @ViewBuilder
     private var suggestionList: some View {
-        if isSearchFocused && !viewModel.dictionarySuggestions.isEmpty {
+            if isSearchFocused && !viewModel.dictionarySuggestions.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                ForEach(viewModel.dictionarySuggestions, id: \.targetCode) { suggestion in
+                ForEach(Array(viewModel.dictionarySuggestions.enumerated()), id: \.element.targetCode) { index, suggestion in
                     Button {
-                        selectSuggestion(suggestion)
+                        selectSuggestion(suggestion, rank: index + 1)
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(suggestion.text)
@@ -134,6 +137,13 @@ struct SearchResultView: View {
                     .stroke(Color("Border").opacity(0.45), lineWidth: 1)
             }
             .padding(.horizontal)
+            .onAppear {
+                BMAnalytics.searchResultImpression(
+                    type: "dictionary_suggestion",
+                    resultCount: viewModel.dictionarySuggestions.count,
+                    entryPoint: "dictionary_result"
+                )
+            }
         }
     }
 
@@ -173,18 +183,28 @@ struct SearchResultView: View {
         viewModel.searchMode = .dictionary
         viewModel.dictionarySuggestions = []
         isSearchFocused = false
+        BMAnalytics.searchSubmit(
+            mode: .dictionary,
+            entryPoint: "dictionary_result",
+            queryLength: trimmed.count
+        )
 
         Task { @MainActor in
             await viewModel.searchDictionaryEntry()
         }
     }
 
-    private func selectSuggestion(_ suggestion: DictionaryEntry) {
+    private func selectSuggestion(_ suggestion: DictionaryEntry, rank: Int) {
         suggestionTask?.cancel()
         viewModel.searchText = suggestion.text
         viewModel.dictionarySuggestions = []
         viewModel.searchErrorMessage = nil
         isSearchFocused = false
+        BMAnalytics.searchResultTap(
+            type: "dictionary_suggestion",
+            entryPoint: "dictionary_result",
+            rank: rank
+        )
 
         Task { @MainActor in
             await viewModel.selectDictionaryEntry(suggestion)

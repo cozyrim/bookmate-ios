@@ -55,6 +55,7 @@ extension BookMateViewModel {
             quotes.insert(savedQuote, at: 0)
             operationErrorMessage = nil
             showToast("문장을 저장했어요.", style: .success)
+            BMAnalytics.sentenceSaved(hasPage: page != nil, hasMemo: memo?.isEmpty == false)
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }
@@ -81,6 +82,7 @@ extension BookMateViewModel {
             }
             operationErrorMessage = nil
             showToast("문장을 수정했어요.", style: .success)
+            BMAnalytics.sentenceUpdated()
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }
@@ -105,6 +107,7 @@ extension BookMateViewModel {
             quotes.removeAll { $0.id == quote.id }
             operationErrorMessage = nil
             showToast("문장을 삭제했어요.", style: .success)
+            BMAnalytics.sentenceDeleted()
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }

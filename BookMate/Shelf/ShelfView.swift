@@ -86,6 +86,7 @@ struct ShelfView: View {
                         Spacer()
 
                         ContentStateView(type: .empty, iconName: "book", title: "아직 등록한 책이 없어요.", message: "읽고 있는 책을 등록하면\n내 책장에서 관리할 수 있어요.", buttonTitle: "책 등록하기", buttonIconName: "plus", buttonAction: {
+                            BMAnalytics.bookCreateEntryTap(entryPoint: "book_shelf_empty")
                             path.append(ShelfRoute.bookSearch)
                         }
                         )
@@ -345,6 +346,11 @@ struct ShelfView: View {
                 .padding(.trailing, 14)
             }
             .buttonStyle(.plain)
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    BMAnalytics.bookCreateEntryTap(entryPoint: "book_shelf_header")
+                }
+            )
 
             Rectangle()
                 .fill(Color("Border").opacity(0.32))
@@ -395,6 +401,10 @@ struct ShelfView: View {
                     wordCount: viewModel.savedWords(for: book.id).count,
                     readingStatus: shelfBook.status,
                     onTap: {
+                        BMAnalytics.bookCardTap(
+                            entryPoint: "book_shelf",
+                            readingStatus: shelfBook.status
+                        )
                         path.append(ShelfRoute.bookDetail(book.id))
                     },
                     onMoreTap: {
@@ -413,6 +423,10 @@ struct ShelfView: View {
                     wordCount: viewModel.savedWords(for: book.id).count,
                     readingStatus: shelfBook.status,
                     onTap: {
+                        BMAnalytics.bookCardTap(
+                            entryPoint: "book_shelf",
+                            readingStatus: shelfBook.status
+                        )
                         path.append(ShelfRoute.bookDetail(book.id))
                     },
                     onMoreTap: {

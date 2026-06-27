@@ -49,6 +49,7 @@ struct DictionaryResultCard: View {
             Button {
                 viewModel.cancelWordSaveAfterBookRegistration()
                 viewModel.isWordSaveSheetPresented = true
+                BMAnalytics.searchResultTap(type: "dictionary_result", entryPoint: "dictionary_result")
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "bookmark")

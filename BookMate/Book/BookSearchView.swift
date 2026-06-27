@@ -63,6 +63,9 @@ struct BookSearchView: View {
         }
         .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
+        .onAppear {
+            BMAnalytics.screenView(.bookSearch)
+        }
     }
 
     @ViewBuilder
@@ -104,7 +107,7 @@ struct BookSearchView: View {
             noResultArea
         } else {
             LazyVStack(spacing: 10) {
-                ForEach(viewModel.bookSearchResults) { kakaoBook in
+                ForEach(Array(viewModel.bookSearchResults.enumerated()), id: \.element.id) { index, kakaoBook in
                     let draft = BookRegistrationDraft(kakaoBook: kakaoBook)
 
                     NavigationLink {
@@ -122,6 +125,15 @@ struct BookSearchView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .simultaneousGesture(
+                        TapGesture().onEnded {
+                            BMAnalytics.searchResultTap(
+                                type: "book",
+                                entryPoint: "book_search",
+                                rank: index + 1
+                            )
+                        }
+                    )
                 }
             }
         }
@@ -208,6 +220,11 @@ struct BookSearchView: View {
                 .background(Color("Primary").opacity(0.12), in: Capsule())
         }
         .buttonStyle(.plain)
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                BMAnalytics.bookCreateEntryTap(entryPoint: "book_search_manual_link")
+            }
+        )
     }
 
     private var noResultArea: some View {
@@ -232,6 +249,11 @@ struct BookSearchView: View {
                 .background(Color("Primary").opacity(0.16), in: Capsule())
         }
         .buttonStyle(.plain)
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                BMAnalytics.bookCreateEntryTap(entryPoint: "book_search_manual_button")
+            }
+        )
     }
 
     private func manualEntryLink(title: String, isProminent: Bool = false) -> some View {
@@ -351,6 +373,7 @@ struct BookSearchView: View {
         }
 
         searchTask?.cancel()
+        BMAnalytics.searchSubmit(mode: .book, entryPoint: "book_search", queryLength: normalized.count)
 
         Task {
             await viewModel.searchBooks(query: normalized)

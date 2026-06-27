@@ -203,6 +203,7 @@ extension BookMateViewModel {
 
             guard let selectedItem = preferredDictionaryItems(from: candidateItems, query: trimmedSearchText).first else {
                 searchErrorMessage = "검색 결과가 없습니다."
+                BMAnalytics.searchCompleted(mode: .dictionary, resultCount: 0)
 
                 if suggestsSimilarWordsOnFailure {
                     await fetchDictionarySuggestions()
@@ -219,12 +220,14 @@ extension BookMateViewModel {
             )
 
             dictionarySearchResult = dictionaryEntry(from: selectedItem, exampleSentence: exampleSentence)
+            BMAnalytics.searchCompleted(mode: .dictionary, resultCount: 1)
 
             addRecentSearch(trimmedSearchText)
             isLoading = false
         } catch {
             searchErrorMessage = "검색 중 오류가 발생했습니다."
             isLoading = false
+            BMAnalytics.searchFailed(mode: .dictionary, reason: "api_error")
             DebugLogger.log(error)
         }
     }
@@ -356,12 +359,14 @@ extension BookMateViewModel {
         guard let dictionarySearchResult else {
             operationErrorMessage = "저장할 단어를 찾지 못했습니다."
             showToast("저장할 단어를 찾지 못했어요.", style: .error)
+            BMAnalytics.wordSaveFailed(reason: "missing_dictionary_result")
             return false
         }
 
         guard booksOnShelf.contains(where: { $0.id == bookId }) else {
             operationErrorMessage = "책을 먼저 등록해 주세요."
             showToast("책을 먼저 등록해 주세요.", style: .error)
+            BMAnalytics.wordSaveFailed(reason: "missing_book")
             return false
         }
 
@@ -373,6 +378,7 @@ extension BookMateViewModel {
         guard !alreadySaved else {
             operationErrorMessage = nil
             showToast("이미 이 책에 저장한 단어예요.", style: .info)
+            BMAnalytics.wordSaveFailed(reason: "duplicate")
             return false
         }
 
@@ -395,12 +401,14 @@ extension BookMateViewModel {
             savedWords.insert(savedWord, at: 0)
             operationErrorMessage = nil
             showToast("단어를 저장했어요.", style: .success)
+            BMAnalytics.wordSaved(hasExampleSentence: exampleSentence?.isEmpty == false)
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }
 
             operationErrorMessage = "단어 저장에 실패했습니다."
             showToast("단어 저장에 실패했어요.", style: .error)
+            BMAnalytics.wordSaveFailed(reason: "api_error")
             DebugLogger.log("단어 저장 실패:", error)
             return false
         }
@@ -451,6 +459,7 @@ extension BookMateViewModel {
 
             operationErrorMessage = nil
             showToast(successMessage, style: .success)
+            BMAnalytics.wordDeleted()
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }
@@ -463,7 +472,11 @@ extension BookMateViewModel {
     }
 
     // 서버에서 단어 기록을 수정하고 로컬 목록을 갱신한다.
-    func updateWord(_ word: Word, successMessage: String = "단어 기록을 수정했어요.") async -> Bool {
+    func updateWord(
+        _ word: Word,
+        successMessage: String = "단어 기록을 수정했어요.",
+        analyticsAction: String = "edit"
+    ) async -> Bool {
         let signpostID = PerformanceLogger.makeSignpostID()
         PerformanceLogger.begin("UpdateWordAPI", id: signpostID)
 
@@ -484,6 +497,7 @@ extension BookMateViewModel {
 
             operationErrorMessage = nil
             showToast(successMessage, style: .success)
+            BMAnalytics.wordUpdated(action: analyticsAction)
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }
@@ -507,7 +521,11 @@ extension BookMateViewModel {
             bookId: book.id
         )
 
-        return await updateWord(movedWord, successMessage: "단어를 다른 책으로 이동했어요.")
+        return await updateWord(
+            movedWord,
+            successMessage: "단어를 다른 책으로 이동했어요.",
+            analyticsAction: "move"
+        )
     }
 
     // MARK: - Recent Searches

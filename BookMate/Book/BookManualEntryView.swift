@@ -285,6 +285,7 @@ struct BookManualEntryView: View {
             guard !isSaving else { return }
 
             dismissKeyboard()
+            BMAnalytics.bookCreateEntryTap(entryPoint: "book_manual_entry")
 
             let trimmedTotalPages = totalPagesText.trimmingCharacters(in: .whitespacesAndNewlines)
             let manualTotalPages = Int(trimmedTotalPages)
