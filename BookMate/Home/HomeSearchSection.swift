@@ -26,7 +26,7 @@ struct HomeSearchSection: View {
         guard !trimmed.isEmpty else { return }
 
         viewModel.searchText = trimmed
-        runSearch()
+        runSearch(entryPoint: "recent_search_chip")
 
         withAnimation(.easeInOut(duration: 0.2)) {
                 isShowingSearchResult = true
@@ -56,6 +56,7 @@ struct HomeSearchSection: View {
     }
 
     private func selectSearchMode(_ mode: BookMateViewModel.SearchMode) {
+        BMAnalytics.searchModeTap(mode, entryPoint: "home")
         viewModel.searchMode = mode
         viewModel.loadRecentSearches()
         dictionarySuggestionTask?.cancel()
@@ -187,6 +188,11 @@ struct HomeSearchSection: View {
                 )
                 .focused($isSearchFocused)
                 .submitLabel(.search)
+                .simultaneousGesture(
+                    TapGesture().onEnded {
+                        BMAnalytics.homeSearchTap(mode: viewModel.searchMode)
+                    }
+                )
                 .onSubmit {
                     isSearchFocused = false
                     runSearch()
@@ -302,6 +308,12 @@ struct HomeSearchSection: View {
                 clearDictionarySearchState()
             }
         }
+        .onAppear {
+            BMAnalytics.homeSearchImpression(
+                mode: viewModel.searchMode,
+                hasRecentSearches: !viewModel.recentSearches.isEmpty
+            )
+        }
         .onDisappear {
             dictionarySuggestionTask?.cancel()
             dictionarySuggestionTask = nil
@@ -405,13 +417,18 @@ struct HomeSearchSection: View {
         if viewModel.searchMode == .dictionary,
            !viewModel.dictionarySuggestions.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                ForEach(viewModel.dictionarySuggestions, id: \.targetCode) { suggestion in
+                ForEach(Array(viewModel.dictionarySuggestions.enumerated()), id: \.element.targetCode) { index, suggestion in
                     Button {
                         dictionarySuggestionTask?.cancel()
                         dictionarySuggestionTask = nil
                         viewModel.searchText = suggestion.text
                         viewModel.dictionarySuggestions = []
                         isShowingSearchResult = true
+                        BMAnalytics.searchResultTap(
+                            type: "dictionary_suggestion",
+                            entryPoint: "home",
+                            rank: index + 1
+                        )
 
                         Task { @MainActor in
                             await viewModel.selectDictionaryEntry(suggestion)
@@ -432,6 +449,13 @@ struct HomeSearchSection: View {
                     }
                     .buttonStyle(.plain)
                 }
+            }
+            .onAppear {
+                BMAnalytics.searchResultImpression(
+                    type: "dictionary_suggestion",
+                    resultCount: viewModel.dictionarySuggestions.count,
+                    entryPoint: "home"
+                )
             }
         }
     }
@@ -470,7 +494,7 @@ struct HomeSearchSection: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(Color("TextSecondary"))
 
-                ForEach(viewModel.bookSearchResults) { kakaoBook in
+                ForEach(Array(viewModel.bookSearchResults.enumerated()), id: \.element.id) { index, kakaoBook in
                     let draft = BookRegistrationDraft(kakaoBook: kakaoBook)
 
                     NavigationLink {
@@ -490,6 +514,11 @@ struct HomeSearchSection: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .simultaneousGesture(
+                        TapGesture().onEnded {
+                            BMAnalytics.searchResultTap(type: "book", entryPoint: "home", rank: index + 1)
+                        }
+                    )
                 }
             }
         }
@@ -532,6 +561,11 @@ struct HomeSearchSection: View {
                         .clipShape(RoundedRectangle(cornerRadius: 18))
                     }
                     .buttonStyle(.plain)
+                    .simultaneousGesture(
+                        TapGesture().onEnded {
+                            BMAnalytics.searchResultTap(type: "saved_book", entryPoint: "home")
+                        }
+                    )
                 }
             }
 
@@ -565,6 +599,11 @@ struct HomeSearchSection: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .simultaneousGesture(
+                        TapGesture().onEnded {
+                            BMAnalytics.searchResultTap(type: "saved_word", entryPoint: "home")
+                        }
+                    )
                 }
             }
         }
@@ -587,7 +626,7 @@ struct HomeSearchSection: View {
 
     /// `$viewModel.dictionarySearchResult` 는 Binding 이라서 `await` 할 수 없습니다.
     /// `dictionarySearchResult`는 `performSearch()` / `searchDictionaryEntry()` 안에서 채워집니다.
-    private func runSearch() {
+    private func runSearch(entryPoint: String = "home") {
         let trimmed = viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmed.isEmpty else {
@@ -595,6 +634,11 @@ struct HomeSearchSection: View {
                 return
             }
 
+        BMAnalytics.searchSubmit(
+            mode: viewModel.searchMode,
+            entryPoint: entryPoint,
+            queryLength: trimmed.count
+        )
         viewModel.dictionarySuggestions = []
 
         switch viewModel.searchMode {

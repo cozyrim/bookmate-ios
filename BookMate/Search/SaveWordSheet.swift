@@ -57,6 +57,7 @@ struct SaveWordSheet: View {
 
                         Button {
                             viewModel.prepareWordSaveAfterBookRegistration()
+                            BMAnalytics.bookCreateEntryTap(entryPoint: "save_word_sheet")
                             dismiss()
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                                 onRegisterBookTap()
@@ -155,14 +156,21 @@ struct SaveWordSheet: View {
                 .padding(.top, 8)
                 
                 SaveButton {
+                    BMAnalytics.saveWordButtonTap(
+                        hasSelectedBook: selectedBookId != nil,
+                        hasBooks: !viewModel.booksOnShelf.isEmpty
+                    )
+
                     guard !viewModel.booksOnShelf.isEmpty else {
                         viewModel.operationErrorMessage = "책을 먼저 등록해 주세요."
                         viewModel.showToast("책을 먼저 등록해 주세요.", style: .error)
+                        BMAnalytics.wordSaveFailed(reason: "missing_book")
                         return
                     }
 
                     guard let selectedBookId else {
                         viewModel.showToast("저장할 책을 선택해 주세요.", style: .error)
+                        BMAnalytics.wordSaveFailed(reason: "missing_selected_book")
                         return
                     }
 
@@ -186,6 +194,11 @@ struct SaveWordSheet: View {
         .padding(24)
         .onAppear {
             selectInitialBookIfNeeded()
+            BMAnalytics.saveWordSheetOpen(
+                hasBooks: !viewModel.booksOnShelf.isEmpty,
+                bookCount: viewModel.booksOnShelf.count,
+                entryPoint: "dictionary_result"
+            )
         }
         
     }

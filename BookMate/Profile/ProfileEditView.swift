@@ -193,6 +193,7 @@ struct ProfileEditView: View {
             nickname = currentNickname
             profileImageUrlToSave = currentProfileImageUrl
             isPublicToSave = authViewModel.profile?.isPublic ?? true
+            BMAnalytics.screenView(.profileEdit)
         }
         .onChange(of: nickname) { _, newValue in
             let normalized = AuthValidation.normalizedNickname(newValue)
@@ -252,6 +253,7 @@ struct ProfileEditView: View {
     }
 
     private func saveProfile() {
+        BMAnalytics.profileSaveTap(canSave: canSave)
         guard canSave else { return }
 
         Task {

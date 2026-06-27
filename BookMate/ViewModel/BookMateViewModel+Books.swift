@@ -59,9 +59,11 @@ extension BookMateViewModel {
 
         do {
             bookSearchResults = try await kakaoBookSearchService.searchBooks(query: trimmed)
+            BMAnalytics.searchCompleted(mode: .book, resultCount: bookSearchResults.count)
         } catch {
             bookSearchResults = []
             bookSearchErrorMessage = "책 검색에 실패했습니다."
+            BMAnalytics.searchFailed(mode: .book, reason: "api_error")
             DebugLogger.log("책 검색 실패:", error)
         }
         isBookSearchLoading = false
@@ -72,6 +74,7 @@ extension BookMateViewModel {
         guard !isBookAlreadyRegistered(draft) else {
             operationErrorMessage = nil
             showToast("이미 등록된 책입니다.", style: .info)
+            BMAnalytics.bookCreateFailed(source: bookRegistrationAnalyticsSource(for: draft), reason: "duplicate")
             throw BookRegistrationError.duplicate
         }
 
@@ -131,6 +134,11 @@ extension BookMateViewModel {
             syncShelfBooksFromBooks()
             operationErrorMessage = nil
             showToast("책을 등록했어요.", style: .success)
+            BMAnalytics.bookCreated(
+                source: bookRegistrationAnalyticsSource(for: draft),
+                hasISBN: !normalizeISBN(draft.isbn).isEmpty,
+                hasTotalPages: totalPages != nil
+            )
             return normalizedSavedBook
         } catch {
             if handleUnauthorizedIfNeeded(error) {
@@ -139,9 +147,14 @@ extension BookMateViewModel {
 
             operationErrorMessage = "책 등록에 실패했습니다."
             showToast("책 등록에 실패했어요.", style: .error)
+            BMAnalytics.bookCreateFailed(source: bookRegistrationAnalyticsSource(for: draft), reason: "api_error")
             DebugLogger.log("책 등록 실패:", error)
             throw error
         }
+    }
+
+    private func bookRegistrationAnalyticsSource(for draft: BookRegistrationDraft) -> String {
+        normalizeISBN(draft.isbn).isEmpty ? "manual" : "book_search"
     }
 
     private func bookRegistrationKey(for draft: BookRegistrationDraft) -> String {
@@ -220,6 +233,7 @@ extension BookMateViewModel {
 
             operationErrorMessage = nil
             showToast("책을 삭제했어요.", style: .success)
+            BMAnalytics.bookDeleted()
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }
@@ -243,6 +257,10 @@ extension BookMateViewModel {
             syncShelfBooksFromBooks()
             operationErrorMessage = nil
             showToast(successMessage, style: .success)
+            BMAnalytics.readingProgressUpdated(
+                progressBucket: readingProgressBucket(bookToUpdate.progress),
+                readingStatus: bookToUpdate.readingStatus
+            )
             return true
         }
 
@@ -270,6 +288,10 @@ extension BookMateViewModel {
 
             operationErrorMessage = nil
             showToast(successMessage, style: .success)
+            BMAnalytics.readingProgressUpdated(
+                progressBucket: readingProgressBucket(updatedBook.progress),
+                readingStatus: updatedBook.readingStatus
+            )
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }
@@ -284,6 +306,23 @@ extension BookMateViewModel {
     // ISBN으로 페이지 수를 조회해 책 등록 폼의 페이지 값을 자동 입력한다.
     func lookupBookPageCount(isbn: String) async -> Int? {
         await bookPageLookupService.fetchPageCount(isbn: isbn)
+    }
+
+    private func readingProgressBucket(_ progress: Double) -> String {
+        switch progress {
+        case ..<0.01:
+            return "0"
+        case ..<0.25:
+            return "1_24"
+        case ..<0.5:
+            return "25_49"
+        case ..<0.75:
+            return "50_74"
+        case ..<0.999:
+            return "75_99"
+        default:
+            return "100"
+        }
     }
 
     // 책장 카드가 참조하는 ShelfBook에 해당하는 책 정보를 찾는다.

@@ -88,6 +88,20 @@ struct WordArchiveView: View {
                                     .foregroundStyle(Color("TextSecondary"))
 
                                 TextField("저장한 단어 검색...", text: $archiveSearchText)
+                                    .submitLabel(.search)
+                                    .onSubmit {
+                                        let trimmed = archiveSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        BMAnalytics.searchSubmit(
+                                            mode: .savedWords,
+                                            entryPoint: "word_archive",
+                                            queryLength: trimmed.count
+                                        )
+                                        BMAnalytics.searchCompleted(
+                                            mode: .savedWords,
+                                            resultCount: filteredWords.count,
+                                            entryPoint: "word_archive"
+                                        )
+                                    }
 
                                 if !archiveSearchText.isEmpty {
                                     Button {
@@ -97,6 +111,11 @@ struct WordArchiveView: View {
                                             .foregroundStyle(Color("TextMuted").opacity(0.6))
                                     }
                                     .buttonStyle(.plain)
+                                    .simultaneousGesture(
+                                        TapGesture().onEnded {
+                                            BMAnalytics.wordCardTap(entryPoint: "word_archive")
+                                        }
+                                    )
                                 }
                             }
                             .padding(.horizontal, 16)
@@ -223,6 +242,9 @@ struct WordArchiveView: View {
             } message: {
                 Text("삭제한 단어는 다시 복구할 수 없습니다.")
             }
+            .onAppear {
+                BMAnalytics.screenView(.wordArchive)
+            }
         }
     }
     
@@ -231,6 +253,7 @@ struct WordArchiveView: View {
             HStack(spacing: 8) {
                 // "전체" 칩
                 Button {
+                    BMAnalytics.wordFilterTap(filterType: "category_all")
                     viewModel.archiveSelectedCategory = nil
                     viewModel.archiveSelectedBookId = nil  // 카테고리 바뀌면 책 선택도 초기화
                 } label: {
@@ -254,6 +277,7 @@ struct WordArchiveView: View {
                 ForEach(availableCategories, id: \.self) { category in
                     let isSelected = viewModel.archiveSelectedCategory == category
                     Button {
+                        BMAnalytics.wordFilterTap(filterType: "category")
                         viewModel.archiveSelectedCategory = isSelected ? nil : category
                         viewModel.archiveSelectedBookId = nil  // 카테고리 바뀌면 책 선택 초기화
                     } label: {
@@ -283,6 +307,7 @@ struct WordArchiveView: View {
         HStack {
             // 책 선택 버튼
             Button {
+                BMAnalytics.wordFilterTap(filterType: "book")
                 isShowingBookFilter = true
             } label: {
                 HStack(spacing: 6) {
@@ -314,6 +339,7 @@ struct WordArchiveView: View {
 
             // 정렬 버튼
             Button {
+                BMAnalytics.wordFilterTap(filterType: "sort")
                 isShowingSortOrder = true
             } label: {
                 HStack(spacing: 6) {

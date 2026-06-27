@@ -52,9 +52,12 @@ final class AuthSessionViewModel: ObservableObject {
             tokenStore.save(response.accessToken)
             currentUser = response.user
             isLoggedIn = true
+            BMAnalytics.setUser(response.user)
+            BMAnalytics.loginCompleted(method: "email")
 
             await loadProfile()
         } catch {
+            BMAnalytics.loginFailed(method: "email", error: error)
             errorMessage = "로그인에 실패했습니다."
             DebugLogger.log("로그인 실패:", error)
         }
@@ -76,9 +79,12 @@ final class AuthSessionViewModel: ObservableObject {
             tokenStore.save(response.accessToken)
             currentUser = response.user
             isLoggedIn = true
+            BMAnalytics.setUser(response.user)
+            BMAnalytics.loginCompleted(method: "kakao")
 
             await loadProfile()
         } catch {
+            BMAnalytics.loginFailed(method: "kakao", error: error)
             errorMessage = "카카오 로그인에 실패했습니다."
             DebugLogger.log("카카오 로그인 실패:", error)
         }
@@ -101,9 +107,12 @@ final class AuthSessionViewModel: ObservableObject {
             tokenStore.save(response.accessToken)
             currentUser = response.user
             isLoggedIn = true
+            BMAnalytics.setUser(response.user)
+            BMAnalytics.signUpCompleted(method: "email")
 
             await loadProfile()
         } catch {
+            BMAnalytics.signUpFailed(method: "email", error: error)
             errorMessage = "회원가입에 실패했습니다."
             DebugLogger.log("회원가입 실패:", error)
         }
@@ -156,10 +165,12 @@ final class AuthSessionViewModel: ObservableObject {
             self.profile = profile
             currentUser = profile.toAuthUser()
             isLoggedIn = true
+            BMAnalytics.setUser(currentUser)
         } catch {
             tokenStore.clear()
             currentUser = nil
             isLoggedIn = false
+            BMAnalytics.setUser(nil)
             DebugLogger.log("로그인 세션 복구 실패:", error)
         }
 
@@ -172,6 +183,8 @@ final class AuthSessionViewModel: ObservableObject {
         currentUser = nil
         isLoggedIn = false
         profile = nil
+        BMAnalytics.setUser(nil)
+        BMAnalytics.logoutCompleted()
     }
 
     // 회원 탈퇴 요청이 성공하면 로컬 로그인 상태도 함께 정리한다.
@@ -191,6 +204,8 @@ final class AuthSessionViewModel: ObservableObject {
             currentUser = nil
             profile = nil
             isLoggedIn = false
+            BMAnalytics.setUser(nil)
+            BMAnalytics.logoutCompleted()
         } catch {
             if handleUnauthorizedIfNeeded(error) {
                 isLoading = false
@@ -230,6 +245,8 @@ final class AuthSessionViewModel: ObservableObject {
 
         isLoading = true
         errorMessage = nil
+        let previousProfile = profile
+        let previousUser = currentUser
 
         do {
             let updatedProfile = try await authAPIService.updateProfile(
@@ -242,6 +259,17 @@ final class AuthSessionViewModel: ObservableObject {
 
             profile = updatedProfile
             currentUser = updatedProfile.toAuthUser()
+            BMAnalytics.setUser(currentUser)
+            BMAnalytics.profileUpdated(
+                changedFields: changedProfileFields(
+                    previousProfile: previousProfile,
+                    previousUser: previousUser,
+                    nickname: nickname,
+                    profileImageUrl: profileImageUrl,
+                    isPublic: isPublic
+                ),
+                isPublic: updatedProfile.isPublic
+            )
             isLoading = false
             return true
         } catch {
@@ -252,6 +280,7 @@ final class AuthSessionViewModel: ObservableObject {
 
             errorMessage = "프로필 수정에 실패했습니다."
             isLoading = false
+            BMAnalytics.profileUpdateFailed(error: error)
             DebugLogger.log("프로필 수정 실패:", error)
             return false
         }
@@ -282,6 +311,8 @@ final class AuthSessionViewModel: ObservableObject {
 
             profile = updatedProfile
             currentUser = updatedProfile.toAuthUser()
+            BMAnalytics.setUser(currentUser)
+            BMAnalytics.miniRoomThemeUpdated(theme: theme.rawValue)
             isLoading = false
             return true
         } catch {
@@ -305,14 +336,44 @@ final class AuthSessionViewModel: ObservableObject {
         }
 
         do {
-            return try await authAPIService.uploadProfileImage(token: token, imageData: imageData)
+            let uploadedURL = try await authAPIService.uploadProfileImage(token: token, imageData: imageData)
+            BMAnalytics.profileImageChanged(source: "photo_library")
+            return uploadedURL
         } catch {
             if handleUnauthorizedIfNeeded(error) { return nil }
 
             errorMessage = "프로필 이미지 업로드에 실패했습니다."
+            BMAnalytics.profileImageUploadFailed(error: error)
             DebugLogger.log("프로필 이미지 업로드 실패:", error)
             return nil
         }
+    }
+
+    private func changedProfileFields(
+        previousProfile: ProfileResponse?,
+        previousUser: AuthUser?,
+        nickname: String,
+        profileImageUrl: String?,
+        isPublic: Bool
+    ) -> [String] {
+        var fields: [String] = []
+        let previousNickname = previousProfile?.nickname ?? previousUser?.nickname
+        let previousProfileImageUrl = previousProfile?.profileImageUrl ?? previousUser?.profileImageUrl
+        let previousIsPublic = previousProfile?.isPublic ?? previousUser?.isPublic
+
+        if previousNickname != nickname {
+            fields.append("nickname")
+        }
+
+        if previousProfileImageUrl != profileImageUrl {
+            fields.append(profileImageUrl == nil ? "profile_image_reset" : "profile_image")
+        }
+
+        if previousIsPublic != isPublic {
+            fields.append("visibility")
+        }
+
+        return fields.isEmpty ? ["none"] : fields
     }
 
     // MARK: - Helpers

@@ -83,6 +83,7 @@ struct HomeView: View {
 
                         HomeSearchSection(viewModel: viewModel, selectedTab: $selectedTab,
                                           onRegisterBookTap: {
+                            BMAnalytics.bookCreateEntryTap(entryPoint: "home_search_section")
                             path.append(HomeRoute.bookSearch)
                         }
                         )
@@ -124,6 +125,10 @@ struct HomeView: View {
                                             category: book.category,
                                             readingStatus: shelfBook.status,
                                             onTap: {
+                                                BMAnalytics.bookCardTap(
+                                                    entryPoint: "home",
+                                                    readingStatus: shelfBook.status
+                                                )
                                                 path.append(HomeRoute.bookDetail(book.id))
                                             }, // 카드 눌렀을 때 상세 이동.
                                             onMoreTap: {
@@ -380,9 +385,9 @@ struct HomeView: View {
                 Spacer()
 
                 if !viewModel.savedWords.isEmpty {
-                    Button {
-                        selectedTab = 2
-                    } label: {
+	                    Button {
+	                        selectedTab = 2
+	                    } label: {
                         HStack(spacing: 4) {
                             Text("더보기")
                                 .font(.caption)
@@ -414,6 +419,11 @@ struct HomeView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .id(word.id)
+                                .simultaneousGesture(
+                                    TapGesture().onEnded {
+                                        BMAnalytics.wordCardTap(entryPoint: "home_recent_words")
+                                    }
+                                )
                             }
                         }
                         .padding(.vertical, 2)
@@ -457,6 +467,11 @@ struct HomeView: View {
                     .contentShape(Rectangle())
             }
             .accessibilityLabel("책 추가")
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    BMAnalytics.bookCreateEntryTap(entryPoint: "home_shelf_header")
+                }
+            )
 
             if !viewModel.shelfBooks.isEmpty {
                 Rectangle()
