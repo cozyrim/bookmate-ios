@@ -234,6 +234,7 @@ extension BookMateViewModel {
             operationErrorMessage = nil
             showToast("책을 삭제했어요.", style: .success)
             BMAnalytics.bookDeleted()
+            await rescheduleContinueReadingReminderIfNeeded()
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }
@@ -261,6 +262,7 @@ extension BookMateViewModel {
                 progressBucket: readingProgressBucket(bookToUpdate.progress),
                 readingStatus: bookToUpdate.readingStatus
             )
+            await rescheduleContinueReadingReminderIfNeeded()
             return true
         }
 
@@ -292,6 +294,7 @@ extension BookMateViewModel {
                 progressBucket: readingProgressBucket(updatedBook.progress),
                 readingStatus: updatedBook.readingStatus
             )
+            await rescheduleContinueReadingReminderIfNeeded()
             return true
         } catch {
             if handleUnauthorizedIfNeeded(error) { return false }
@@ -340,6 +343,21 @@ extension BookMateViewModel {
         shelfBooks.first { $0.bookId == bookId }
     }
 
+    var latestReadingBookForReminder: (book: Book, shelfBook: ShelfBook)? {
+        shelfBooks
+            .filter { shelfBook in
+                shelfBook.status == .reading &&
+                shelfBook.progress > 0 &&
+                shelfBook.progress < 0.999
+            }
+            .sorted { $0.updatedAt > $1.updatedAt }
+            .compactMap { shelfBook -> (book: Book, shelfBook: ShelfBook)? in
+                guard let book = book(for: shelfBook) else { return nil }
+                return (book, shelfBook)
+            }
+            .first
+    }
+
     // REST Book 데이터를 책장 렌더링용 ShelfBook 상태로 변환한다.
     private func makeShelfBook(from book: Book) -> ShelfBook {
         let normalizedBook = normalizedBookForReadingState(book)
@@ -361,6 +379,14 @@ extension BookMateViewModel {
         shelfBooks = books.map { book in
             makeShelfBook(from: book)
         }
+    }
+
+    private func rescheduleContinueReadingReminderIfNeeded() async {
+        let reminderBook = latestReadingBookForReminder
+        await ReadingNotificationService.shared.scheduleContinueReadingReminderIfEnabled(
+            book: reminderBook?.book,
+            shelfBook: reminderBook?.shelfBook
+        )
     }
 
     private func normalizedBookForReadingState(_ book: Book) -> Book {
