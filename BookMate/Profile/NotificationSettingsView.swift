@@ -9,14 +9,15 @@ import SwiftUI
 import UIKit
 
 struct NotificationSettingsView: View {
+    @ObservedObject var viewModel: BookMateViewModel
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage("readingReminderEnabled") private var readingReminderEnabled = true
     @AppStorage("readingReminderHour") private var readingReminderHour = 21
     @AppStorage("readingReminderMinute") private var readingReminderMinute = 0
 
-    @AppStorage("readingRecordReminderEnabled") private var readingRecordReminderEnabled = true
-    @AppStorage("readingRecordReminderDays") private var readingRecordReminderDays = 3
+    @AppStorage("continueReadingReminderEnabled") private var continueReadingReminderEnabled = true
+    @AppStorage("continueReadingReminderDays") private var continueReadingReminderDays = 3
 
     @State private var isShowingPermissionAlert = false
 
@@ -76,15 +77,15 @@ struct NotificationSettingsView: View {
                                 .frame(minHeight: 72)
                             }
                         }
-                        SettingsSectionCard(title: "책 읽기 기록 알림") {
+                        SettingsSectionCard(title: "읽던 책 이어보기") {
                             SettingsToggleRow(
                                 iconName: "book",
-                                title: "기록 리마인드",
-                                subtitle: "며칠 동안 독서 기록이 없으면 알려드려요.",
-                                isOn: $readingRecordReminderEnabled
+                                title: "이어보기 알림",
+                                subtitle: "읽는 중인 책을 다시 열 시간에 알려드려요.",
+                                isOn: $continueReadingReminderEnabled
                             )
 
-                            if readingRecordReminderEnabled {
+                            if continueReadingReminderEnabled {
                                 SettingsDivider()
 
                                 HStack(spacing: 16) {
@@ -100,14 +101,14 @@ struct NotificationSettingsView: View {
                                             .font(.callout)
                                             .fontWeight(.semibold)
 
-                                        Text("\(readingRecordReminderDays)일 동안 기록이 없을 때")
+                                        Text("\(continueReadingReminderDays)일 뒤에 다시 알려주기")
                                             .font(.caption)
                                             .foregroundStyle(Color("TextSecondary").opacity(0.75))
                                     }
 
                                     Spacer()
 
-                                    Stepper("", value: $readingRecordReminderDays, in: 1...14)
+                                    Stepper("", value: $continueReadingReminderDays, in: 1...14)
                                         .labelsHidden()
                                 }
                                 .padding(.horizontal, 20)
@@ -116,7 +117,7 @@ struct NotificationSettingsView: View {
                         }
                         SettingsPrimaryButton(title: "저장하기") {
                             Task {
-                                guard readingReminderEnabled || readingRecordReminderEnabled else {
+                                guard readingReminderEnabled || continueReadingReminderEnabled else {
                                     ReadingNotificationService.shared.cancelAllReadingReminders()
                                     dismiss()
                                     return
@@ -138,12 +139,15 @@ struct NotificationSettingsView: View {
                                     ReadingNotificationService.shared.cancelDailyReadingReminder()
                                 }
 
-                                if readingRecordReminderEnabled {
-                                    await ReadingNotificationService.shared.scheduleReadingRecordReminder(
-                                        afterDays: readingRecordReminderDays
+                                if continueReadingReminderEnabled {
+                                    let reminderBook = viewModel.latestReadingBookForReminder
+                                    await ReadingNotificationService.shared.scheduleContinueReadingReminder(
+                                        afterDays: continueReadingReminderDays,
+                                        book: reminderBook?.book,
+                                        shelfBook: reminderBook?.shelfBook
                                     )
                                 } else {
-                                    ReadingNotificationService.shared.cancelReadingRecordReminder()
+                                    ReadingNotificationService.shared.cancelContinueReadingReminder()
                                 }
 
                                 dismiss()
@@ -177,5 +181,5 @@ struct NotificationSettingsView: View {
     }
 }
 #Preview {
-    NotificationSettingsView()
+    NotificationSettingsView(viewModel: BookMateViewModel())
 }
