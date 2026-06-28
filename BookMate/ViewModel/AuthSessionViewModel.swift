@@ -56,6 +56,7 @@ final class AuthSessionViewModel: ObservableObject {
             BMAnalytics.loginCompleted(method: "email")
 
             await loadProfile()
+            await PushNotificationService.shared.syncTokenWithServerIfPossible()
         } catch {
             BMAnalytics.loginFailed(method: "email", error: error)
             errorMessage = "로그인에 실패했습니다."
@@ -83,6 +84,7 @@ final class AuthSessionViewModel: ObservableObject {
             BMAnalytics.loginCompleted(method: "kakao")
 
             await loadProfile()
+            await PushNotificationService.shared.syncTokenWithServerIfPossible()
         } catch {
             BMAnalytics.loginFailed(method: "kakao", error: error)
             errorMessage = "카카오 로그인에 실패했습니다."
@@ -111,6 +113,7 @@ final class AuthSessionViewModel: ObservableObject {
             BMAnalytics.signUpCompleted(method: "email")
 
             await loadProfile()
+            await PushNotificationService.shared.syncTokenWithServerIfPossible()
         } catch {
             BMAnalytics.signUpFailed(method: "email", error: error)
             errorMessage = "회원가입에 실패했습니다."
@@ -166,6 +169,7 @@ final class AuthSessionViewModel: ObservableObject {
             currentUser = profile.toAuthUser()
             isLoggedIn = true
             BMAnalytics.setUser(currentUser)
+            await PushNotificationService.shared.syncTokenWithServerIfPossible()
         } catch {
             tokenStore.clear()
             currentUser = nil
@@ -179,6 +183,11 @@ final class AuthSessionViewModel: ObservableObject {
 
     // 저장된 토큰과 사용자 상태를 지우고 로그아웃 상태로 전환한다.
     func logout() {
+        let accessToken = tokenStore.load()
+        Task {
+            await PushNotificationService.shared.disableCurrentTokenOnServer(accessToken: accessToken)
+        }
+
         tokenStore.clear()
         currentUser = nil
         isLoggedIn = false
@@ -200,6 +209,7 @@ final class AuthSessionViewModel: ObservableObject {
         do {
             try await authAPIService.withdraw(token: token)
 
+            await PushNotificationService.shared.disableCurrentTokenOnServer(accessToken: token)
             tokenStore.clear()
             currentUser = nil
             profile = nil
