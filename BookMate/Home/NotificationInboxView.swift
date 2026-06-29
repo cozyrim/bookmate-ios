@@ -9,12 +9,12 @@ import SwiftUI
 
 struct NotificationInboxView: View {
     @ObservedObject var viewModel: BookMateViewModel
+    @Binding var notifications: [AppNotificationItem]
+    @Binding var isLoading: Bool
     let onClose: (() -> Void)?
     let onSelect: (AppNotificationItem) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var notifications: [AppNotificationItem] = []
-    @State private var isLoading = false
     @State private var isShowingNotificationSettings = false
     @State private var toast: AppToast?
 
@@ -52,9 +52,6 @@ struct NotificationInboxView: View {
                 .padding(.bottom, 24)
             }
             .appToast($toast)
-            .task {
-                await loadNotifications()
-            }
             .sheet(isPresented: $isShowingNotificationSettings) {
                 NotificationSettingsView(viewModel: viewModel)
             }
@@ -374,6 +371,8 @@ struct NotificationInboxView: View {
 #Preview {
     NotificationInboxView(
         viewModel: BookMateViewModel(),
+        notifications: .constant([]),
+        isLoading: .constant(false),
         onClose: nil
     ) { _ in }
 }

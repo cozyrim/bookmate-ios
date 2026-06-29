@@ -24,6 +24,9 @@ struct HomeView: View {
     @State private var reviewWordFocusID: UUID?
     @State private var isShowingNotificationInbox = false
     @State private var isNotificationInboxPanelPresented = false
+    @State private var isPreparingNotificationInbox = false
+    @State private var notificationInboxItems: [AppNotificationItem] = []
+    @State private var isNotificationInboxLoading = false
     @State private var unreadNotificationCount = 0
 
     private let notificationService = NotificationAPIService()
@@ -699,15 +702,23 @@ struct HomeView: View {
             openNotificationInbox()
         } label: {
             ZStack(alignment: .topTrailing) {
-                Image(systemName: "bell")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color("TextSecondary"))
-                    .frame(width: 38, height: 38)
-                    .background(Color("Surface").opacity(0.84), in: Circle())
-                    .overlay {
-                        Circle()
-                            .stroke(Color("Border").opacity(0.25), lineWidth: 1)
+                Group {
+                    if isPreparingNotificationInbox {
+                        ProgressView()
+                            .tint(Color("TextSecondary"))
+                            .scaleEffect(0.75)
+                    } else {
+                        Image(systemName: "bell")
+                            .font(.system(size: 16, weight: .semibold))
                     }
+                }
+                .foregroundStyle(Color("TextSecondary"))
+                .frame(width: 38, height: 38)
+                .background(Color("Surface").opacity(0.84), in: Circle())
+                .overlay {
+                    Circle()
+                        .stroke(Color("Border").opacity(0.25), lineWidth: 1)
+                }
 
                 if unreadNotificationCount > 0 {
                     Text(unreadNotificationBadgeText)
@@ -723,6 +734,7 @@ struct HomeView: View {
             }
         }
         .buttonStyle(.plain)
+        .disabled(isPreparingNotificationInbox)
         .accessibilityLabel(unreadNotificationCount > 0 ? "새 알림 \(unreadNotificationCount)개" : "알림")
     }
 
@@ -744,6 +756,8 @@ struct HomeView: View {
 
                 NotificationInboxView(
                     viewModel: viewModel,
+                    notifications: $notificationInboxItems,
+                    isLoading: $isNotificationInboxLoading,
                     onClose: closeNotificationInbox
                 ) { notification in
                     PushNotificationRouter.shared.route(userInfo: notification.userInfo)
@@ -770,9 +784,37 @@ struct HomeView: View {
     }
 
     private func openNotificationInbox() {
-        guard !isShowingNotificationInbox else { return }
+        guard !isShowingNotificationInbox, !isPreparingNotificationInbox else { return }
 
+        Task {
+            await prepareAndOpenNotificationInbox()
+        }
+    }
+
+    @MainActor
+    private func prepareAndOpenNotificationInbox() async {
+        isPreparingNotificationInbox = true
+        isNotificationInboxLoading = true
         isNotificationInboxPanelPresented = false
+
+        do {
+            notificationInboxItems = try await notificationService.fetchNotifications()
+        } catch {
+            DebugLogger.log("알림 목록 사전 로드 실패:", error)
+
+            if let apiError = error as? APIError,
+               case .unauthorized = apiError {
+                viewModel.didReceiveUnauthorized = true
+            } else if notificationInboxItems.isEmpty {
+                viewModel.showToast(
+                    error.bookMateUserMessage(fallback: "알림을 불러오지 못했어요."),
+                    style: .error
+                )
+            }
+        }
+
+        isNotificationInboxLoading = false
+        isPreparingNotificationInbox = false
         isShowingNotificationInbox = true
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) {
