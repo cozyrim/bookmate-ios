@@ -17,9 +17,6 @@ struct NotificationInboxView: View {
     @State private var isLoading = false
     @State private var isShowingNotificationSettings = false
     @State private var toast: AppToast?
-    @State private var refreshNoticeMessage: String?
-    @State private var refreshNoticeIconName = "checkmark.circle"
-    @State private var refreshNoticeID = UUID()
 
     private let notificationService = NotificationAPIService()
 
@@ -35,17 +32,20 @@ struct NotificationInboxView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
 
-                    if let refreshNoticeMessage {
-                        refreshNoticeBanner(refreshNoticeMessage)
+                    Group {
+                        if isLoading && notifications.isEmpty {
+                            loadingState
+                                .transition(.opacity)
+                        } else if notifications.isEmpty {
+                            emptyState
+                                .transition(.opacity)
+                        } else {
+                            notificationList
+                                .transition(.opacity)
+                        }
                     }
-
-                    if isLoading && notifications.isEmpty {
-                        loadingState
-                    } else if notifications.isEmpty {
-                        emptyState
-                    } else {
-                        notificationList
-                    }
+                    .animation(.easeOut(duration: 0.18), value: isLoading)
+                    .animation(.easeOut(duration: 0.18), value: notifications.count)
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
@@ -102,34 +102,15 @@ struct NotificationInboxView: View {
     }
 
     private var loadingState: some View {
-        VStack(spacing: 12) {
-            ProgressView()
-                .tint(Color("Primary"))
-
-            Text("알림을 불러오는 중이에요.")
-                .font(.callout)
-                .foregroundStyle(Color("TextSecondary"))
+        ScrollView(showsIndicators: false) {
+            LazyVStack(spacing: 12) {
+                notificationPlaceholderRow
+                notificationPlaceholderRow
+                    .opacity(0.55)
+            }
+            .padding(.bottom, 18)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private func refreshNoticeBanner(_ message: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: refreshNoticeIconName)
-                .font(.system(size: 13, weight: .semibold))
-
-            Text(message)
-                .font(.caption)
-                .fontWeight(.semibold)
-                .lineLimit(1)
-
-            Spacer(minLength: 0)
-        }
-        .foregroundStyle(Color("TextSecondary"))
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
-        .background(Color("Surface").opacity(0.72), in: Capsule())
-        .transition(.opacity.combined(with: .move(edge: .top)))
+        .disabled(true)
     }
 
     private var emptyState: some View {
@@ -156,6 +137,45 @@ struct NotificationInboxView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    private var notificationPlaceholderRow: some View {
+        HStack(alignment: .top, spacing: 13) {
+            Circle()
+                .fill(Color("Primary").opacity(0.1))
+                .frame(width: 38, height: 38)
+                .overlay {
+                    Image(systemName: "bell")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color("Primary").opacity(0.35))
+                }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Capsule()
+                    .fill(Color("TextSecondary").opacity(0.14))
+                    .frame(width: 210, height: 17)
+
+                Capsule()
+                    .fill(Color("TextSecondary").opacity(0.1))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 13)
+
+                Capsule()
+                    .fill(Color("TextSecondary").opacity(0.08))
+                    .frame(width: 120, height: 11)
+            }
+            .padding(.top, 2)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 15)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color("Surface").opacity(0.9), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Color("Border").opacity(0.18), lineWidth: 1)
+        }
+    }
+
     private var notificationList: some View {
         ScrollView(showsIndicators: false) {
             LazyVStack(spacing: 12) {
@@ -170,7 +190,7 @@ struct NotificationInboxView: View {
             .padding(.bottom, 18)
         }
         .refreshable {
-            await loadNotifications(showUpToDateFeedback: true)
+            await loadNotifications()
         }
     }
 
@@ -257,17 +277,12 @@ struct NotificationInboxView: View {
     }
 
     @MainActor
-    private func loadNotifications(showUpToDateFeedback: Bool = false) async {
+    private func loadNotifications() async {
         isLoading = true
         defer { isLoading = false }
 
         do {
             notifications = try await notificationService.fetchNotifications()
-            if showUpToDateFeedback {
-                showRefreshNotice("최신 상태예요.", iconName: "checkmark.circle")
-            } else {
-                refreshNoticeMessage = nil
-            }
         } catch {
             DebugLogger.log("알림 목록 로드 실패:", error)
 
@@ -277,15 +292,9 @@ struct NotificationInboxView: View {
             }
 
             if notifications.isEmpty {
-                refreshNoticeMessage = nil
                 toast = AppToast(
                     message: error.bookMateUserMessage(fallback: "알림을 불러오지 못했어요."),
                     style: .error
-                )
-            } else {
-                showRefreshNotice(
-                    error.bookMateUserMessage(fallback: "연결이 불안정해요. 잠시 후 다시 확인해 주세요."),
-                    iconName: "exclamationmark.circle"
                 )
             }
         }
@@ -298,7 +307,6 @@ struct NotificationInboxView: View {
                 try await notificationService.markNotificationRead(id: notification.id)
                 markReadLocally(notification.id)
             }
-            refreshNoticeMessage = nil
 
             close()
 
@@ -317,7 +325,6 @@ struct NotificationInboxView: View {
     private func markAllRead() async {
         do {
             try await notificationService.markAllNotificationsRead()
-            refreshNoticeMessage = nil
             notifications = notifications.map { notification in
                 AppNotificationItem(
                     id: notification.id,
@@ -335,25 +342,6 @@ struct NotificationInboxView: View {
                 message: error.bookMateUserMessage(fallback: "알림 상태를 바꾸지 못했어요."),
                 style: .error
             )
-        }
-    }
-
-    @MainActor
-    private func showRefreshNotice(_ message: String, iconName: String) {
-        let noticeID = UUID()
-        refreshNoticeID = noticeID
-        refreshNoticeIconName = iconName
-
-        withAnimation(.easeOut(duration: 0.16)) {
-            refreshNoticeMessage = message
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-            guard refreshNoticeID == noticeID else { return }
-
-            withAnimation(.easeOut(duration: 0.16)) {
-                refreshNoticeMessage = nil
-            }
         }
     }
 
