@@ -5,12 +5,15 @@
 //  Created by 한채림 on 5/11/26.
 //
 
+import Combine
 import SwiftUI
 
 struct MainTabView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
     @StateObject private var viewModel = BookMateViewModel() // StateObject는 처음 Viewmodel 만들고 소유
+    @ObservedObject private var pushNotificationRouter = PushNotificationRouter.shared
     @State var tabIndex = 0
+    @State private var roomNotificationRequest: PushNotificationNavigationRequest?
 
     var body: some View {
         TabView(selection: $tabIndex) {
@@ -37,7 +40,7 @@ struct MainTabView: View {
                 }
                 .tag(2)
 
-            RoomTabView(viewModel: viewModel)
+            RoomTabView(viewModel: viewModel, notificationRequest: $roomNotificationRequest)
                 .tabItem {
                     Image(systemName: "books.vertical")
                     Text("서재")
@@ -57,6 +60,13 @@ struct MainTabView: View {
         .appToast($viewModel.toast) // MainTabView가 가진 viewModel.toast 값을 AppToastModifier에게 연결해서 넘긴다.원본 값을 읽고 바꿀 수 있는 연결 통로 전달
         .onAppear {
             BMAnalytics.screenView(screen(for: tabIndex))
+
+            if let request = pushNotificationRouter.pendingRequest {
+                handleNotificationNavigation(request)
+            }
+        }
+        .onReceive(pushNotificationRouter.$pendingRequest.compactMap { $0 }) { request in
+            handleNotificationNavigation(request)
         }
         .task(id: authViewModel.currentUser?.id) {
             viewModel.setCurrentUser(authViewModel.currentUser) // 로그인한 사용자마다 최근 검색어 저장칸이 다름
@@ -110,6 +120,15 @@ struct MainTabView: View {
             return .profile
         default:
             return .home
+        }
+    }
+
+    private func handleNotificationNavigation(_ request: PushNotificationNavigationRequest) {
+        switch request.destination {
+        case .myGuestbook:
+            tabIndex = 3
+            roomNotificationRequest = request
+            pushNotificationRouter.consume(request)
         }
     }
 }

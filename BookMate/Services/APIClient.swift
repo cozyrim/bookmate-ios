@@ -11,16 +11,36 @@ import Foundation
 /// - makeRequest: Keychain 토큰을 Authorization 헤더에 자동으로 실어주는 URLRequest 생성
 /// - validate: 서버 응답 상태 코드 검증
 struct APIClient {
+    static let defaultTimeoutInterval: TimeInterval = 12
+
     private let tokenStore: AuthTokenStore = KeychainTokenStore()
 
     /// Authorization 헤더가 포함된 URLRequest를 만들어요.
     func makeRequest(url: URL, method: String = "GET") -> URLRequest {
-        var request = URLRequest(url: url)
-        request.httpMethod = method
+        var request = makeUnauthenticatedRequest(url: url, method: method)
 
         if let token = tokenStore.load() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
+
+        return request
+    }
+
+    func makeRequest(url: URL, method: String = "GET", accessToken: String?) -> URLRequest {
+        var request = makeUnauthenticatedRequest(url: url, method: method)
+
+        if let accessToken, !accessToken.isEmpty {
+            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        } else if let token = tokenStore.load() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        return request
+    }
+
+    func makeUnauthenticatedRequest(url: URL, method: String = "GET") -> URLRequest {
+        var request = URLRequest(url: url, timeoutInterval: Self.defaultTimeoutInterval)
+        request.httpMethod = method
 
         return request
     }

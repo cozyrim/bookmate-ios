@@ -17,9 +17,7 @@ struct SocialAPIService {
             components.path = "/api/social/users/search"
             components.queryItems = [URLQueryItem(name: "nickname", value: nickname)]
             
-            var request = URLRequest(url: components.url!)
-            request.httpMethod = "GET"
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let request = client.makeRequest(url: components.url!, method: "GET", accessToken: token)
             
             let (data, response) = try await URLSession.shared.data(for: request)
             try client.validate(response)
@@ -35,9 +33,7 @@ struct SocialAPIService {
             .appendingPathComponent("users")
             .appendingPathComponent("random")
             
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let request = client.makeRequest(url: url, method: "GET", accessToken: token)
         
         let (data, response) = try await URLSession.shared.data(for: request)
         try client.validate(response)
@@ -55,9 +51,7 @@ struct SocialAPIService {
                 .appendingPathComponent(userId.uuidString)
                 .appendingPathComponent("books")
                 
-            var request = URLRequest(url: url)
-            request.httpMethod = "GET"
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let request = client.makeRequest(url: url, method: "GET", accessToken: token)
             
             let (data, response) = try await URLSession.shared.data(for: request)
             try client.validate(response)
@@ -77,9 +71,7 @@ struct SocialAPIService {
                 .appendingPathComponent(userId.uuidString)
                 .appendingPathComponent("guestbook")
                 
-            var request = URLRequest(url: url)
-            request.httpMethod = "GET"
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let request = client.makeRequest(url: url, method: "GET", accessToken: token)
             
             let (data, response) = try await URLSession.shared.data(for: request)
             try client.validate(response)
@@ -98,9 +90,7 @@ struct SocialAPIService {
                 
             let requestBody = GuestbookWriteRequest(content: content)
             
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            var request = client.makeRequest(url: url, method: "POST", accessToken: token)
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONEncoder().encode(requestBody)
             
@@ -118,9 +108,7 @@ struct SocialAPIService {
                 .appendingPathComponent("guestbook")
                 .appendingPathComponent(messageId.uuidString)
                 
-            var request = URLRequest(url: url)
-            request.httpMethod = "DELETE"
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let request = client.makeRequest(url: url, method: "DELETE", accessToken: token)
             
             let (_, response) = try await URLSession.shared.data(for: request)
             try client.validate(response)

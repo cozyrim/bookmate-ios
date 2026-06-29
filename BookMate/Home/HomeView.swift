@@ -22,6 +22,10 @@ struct HomeView: View {
 
     @State private var selectedBookToEdit: Book?
     @State private var reviewWordFocusID: UUID?
+    @State private var isShowingNotificationInbox = false
+    @State private var unreadNotificationCount = 0
+
+    private let notificationService = NotificationAPIService()
 
     private enum HomeRoute: Hashable {
         case bookSearch
@@ -334,6 +338,20 @@ struct HomeView: View {
                         Text("책 정보를 찾을 수 없습니다.")
                     }
                 }
+            }
+            .sheet(isPresented: $isShowingNotificationInbox, onDismiss: {
+                Task {
+                    await loadUnreadNotificationCount()
+                }
+            }) {
+                NotificationInboxView(viewModel: viewModel) { notification in
+                    PushNotificationRouter.shared.route(userInfo: notification.userInfo)
+                }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+            }
+            .task {
+                await loadUnreadNotificationCount()
             }
         }
     }
@@ -650,29 +668,81 @@ struct HomeView: View {
 
 
     private var homeIntroHeader: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 7) {
-                Text("BookMate 오늘 만난 문장")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color("TextSecondary"))
+        HStack(alignment: .top, spacing: 14) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 7) {
+                    Text("BookMate 오늘 만난 문장")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color("TextSecondary"))
 
-                Image("BookMateSymbolIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 28, height: 28)
-                    .offset(y: -2)
-                    .accessibilityHidden(true)
+                    Image("BookMateSymbolIcon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 28, height: 28)
+                        .offset(y: -2)
+                        .accessibilityHidden(true)
+                }
+
+                Text("읽다가 만난 단어들")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color("TextPrimary"))
             }
 
-            Text("읽다가 만난 단어들")
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundStyle(Color("TextPrimary"))
+            Spacer(minLength: 8)
+
+            notificationBellButton
+                .padding(.top, 2)
         }
         .padding(.horizontal, 24) 
         .padding(.top, 18)
         .padding(.bottom, 2)
+    }
+
+    private var notificationBellButton: some View {
+        Button {
+            isShowingNotificationInbox = true
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                Image(systemName: "bell")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color("TextSecondary"))
+                    .frame(width: 38, height: 38)
+                    .background(Color("Surface").opacity(0.84), in: Circle())
+                    .overlay {
+                        Circle()
+                            .stroke(Color("Border").opacity(0.25), lineWidth: 1)
+                    }
+
+                if unreadNotificationCount > 0 {
+                    Text(unreadNotificationBadgeText)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(Color("PrimaryButtonText"))
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+                        .frame(minWidth: 16, minHeight: 16)
+                        .padding(.horizontal, unreadNotificationCount > 9 ? 3 : 0)
+                        .background(Color("Primary"), in: Capsule())
+                        .offset(x: 2, y: -2)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(unreadNotificationCount > 0 ? "새 알림 \(unreadNotificationCount)개" : "알림")
+    }
+
+    private var unreadNotificationBadgeText: String {
+        unreadNotificationCount > 99 ? "99+" : "\(unreadNotificationCount)"
+    }
+
+    @MainActor
+    private func loadUnreadNotificationCount() async {
+        do {
+            unreadNotificationCount = try await notificationService.fetchUnreadCount()
+        } catch {
+            unreadNotificationCount = 0
+        }
     }
 }
 

@@ -57,7 +57,8 @@ final class BookPageLookupService {
         guard let url = components?.url else { return nil }
         
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let request = URLRequest(url: url, timeoutInterval: APIClient.defaultTimeoutInterval)
+            let (data, _) = try await URLSession.shared.data(for: request)
             let response = try JSONDecoder().decode(GoogleBooksResponse.self, from: data)
             
             return response.items?

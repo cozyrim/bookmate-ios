@@ -5,16 +5,23 @@ struct GuestbookSheetView: View {
 
     @Binding var messages: [GuestbookMessageResponse]
 
+    let highlightedMessageId: UUID?
     let targetUser: PublicUserResponse
     let socialService: SocialAPIService
 
     @State private var isPosting = false
     @State private var selectedReportTarget: ModerationTarget?
     @State private var pendingBlockMessage: GuestbookMessageResponse?
+    @State private var activeHighlightedMessageId: UUID?
+    @State private var didScrollToHighlightedMessage = false
     @State private var toast: AppToast?
 
     private let tokenStore = KeychainTokenStore()
     private let moderationService = ModerationAPIService()
+
+    private var messageIDs: [UUID] {
+        messages.map(\.id)
+    }
 
     var body: some View {
         ZStack {
@@ -76,41 +83,52 @@ struct GuestbookSheetView: View {
     }
 
     private var messageList: some View {
-        List {
-            if messages.isEmpty {
-                ContentUnavailableView(
-                    "아직 방명록이 없어요",
-                    systemImage: "heart.text.square",
-                    description: Text("첫 방명록을 남겨보세요.")
-                )
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 44, leading: 18, bottom: 44, trailing: 18))
-            } else {
-                ForEach(messages) { message in
-                    VStack(spacing: 0) {
-                        messageRow(message)
+        ScrollViewReader { proxy in
+            List {
+                if messages.isEmpty {
+                    ContentUnavailableView(
+                        "아직 방명록이 없어요",
+                        systemImage: "heart.text.square",
+                        description: Text("첫 방명록을 남겨보세요.")
+                    )
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 44, leading: 18, bottom: 44, trailing: 18))
+                } else {
+                    ForEach(messages) { message in
+                        VStack(spacing: 0) {
+                            messageRow(message)
 
-                        if message.id != messages.last?.id {
-                            Rectangle()
-                                .fill(Color("Border").opacity(0.34))
-                                .frame(height: 0.7)
+                            if message.id != messages.last?.id {
+                                Rectangle()
+                                    .fill(Color("Border").opacity(0.34))
+                                    .frame(height: 0.7)
+                            }
                         }
+                            .id(message.id)
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets(top: 0, leading: 18, bottom: 0, trailing: 18))
                     }
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 18, bottom: 0, trailing: 18))
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .onAppear {
+                scrollToHighlightedMessageIfNeeded(proxy)
+            }
+            .onChange(of: messageIDs) { _, _ in
+                scrollToHighlightedMessageIfNeeded(proxy)
+            }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
     }
 
 
 
     private func messageRow(_ message: GuestbookMessageResponse) -> some View {
-        HStack(alignment: .top, spacing: 10) {
+        let isHighlighted = message.id == activeHighlightedMessageId
+
+        return HStack(alignment: .top, spacing: 10) {
             ProfileImageView(
                 imageName: "profileImage",
                 imageURLString: message.writerProfileImageUrl,
@@ -138,7 +156,44 @@ struct GuestbookSheetView: View {
             messageActions(for: message)
         }
         .padding(.vertical, 12)
+        .padding(.horizontal, 10)
+        .background {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(isHighlighted ? Color("Primary").opacity(0.13) : Color.clear)
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(isHighlighted ? Color("Primary").opacity(0.55) : Color.clear, lineWidth: 1.2)
+        }
+        .animation(.easeInOut(duration: 0.22), value: isHighlighted)
         .contentShape(Rectangle())
+    }
+
+    private func scrollToHighlightedMessageIfNeeded(_ proxy: ScrollViewProxy) {
+        guard !didScrollToHighlightedMessage,
+              let highlightedMessageId,
+              messages.contains(where: { $0.id == highlightedMessageId }) else {
+            return
+        }
+
+        didScrollToHighlightedMessage = true
+        activeHighlightedMessageId = highlightedMessageId
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            withAnimation(.easeInOut(duration: 0.35)) {
+                proxy.scrollTo(highlightedMessageId, anchor: .center)
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) {
+            guard activeHighlightedMessageId == highlightedMessageId else {
+                return
+            }
+
+            withAnimation(.easeInOut(duration: 0.35)) {
+                activeHighlightedMessageId = nil
+            }
+        }
     }
 
     @ViewBuilder

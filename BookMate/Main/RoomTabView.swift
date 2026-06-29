@@ -3,17 +3,26 @@ import Combine
 
 struct RoomTabView: View {
     let viewModel: BookMateViewModel
+    @Binding private var notificationRequest: PushNotificationNavigationRequest?
     @StateObject private var booksStore: MiniRoomBooksStore
     @State private var path = NavigationPath()
 
-    init(viewModel: BookMateViewModel) {
+    init(
+        viewModel: BookMateViewModel,
+        notificationRequest: Binding<PushNotificationNavigationRequest?> = .constant(nil)
+    ) {
         self.viewModel = viewModel
+        self._notificationRequest = notificationRequest
         _booksStore = StateObject(wrappedValue: MiniRoomBooksStore(viewModel: viewModel))
     }
     
     var body: some View {
         NavigationStack(path: $path) {
-            MyRoomView(books: booksStore.books, path: $path)
+            MyRoomView(
+                books: booksStore.books,
+                path: $path,
+                notificationRequest: $notificationRequest
+            )
                 .navigationDestination(for: ShelfView.ShelfRoute.self) { route in
                     switch route {
                     case .bookSearch:

@@ -68,7 +68,8 @@ final class AladinBookLookupService {
         guard let url = components?.url else { return nil }
 
         do {
-            let (data, response) = try await session.data(from: url)
+            let request = URLRequest(url: url, timeoutInterval: APIClient.defaultTimeoutInterval)
+            let (data, response) = try await session.data(for: request)
 
             if let httpResponse = response as? HTTPURLResponse,
                !(200..<300).contains(httpResponse.statusCode) {
