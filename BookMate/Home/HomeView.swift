@@ -748,11 +748,11 @@ struct HomeView: View {
                     PushNotificationRouter.shared.route(userInfo: notification.userInfo)
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: min(proxy.size.height * 0.72, 620))
+                .frame(height: min(proxy.size.height * 0.66, 580))
                 .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
                 .shadow(color: Color("Shadow").opacity(0.18), radius: 24, x: 0, y: 14)
                 .padding(.horizontal, 18)
-                .padding(.top, max(proxy.safeAreaInsets.top + 10, 24))
+                .padding(.top, max(proxy.safeAreaInsets.top + 38, 86))
             }
         }
         .ignoresSafeArea()

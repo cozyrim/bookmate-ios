@@ -8,10 +8,14 @@
 import Foundation
 
 enum BookMateDateFormatter {
+    private static let koreaTimeZone = TimeZone(identifier: "Asia/Seoul") ?? .current
+    private static let serverTimeZone = TimeZone(secondsFromGMT: 0) ?? .current
+
     static let api: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.locale = Locale(identifier: "ko_KR")
+        formatter.timeZone = koreaTimeZone
         return formatter
     }()
 
@@ -19,6 +23,7 @@ enum BookMateDateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
         formatter.locale = Locale(identifier: "ko_KR")
+        formatter.timeZone = koreaTimeZone
         return formatter
     }()
 
@@ -26,6 +31,7 @@ enum BookMateDateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd HH:mm"
         formatter.locale = Locale(identifier: "ko_KR")
+        formatter.timeZone = koreaTimeZone
         return formatter
     }()
 
@@ -57,6 +63,7 @@ enum BookMateDateFormatter {
             let formatter = DateFormatter()
             formatter.dateFormat = format
             formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = serverTimeZone
 
             if let date = formatter.date(from: string) {
                 return date
