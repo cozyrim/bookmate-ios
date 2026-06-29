@@ -754,6 +754,7 @@ struct HomeView: View {
                 .shadow(color: Color("Shadow").opacity(0.18), radius: 24, x: 0, y: 14)
                 .padding(.horizontal, 18)
                 .padding(.top, panelTopPadding)
+                .compositingGroup()
                 .offset(y: isNotificationInboxPanelPresented ? 0 : -(panelHeight + panelTopPadding + 28))
             }
         }
