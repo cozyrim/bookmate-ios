@@ -24,7 +24,6 @@ struct HomeView: View {
     @State private var reviewWordFocusID: UUID?
     @State private var isShowingNotificationInbox = false
     @State private var isNotificationInboxPanelPresented = false
-    @State private var isNotificationInboxContentVisible = false
     @State private var unreadNotificationCount = 0
 
     private let notificationService = NotificationAPIService()
@@ -745,9 +744,7 @@ struct HomeView: View {
 
                 NotificationInboxView(
                     viewModel: viewModel,
-                    onClose: closeNotificationInbox,
-                    contentOpacity: isNotificationInboxContentVisible ? 1 : 0,
-                    contentOffsetY: isNotificationInboxContentVisible ? 0 : 10
+                    onClose: closeNotificationInbox
                 ) { notification in
                     PushNotificationRouter.shared.route(userInfo: notification.userInfo)
                 }
@@ -764,7 +761,7 @@ struct HomeView: View {
     }
 
     private var notificationPanelOpenAnimation: Animation {
-        .spring(response: 0.54, dampingFraction: 0.9, blendDuration: 0.08)
+        .spring(response: 0.58, dampingFraction: 0.92, blendDuration: 0.08)
     }
 
     private var notificationPanelCloseAnimation: Animation {
@@ -775,7 +772,6 @@ struct HomeView: View {
         guard !isShowingNotificationInbox else { return }
 
         isNotificationInboxPanelPresented = false
-        isNotificationInboxContentVisible = false
         isShowingNotificationInbox = true
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) {
@@ -785,22 +781,10 @@ struct HomeView: View {
                 isNotificationInboxPanelPresented = true
             }
         }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            guard isShowingNotificationInbox, isNotificationInboxPanelPresented else { return }
-
-            withAnimation(.easeOut(duration: 0.24)) {
-                isNotificationInboxContentVisible = true
-            }
-        }
     }
 
     private func closeNotificationInbox() {
         guard isShowingNotificationInbox else { return }
-
-        withAnimation(.easeOut(duration: 0.12)) {
-            isNotificationInboxContentVisible = false
-        }
 
         withAnimation(notificationPanelCloseAnimation) {
             isNotificationInboxPanelPresented = false
