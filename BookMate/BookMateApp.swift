@@ -12,6 +12,7 @@ import FirebaseCore
 
 @main
 struct BookMateApp: App {
+    @UIApplicationDelegateAdaptor(BookMateAppDelegate.self) private var appDelegate
     @AppStorage("appColorMode") private var appColorMode = AppColorMode.system.rawValue
 
     init() {
@@ -24,6 +25,7 @@ struct BookMateApp: App {
 
         KakaoSDK.initSDK(appKey: kakaoNativeAppKey)
         FirebaseApp.configure()
+        PushNotificationService.shared.configure()
     }
     
     private var preferredScheme: ColorScheme? {
