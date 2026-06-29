@@ -130,6 +130,8 @@ struct NotificationSettingsView: View {
                                     return
                                 }
 
+                                await PushNotificationService.shared.syncTokenWithServerIfPossible()
+
                                 if readingReminderEnabled {
                                     await ReadingNotificationService.shared.scheduleDailyReadingReminder(
                                         hour: readingReminderHour,
