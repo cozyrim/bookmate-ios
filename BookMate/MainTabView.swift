@@ -45,7 +45,7 @@ struct MainTabView: View {
                 .tag(3)
 
 
-            ProfileView(authViewModel: authViewModel)
+            ProfileView(authViewModel: authViewModel, viewModel: viewModel)
                 .tabItem{
                     Image(systemName: "person.crop.circle")
                     Text("프로필")

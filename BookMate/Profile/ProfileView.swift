@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
+    @ObservedObject var viewModel: BookMateViewModel
     @State private var path = NavigationPath()
     @State private var isShowingProfilePreview = false
     @State private var toast: AppToast?
@@ -105,7 +106,7 @@ struct ProfileView: View {
                     AccountManagementView(authViewModel: authViewModel)
                     
                 case .notificationSettings:
-                    NotificationSettingsView()
+                    NotificationSettingsView(viewModel: viewModel)
                     
                 case .themeSettings:
                     ThemeSettingsView()
@@ -199,5 +200,5 @@ struct ProfileView: View {
     }
 }
 #Preview {
-    ProfileView(authViewModel: AuthSessionViewModel())
+    ProfileView(authViewModel: AuthSessionViewModel(), viewModel: BookMateViewModel())
 }
