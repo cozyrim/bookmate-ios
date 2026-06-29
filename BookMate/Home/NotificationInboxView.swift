@@ -9,6 +9,7 @@ import SwiftUI
 
 struct NotificationInboxView: View {
     @ObservedObject var viewModel: BookMateViewModel
+    let onClose: (() -> Void)?
     let onSelect: (AppNotificationItem) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -27,7 +28,6 @@ struct NotificationInboxView: View {
         NavigationStack {
             ZStack {
                 Color("AppBackground")
-                    .ignoresSafeArea()
 
                 VStack(alignment: .leading, spacing: 18) {
                     header
@@ -82,7 +82,7 @@ struct NotificationInboxView: View {
             .accessibilityLabel("알림 설정")
 
             Button {
-                dismiss()
+                close()
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 15, weight: .bold))
@@ -238,8 +238,17 @@ struct NotificationInboxView: View {
         do {
             notifications = try await notificationService.fetchNotifications()
         } catch {
+            DebugLogger.log("알림 목록 로드 실패:", error)
+
+            if let apiError = error as? APIError,
+               case .unauthorized = apiError {
+                viewModel.didReceiveUnauthorized = true
+            }
+
             toast = AppToast(
-                message: error.bookMateUserMessage(fallback: "알림을 불러오지 못했어요."),
+                message: error.bookMateUserMessage(
+                    fallback: notifications.isEmpty ? "알림을 불러오지 못했어요." : "새로고침에 실패했어요."
+                ),
                 style: .error
             )
         }
@@ -253,7 +262,7 @@ struct NotificationInboxView: View {
                 markReadLocally(notification.id)
             }
 
-            dismiss()
+            close()
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                 onSelect(notification)
@@ -306,8 +315,16 @@ struct NotificationInboxView: View {
             )
         }
     }
+
+    private func close() {
+        if let onClose {
+            onClose()
+        } else {
+            dismiss()
+        }
+    }
 }
 
 #Preview {
-    NotificationInboxView(viewModel: BookMateViewModel()) { _ in }
+    NotificationInboxView(viewModel: BookMateViewModel(), onClose: nil) { _ in }
 }

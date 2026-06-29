@@ -151,6 +151,11 @@ struct HomeView: View {
                 .buttonStyle(.plain)
                 .scrollDismissesKeyboard(.interactively)
 
+                if isShowingNotificationInbox {
+                    notificationInboxOverlay
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .zIndex(10)
+                }
             }
             .sheet(item: $activeBookSheet) { sheet in
                 switch sheet {
@@ -338,17 +343,6 @@ struct HomeView: View {
                         Text("책 정보를 찾을 수 없습니다.")
                     }
                 }
-            }
-            .sheet(isPresented: $isShowingNotificationInbox, onDismiss: {
-                Task {
-                    await loadUnreadNotificationCount()
-                }
-            }) {
-                NotificationInboxView(viewModel: viewModel) { notification in
-                    PushNotificationRouter.shared.route(userInfo: notification.userInfo)
-                }
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
             }
             .task {
                 await loadUnreadNotificationCount()
@@ -702,7 +696,9 @@ struct HomeView: View {
 
     private var notificationBellButton: some View {
         Button {
-            isShowingNotificationInbox = true
+            withAnimation(.snappy(duration: 0.28)) {
+                isShowingNotificationInbox = true
+            }
         } label: {
             ZStack(alignment: .topTrailing) {
                 Image(systemName: "bell")
@@ -734,6 +730,42 @@ struct HomeView: View {
 
     private var unreadNotificationBadgeText: String {
         unreadNotificationCount > 99 ? "99+" : "\(unreadNotificationCount)"
+    }
+
+    private var notificationInboxOverlay: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .top) {
+                Color.black.opacity(0.34)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        closeNotificationInbox()
+                    }
+
+                NotificationInboxView(
+                    viewModel: viewModel,
+                    onClose: closeNotificationInbox
+                ) { notification in
+                    PushNotificationRouter.shared.route(userInfo: notification.userInfo)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: min(proxy.size.height * 0.72, 620))
+                .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
+                .shadow(color: Color("Shadow").opacity(0.18), radius: 24, x: 0, y: 14)
+                .padding(.horizontal, 18)
+                .padding(.top, max(proxy.safeAreaInsets.top + 10, 24))
+            }
+        }
+        .ignoresSafeArea()
+    }
+
+    private func closeNotificationInbox() {
+        withAnimation(.snappy(duration: 0.24)) {
+            isShowingNotificationInbox = false
+        }
+
+        Task {
+            await loadUnreadNotificationCount()
+        }
     }
 
     @MainActor
