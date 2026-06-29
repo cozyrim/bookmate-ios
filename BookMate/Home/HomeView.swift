@@ -23,6 +23,8 @@ struct HomeView: View {
     @State private var selectedBookToEdit: Book?
     @State private var reviewWordFocusID: UUID?
     @State private var isShowingNotificationInbox = false
+    @State private var isNotificationInboxPanelPresented = false
+    @State private var isNotificationInboxContentVisible = false
     @State private var unreadNotificationCount = 0
 
     private let notificationService = NotificationAPIService()
@@ -153,7 +155,6 @@ struct HomeView: View {
 
                 if isShowingNotificationInbox {
                     notificationInboxOverlay
-                        .transition(.move(edge: .top).combined(with: .opacity))
                         .zIndex(10)
                 }
             }
@@ -696,9 +697,7 @@ struct HomeView: View {
 
     private var notificationBellButton: some View {
         Button {
-            withAnimation(.snappy(duration: 0.28)) {
-                isShowingNotificationInbox = true
-            }
+            openNotificationInbox()
         } label: {
             ZStack(alignment: .topTrailing) {
                 Image(systemName: "bell")
@@ -734,8 +733,11 @@ struct HomeView: View {
 
     private var notificationInboxOverlay: some View {
         GeometryReader { proxy in
+            let panelHeight = min(proxy.size.height * 0.66, 580)
+            let panelTopPadding = max(proxy.safeAreaInsets.top + 38, 86)
+
             ZStack(alignment: .top) {
-                Color.black.opacity(0.34)
+                Color.black.opacity(isNotificationInboxPanelPresented ? 0.34 : 0)
                     .ignoresSafeArea()
                     .onTapGesture {
                         closeNotificationInbox()
@@ -743,28 +745,75 @@ struct HomeView: View {
 
                 NotificationInboxView(
                     viewModel: viewModel,
-                    onClose: closeNotificationInbox
+                    onClose: closeNotificationInbox,
+                    contentOpacity: isNotificationInboxContentVisible ? 1 : 0,
+                    contentOffsetY: isNotificationInboxContentVisible ? 0 : 10
                 ) { notification in
                     PushNotificationRouter.shared.route(userInfo: notification.userInfo)
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: min(proxy.size.height * 0.66, 580))
+                .frame(height: panelHeight)
                 .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
                 .shadow(color: Color("Shadow").opacity(0.18), radius: 24, x: 0, y: 14)
                 .padding(.horizontal, 18)
-                .padding(.top, max(proxy.safeAreaInsets.top + 38, 86))
+                .padding(.top, panelTopPadding)
+                .offset(y: isNotificationInboxPanelPresented ? 0 : -(panelHeight + panelTopPadding + 28))
             }
         }
         .ignoresSafeArea()
     }
 
-    private func closeNotificationInbox() {
-        withAnimation(.snappy(duration: 0.24)) {
-            isShowingNotificationInbox = false
+    private var notificationPanelOpenAnimation: Animation {
+        .spring(response: 0.54, dampingFraction: 0.9, blendDuration: 0.08)
+    }
+
+    private var notificationPanelCloseAnimation: Animation {
+        .spring(response: 0.36, dampingFraction: 0.96, blendDuration: 0.04)
+    }
+
+    private func openNotificationInbox() {
+        guard !isShowingNotificationInbox else { return }
+
+        isNotificationInboxPanelPresented = false
+        isNotificationInboxContentVisible = false
+        isShowingNotificationInbox = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) {
+            guard isShowingNotificationInbox else { return }
+
+            withAnimation(notificationPanelOpenAnimation) {
+                isNotificationInboxPanelPresented = true
+            }
         }
 
-        Task {
-            await loadUnreadNotificationCount()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            guard isShowingNotificationInbox, isNotificationInboxPanelPresented else { return }
+
+            withAnimation(.easeOut(duration: 0.24)) {
+                isNotificationInboxContentVisible = true
+            }
+        }
+    }
+
+    private func closeNotificationInbox() {
+        guard isShowingNotificationInbox else { return }
+
+        withAnimation(.easeOut(duration: 0.12)) {
+            isNotificationInboxContentVisible = false
+        }
+
+        withAnimation(notificationPanelCloseAnimation) {
+            isNotificationInboxPanelPresented = false
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.26) {
+            guard !isNotificationInboxPanelPresented else { return }
+
+            isShowingNotificationInbox = false
+
+            Task {
+                await loadUnreadNotificationCount()
+            }
         }
     }
 

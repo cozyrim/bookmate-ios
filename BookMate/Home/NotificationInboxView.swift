@@ -10,6 +10,8 @@ import SwiftUI
 struct NotificationInboxView: View {
     @ObservedObject var viewModel: BookMateViewModel
     let onClose: (() -> Void)?
+    let contentOpacity: Double
+    let contentOffsetY: CGFloat
     let onSelect: (AppNotificationItem) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -48,6 +50,8 @@ struct NotificationInboxView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
                 .padding(.bottom, 24)
+                .opacity(contentOpacity)
+                .offset(y: contentOffsetY)
             }
             .appToast($toast)
             .task {
@@ -355,5 +359,10 @@ struct NotificationInboxView: View {
 }
 
 #Preview {
-    NotificationInboxView(viewModel: BookMateViewModel(), onClose: nil) { _ in }
+    NotificationInboxView(
+        viewModel: BookMateViewModel(),
+        onClose: nil,
+        contentOpacity: 1,
+        contentOffsetY: 0
+    ) { _ in }
 }
