@@ -17,6 +17,7 @@ struct NotificationInboxView: View {
     @State private var isLoading = false
     @State private var isShowingNotificationSettings = false
     @State private var toast: AppToast?
+    @State private var refreshFailureMessage: String?
 
     private let notificationService = NotificationAPIService()
 
@@ -31,6 +32,10 @@ struct NotificationInboxView: View {
 
                 VStack(alignment: .leading, spacing: 18) {
                     header
+
+                    if let refreshFailureMessage {
+                        refreshFailureBanner(refreshFailureMessage)
+                    }
 
                     if isLoading && notifications.isEmpty {
                         loadingState
@@ -104,6 +109,24 @@ struct NotificationInboxView: View {
                 .foregroundStyle(Color("TextSecondary"))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func refreshFailureBanner(_ message: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.circle")
+                .font(.system(size: 13, weight: .semibold))
+
+            Text(message)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .lineLimit(1)
+
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(Color("TextSecondary"))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .background(Color("Surface").opacity(0.72), in: Capsule())
     }
 
     private var emptyState: some View {
@@ -237,6 +260,7 @@ struct NotificationInboxView: View {
 
         do {
             notifications = try await notificationService.fetchNotifications()
+            refreshFailureMessage = nil
         } catch {
             DebugLogger.log("알림 목록 로드 실패:", error)
 
@@ -245,12 +269,15 @@ struct NotificationInboxView: View {
                 viewModel.didReceiveUnauthorized = true
             }
 
-            toast = AppToast(
-                message: error.bookMateUserMessage(
-                    fallback: notifications.isEmpty ? "알림을 불러오지 못했어요." : "새로고침에 실패했어요."
-                ),
-                style: .error
-            )
+            if notifications.isEmpty {
+                refreshFailureMessage = nil
+                toast = AppToast(
+                    message: error.bookMateUserMessage(fallback: "알림을 불러오지 못했어요."),
+                    style: .error
+                )
+            } else {
+                refreshFailureMessage = error.bookMateUserMessage(fallback: "최신 알림을 확인하지 못했어요.")
+            }
         }
     }
 
@@ -261,6 +288,7 @@ struct NotificationInboxView: View {
                 try await notificationService.markNotificationRead(id: notification.id)
                 markReadLocally(notification.id)
             }
+            refreshFailureMessage = nil
 
             close()
 
@@ -279,6 +307,7 @@ struct NotificationInboxView: View {
     private func markAllRead() async {
         do {
             try await notificationService.markAllNotificationsRead()
+            refreshFailureMessage = nil
             notifications = notifications.map { notification in
                 AppNotificationItem(
                     id: notification.id,
