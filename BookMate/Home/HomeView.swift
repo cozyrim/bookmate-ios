@@ -22,6 +22,14 @@ struct HomeView: View {
 
     @State private var selectedBookToEdit: Book?
     @State private var reviewWordFocusID: UUID?
+    @State private var isShowingNotificationInbox = false
+    @State private var isNotificationInboxPanelPresented = false
+    @State private var isPreparingNotificationInbox = false
+    @State private var notificationInboxItems: [AppNotificationItem] = []
+    @State private var isNotificationInboxLoading = false
+    @State private var unreadNotificationCount = 0
+
+    private let notificationService = NotificationAPIService()
 
     private enum HomeRoute: Hashable {
         case bookSearch
@@ -147,6 +155,10 @@ struct HomeView: View {
                 .buttonStyle(.plain)
                 .scrollDismissesKeyboard(.interactively)
 
+                if isShowingNotificationInbox {
+                    notificationInboxOverlay
+                        .zIndex(10)
+                }
             }
             .sheet(item: $activeBookSheet) { sheet in
                 switch sheet {
@@ -334,6 +346,9 @@ struct HomeView: View {
                         Text("책 정보를 찾을 수 없습니다.")
                     }
                 }
+            }
+            .task {
+                await loadUnreadNotificationCount()
             }
         }
     }
@@ -650,29 +665,192 @@ struct HomeView: View {
 
 
     private var homeIntroHeader: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 7) {
-                Text("BookMate 오늘 만난 문장")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color("TextSecondary"))
+        HStack(alignment: .top, spacing: 14) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 7) {
+                    Text("BookMate 오늘 만난 문장")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color("TextSecondary"))
 
-                Image("BookMateSymbolIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 28, height: 28)
-                    .offset(y: -2)
-                    .accessibilityHidden(true)
+                    Image("BookMateSymbolIcon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 28, height: 28)
+                        .offset(y: -2)
+                        .accessibilityHidden(true)
+                }
+
+                Text("읽다가 만난 단어들")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color("TextPrimary"))
             }
 
-            Text("읽다가 만난 단어들")
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundStyle(Color("TextPrimary"))
+            Spacer(minLength: 8)
+
+            notificationBellButton
+                .padding(.top, 2)
         }
         .padding(.horizontal, 24) 
         .padding(.top, 18)
         .padding(.bottom, 2)
+    }
+
+    private var notificationBellButton: some View {
+        Button {
+            openNotificationInbox()
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                Group {
+                    if isPreparingNotificationInbox {
+                        ProgressView()
+                            .tint(Color("TextSecondary"))
+                            .scaleEffect(0.75)
+                    } else {
+                        Image(systemName: "bell")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                }
+                .foregroundStyle(Color("TextSecondary"))
+                .frame(width: 38, height: 38)
+                .background(Color("Surface").opacity(0.84), in: Circle())
+                .overlay {
+                    Circle()
+                        .stroke(Color("Border").opacity(0.25), lineWidth: 1)
+                }
+
+                if unreadNotificationCount > 0 {
+                    Text(unreadNotificationBadgeText)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(Color("PrimaryButtonText"))
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+                        .frame(minWidth: 16, minHeight: 16)
+                        .padding(.horizontal, unreadNotificationCount > 9 ? 3 : 0)
+                        .background(Color("Primary"), in: Capsule())
+                        .offset(x: 2, y: -2)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(isPreparingNotificationInbox)
+        .accessibilityLabel(unreadNotificationCount > 0 ? "새 알림 \(unreadNotificationCount)개" : "알림")
+    }
+
+    private var unreadNotificationBadgeText: String {
+        unreadNotificationCount > 99 ? "99+" : "\(unreadNotificationCount)"
+    }
+
+    private var notificationInboxOverlay: some View {
+        GeometryReader { proxy in
+            let panelHeight = min(proxy.size.height * 0.66, 580)
+            let panelTopPadding = max(proxy.safeAreaInsets.top + 38, 86)
+
+            ZStack(alignment: .top) {
+                Color.black.opacity(isNotificationInboxPanelPresented ? 0.34 : 0)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        closeNotificationInbox()
+                    }
+
+                NotificationInboxView(
+                    viewModel: viewModel,
+                    notifications: $notificationInboxItems,
+                    isLoading: $isNotificationInboxLoading,
+                    onClose: closeNotificationInbox
+                ) { notification in
+                    PushNotificationRouter.shared.route(userInfo: notification.userInfo)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: panelHeight)
+                .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
+                .shadow(color: Color("Shadow").opacity(0.18), radius: 24, x: 0, y: 14)
+                .padding(.horizontal, 18)
+                .padding(.top, panelTopPadding)
+                .compositingGroup()
+                .offset(y: isNotificationInboxPanelPresented ? 0 : -(panelHeight + panelTopPadding + 28))
+            }
+        }
+        .ignoresSafeArea()
+    }
+
+    private var notificationPanelOpenAnimation: Animation {
+        .spring(response: 0.58, dampingFraction: 0.92, blendDuration: 0.08)
+    }
+
+    private var notificationPanelCloseAnimation: Animation {
+        .spring(response: 0.36, dampingFraction: 0.96, blendDuration: 0.04)
+    }
+
+    private func openNotificationInbox() {
+        guard !isShowingNotificationInbox, !isPreparingNotificationInbox else { return }
+
+        Task {
+            await prepareAndOpenNotificationInbox()
+        }
+    }
+
+    @MainActor
+    private func prepareAndOpenNotificationInbox() async {
+        isPreparingNotificationInbox = true
+        isNotificationInboxLoading = true
+        isNotificationInboxPanelPresented = false
+
+        do {
+            notificationInboxItems = try await notificationService.fetchNotifications()
+        } catch {
+            DebugLogger.log("알림 목록 사전 로드 실패:", error)
+
+            if let apiError = error as? APIError,
+               case .unauthorized = apiError {
+                viewModel.didReceiveUnauthorized = true
+            } else if notificationInboxItems.isEmpty {
+                viewModel.showToast(
+                    error.bookMateUserMessage(fallback: "알림을 불러오지 못했어요."),
+                    style: .error
+                )
+            }
+        }
+
+        isNotificationInboxLoading = false
+        isPreparingNotificationInbox = false
+        isShowingNotificationInbox = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) {
+            guard isShowingNotificationInbox else { return }
+
+            withAnimation(notificationPanelOpenAnimation) {
+                isNotificationInboxPanelPresented = true
+            }
+        }
+    }
+
+    private func closeNotificationInbox() {
+        guard isShowingNotificationInbox else { return }
+
+        withAnimation(notificationPanelCloseAnimation) {
+            isNotificationInboxPanelPresented = false
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.26) {
+            guard !isNotificationInboxPanelPresented else { return }
+
+            isShowingNotificationInbox = false
+
+            Task {
+                await loadUnreadNotificationCount()
+            }
+        }
+    }
+
+    @MainActor
+    private func loadUnreadNotificationCount() async {
+        do {
+            unreadNotificationCount = try await notificationService.fetchUnreadCount()
+        } catch {
+            unreadNotificationCount = 0
+        }
     }
 }
 

@@ -63,8 +63,7 @@ struct AuthAPIService {
             "password": password
         ]
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
+        var request = client.makeUnauthenticatedRequest(url: url, method: "POST")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
         
@@ -83,8 +82,7 @@ struct AuthAPIService {
         
         let body = KakaoLoginBody(accessToken: accessToken)
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
+        var request = client.makeUnauthenticatedRequest(url: url, method: "POST")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
         
@@ -109,8 +107,7 @@ struct AuthAPIService {
             "nickname": nickname
         ]
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
+        var request = client.makeUnauthenticatedRequest(url: url, method: "POST")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
         
@@ -127,8 +124,7 @@ struct AuthAPIService {
             .appendingPathComponent("auth")
             .appendingPathComponent("nickname-suggestion")
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
+        let request = client.makeUnauthenticatedRequest(url: url, method: "GET")
 
         let (data, response) = try await URLSession.shared.data(for: request)
         try client.validate(response)
@@ -148,8 +144,7 @@ struct AuthAPIService {
             URLQueryItem(name: "email", value: email)
         ]
 
-        var request = URLRequest(url: components.url!)
-        request.httpMethod = "GET"
+        let request = client.makeUnauthenticatedRequest(url: components.url!, method: "GET")
 
         let (data, response) = try await URLSession.shared.data(for: request)
         try client.validate(response)
@@ -168,8 +163,7 @@ struct AuthAPIService {
             URLQueryItem(name: "nickname", value: nickname)
         ]
 
-        var request = URLRequest(url: components.url!)
-        request.httpMethod = "GET"
+        let request = client.makeUnauthenticatedRequest(url: components.url!, method: "GET")
 
         let (data, response) = try await URLSession.shared.data(for: request)
         try client.validate(response)
@@ -183,9 +177,7 @@ struct AuthAPIService {
             .appendingPathComponent("api")
             .appendingPathComponent("me")
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let request = client.makeRequest(url: url, method: "GET", accessToken: token)
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
@@ -208,10 +200,8 @@ struct AuthAPIService {
         
         let body = ProfileUpdateBody(nickname: nickname, profileImageUrl: profileImageUrl, isPublic: isPublic, roomTheme: roomTheme)
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "PATCH"
+        var request = client.makeRequest(url: url, method: "PATCH", accessToken: token)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.httpBody = try JSONEncoder().encode(body)
         
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -227,9 +217,7 @@ struct AuthAPIService {
             .appendingPathComponent("users")
             .appendingPathComponent("me")
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let request = client.makeRequest(url: url, method: "DELETE", accessToken: token)
         
         let (_, response) = try await URLSession.shared.data(for: request)
         
@@ -249,9 +237,7 @@ struct AuthAPIService {
         
         let boundary = "Boundary-\(UUID().uuidString)"
     
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        var request = client.makeRequest(url: url, method: "POST", accessToken: token)
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         
         var body = Data()

@@ -74,6 +74,7 @@ struct PublicBookshelfView: View {
         .sheet(isPresented: $showingGuestbook) {
             GuestbookSheetView(
                 messages: $guestbookMessages,
+                highlightedMessageId: nil,
                 targetUser: targetUser,
                 socialService: socialService
             )

@@ -92,7 +92,7 @@ final class KakaoBookSearchService {
             throw KakaoBookSearchError.invalidURL
         }
 
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: url, timeoutInterval: APIClient.defaultTimeoutInterval)
         request.httpMethod = "GET"
         request.setValue("KakaoAK \(apiKey)", forHTTPHeaderField: "Authorization")
 

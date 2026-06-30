@@ -10,6 +10,35 @@ import Foundation
 import UIKit
 import UserNotifications
 
+private actor PushTokenSyncState {
+    private let failedSyncRetryCooldown: TimeInterval
+    private var isSyncing = false
+    private var lastFailedSyncAt: Date?
+
+    init(failedSyncRetryCooldown: TimeInterval) {
+        self.failedSyncRetryCooldown = failedSyncRetryCooldown
+    }
+
+    func beginSyncIfPossible() -> Bool {
+        guard !isSyncing else {
+            return false
+        }
+
+        if let lastFailedSyncAt,
+           Date().timeIntervalSince(lastFailedSyncAt) < failedSyncRetryCooldown {
+            return false
+        }
+
+        isSyncing = true
+        return true
+    }
+
+    func finishSync(succeeded: Bool) {
+        isSyncing = false
+        lastFailedSyncAt = succeeded ? nil : Date()
+    }
+}
+
 final class PushNotificationService: NSObject {
     static let shared = PushNotificationService()
 
@@ -18,6 +47,7 @@ final class PushNotificationService: NSObject {
 
     private let apiService = NotificationAPIService()
     private let tokenStore: AuthTokenStore = KeychainTokenStore()
+    private let syncState = PushTokenSyncState(failedSyncRetryCooldown: 60)
 
     private override init() {
         super.init()
@@ -42,13 +72,17 @@ final class PushNotificationService: NSObject {
     }
 
     func syncTokenWithServerIfPossible() async {
+        guard await syncState.beginSyncIfPossible() else { return }
+
         await registerForRemoteNotificationsIfAuthorized()
 
         guard tokenStore.load() != nil else {
+            await syncState.finishSync(succeeded: true)
             return
         }
 
         guard let fcmToken = await currentFCMToken() else {
+            await syncState.finishSync(succeeded: true)
             return
         }
 
@@ -58,8 +92,10 @@ final class PushNotificationService: NSObject {
                 deviceId: appDeviceId,
                 appVersion: appVersion
             )
+            await syncState.finishSync(succeeded: true)
             DebugLogger.log("FCM 토큰 서버 등록 완료")
         } catch {
+            await syncState.finishSync(succeeded: false)
             DebugLogger.log("FCM 토큰 서버 등록 실패:", error)
         }
     }
@@ -160,5 +196,18 @@ extension PushNotificationService: UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         completionHandler([.banner, .list, .sound, .badge])
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let userInfo = response.notification.request.content.userInfo
+
+        Task { @MainActor in
+            PushNotificationRouter.shared.route(userInfo: userInfo)
+            completionHandler()
+        }
     }
 }

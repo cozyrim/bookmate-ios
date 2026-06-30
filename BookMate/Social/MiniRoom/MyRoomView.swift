@@ -4,6 +4,7 @@ struct MyRoomView: View {
     let books: [Book]
     @EnvironmentObject var authViewModel: AuthSessionViewModel
     @Binding var path: NavigationPath
+    @Binding private var notificationRequest: PushNotificationNavigationRequest?
     
     private let tokenStore = KeychainTokenStore()
     private let socialService = SocialAPIService()
@@ -12,10 +13,21 @@ struct MyRoomView: View {
     
     @State private var guestbookMessages: [GuestbookMessageResponse] = []
     @State private var showingGuestbook = false
+    @State private var highlightedGuestbookMessageId: UUID?
     @State private var showingThemePicker = false
 
     private var currentTheme: MiniRoomTheme {
         MiniRoomTheme.from(authViewModel.profile?.roomTheme ?? authViewModel.currentUser?.roomTheme)
+    }
+
+    init(
+        books: [Book],
+        path: Binding<NavigationPath>,
+        notificationRequest: Binding<PushNotificationNavigationRequest?> = .constant(nil)
+    ) {
+        self.books = books
+        self._path = path
+        self._notificationRequest = notificationRequest
     }
     
     var body: some View {
@@ -41,6 +53,7 @@ struct MyRoomView: View {
                         },
                         onOpenGuestbook: {
                             PerformanceLogger.event("MiniRoomGuestbookTapped")
+                            highlightedGuestbookMessageId = nil
                             fetchGuestbook()
                             showingGuestbook = true
                         },
@@ -58,10 +71,16 @@ struct MyRoomView: View {
             } message: {
                 Text(surfError ?? "")
             }
-            .sheet(isPresented: $showingGuestbook) {
+            .sheet(
+                isPresented: $showingGuestbook,
+                onDismiss: {
+                    highlightedGuestbookMessageId = nil
+                }
+            ) {
                 if let user = authViewModel.currentUser {
                     GuestbookSheetView(
                         messages: $guestbookMessages,
+                        highlightedMessageId: highlightedGuestbookMessageId,
                         targetUser: PublicUserResponse(
                             id: user.id,
                             nickname: user.nickname,
@@ -79,7 +98,28 @@ struct MyRoomView: View {
                     .environmentObject(authViewModel)
                     .presentationDetents([.large])
             }
+            .onAppear {
+                handleNotificationRequestIfNeeded()
+            }
+            .onChange(of: notificationRequest?.id) { _, _ in
+                handleNotificationRequestIfNeeded()
+            }
         }
+
+    private func handleNotificationRequestIfNeeded() {
+        guard let notificationRequest else {
+            return
+        }
+
+        switch notificationRequest.destination {
+        case .myGuestbook(let messageId):
+            PerformanceLogger.event("NotificationGuestbookOpened")
+            highlightedGuestbookMessageId = messageId
+            fetchGuestbook()
+            showingGuestbook = true
+            self.notificationRequest = nil
+        }
+    }
     
     private func fetchGuestbook() {
         guard let token = tokenStore.load(), let user = authViewModel.currentUser else { return }
@@ -103,7 +143,13 @@ struct MyRoomView: View {
     }
     
     private func surfRandomUser() {
-        guard let token = tokenStore.load() else { return }
+        guard !isSurfing else { return }
+
+        guard let token = tokenStore.load() else {
+            surfError = "로그인이 필요해요."
+            return
+        }
+
         isSurfing = true
         
         Task {
@@ -124,7 +170,7 @@ struct MyRoomView: View {
             } catch {
                 await MainActor.run {
                     isSurfing = false
-                    surfError = "방문할 다른 유저를 찾지 못했어요."
+                    surfError = error.bookMateUserMessage(fallback: "방문할 다른 유저를 찾지 못했어요.")
                 }
             }
         }

@@ -615,7 +615,8 @@ extension BookMateViewModel {
             throw URLError(.badURL)
         }
 
-        return try await URLSession.shared.data(from: url)
+        let request = URLRequest(url: url, timeoutInterval: APIClient.defaultTimeoutInterval)
+        return try await URLSession.shared.data(for: request)
     }
 
     private func preferredDictionaryItems(from items: [StdDictItem], query: String) -> [StdDictItem] {
