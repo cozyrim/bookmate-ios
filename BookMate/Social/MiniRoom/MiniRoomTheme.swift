@@ -66,6 +66,15 @@ enum MiniRoomTheme: String, CaseIterable, Identifiable {
         }
     }
 
+    var topExtensionImageName: String? {
+        switch self {
+        case .basic, .pink, .mint:
+            return "MiniRoomLayeredRoomTopExtension"
+        case .dark:
+            return nil
+        }
+    }
+
     var sceneTintColor: Color {
         switch self {
         case .pink:

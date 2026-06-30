@@ -132,12 +132,23 @@ private struct MiniRoomCanvas: View {
             let canvasWidth = min(width * 1.20, 520)
             let canvasHeight = canvasWidth / backgroundAspectRatio
             let canvasTop = max(0, availableHeight - canvasHeight)
+            let topExtensionOverlap = min(36, max(18, canvasTop * 0.08))
             let guestbookX = min(width - 88, max(88, width / 2 - canvasWidth * 0.25))
             let guestbookY = min(canvasTop + canvasHeight * 0.81, availableHeight - 64)
             let actionButtonsX = min(width - 104, max(178, width / 2 + canvasWidth * 0.20))
             let actionButtonsY = canvasTop + min(max(52, canvasHeight * 0.073), 66)
 
             ZStack(alignment: .top) {
+                if let topExtensionImageName = theme.topExtensionImageName, canvasTop > 1 {
+                    topExtensionImage(
+                        topExtensionImageName,
+                        canvasWidth: canvasWidth,
+                        visibleHeight: canvasTop,
+                        overlap: topExtensionOverlap,
+                        containerWidth: width
+                    )
+                }
+
                 layeredImage(
                     theme.sceneImageName(for: colorScheme),
                     canvasWidth: canvasWidth,
@@ -186,6 +197,30 @@ private struct MiniRoomCanvas: View {
             .frame(width: width, height: availableHeight, alignment: .top)
             .background(theme.backgroundColor)
         }
+    }
+
+    private func topExtensionImage(_ name: String, canvasWidth: CGFloat, visibleHeight: CGFloat, overlap: CGFloat, containerWidth: CGFloat) -> some View {
+        let imageHeight = visibleHeight + overlap
+
+        return ZStack {
+            Image(name)
+                .resizable()
+
+            if theme.sceneTintOpacity > 0 {
+                theme.sceneTintColor
+                    .opacity(theme.sceneTintOpacity)
+                    .blendMode(.softLight)
+
+                theme.sceneTintColor
+                    .opacity(theme.sceneTintOpacity * 0.42)
+                    .blendMode(.color)
+            }
+        }
+        .compositingGroup()
+        .frame(width: canvasWidth, height: imageHeight)
+        .clipped()
+        .position(x: containerWidth / 2, y: imageHeight / 2)
+        .allowsHitTesting(false)
     }
 
     private func layeredImage(_ name: String, canvasWidth: CGFloat, canvasHeight: CGFloat, canvasTop: CGFloat, containerWidth: CGFloat) -> some View {

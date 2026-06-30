@@ -45,11 +45,41 @@ struct RootView: View {
                 LoginView(authViewModel: authViewModel)
             }
         }
+        .phoneWidthOnWideScreens()
         .dismissKeyboardOnTap()
     }
 }
 #Preview {
     RootView()
+}
+
+private extension View {
+    func phoneWidthOnWideScreens(maxWidth: CGFloat = 520) -> some View {
+        modifier(PhoneWidthOnWideScreensModifier(maxWidth: maxWidth))
+    }
+}
+
+private struct PhoneWidthOnWideScreensModifier: ViewModifier {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    let maxWidth: CGFloat
+
+    func body(content: Content) -> some View {
+        if horizontalSizeClass == .regular {
+            ZStack {
+                Color("AppBackground")
+                    .ignoresSafeArea()
+
+                content
+                    .frame(maxWidth: maxWidth, maxHeight: .infinity)
+                    .background(Color("AppBackground"))
+                    .clipped()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        } else {
+            content
+        }
+    }
 }
 
 //앱 시작
