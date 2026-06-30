@@ -103,6 +103,7 @@ struct BookRegistrationCompleteView: View {
                             viewModel.wordSaveBookIdToSelectAfterRegistration = book.id
                         } else {
                             viewModel.clearSearchState(searchMode: .dictionary)
+                            viewModel.requestDictionarySearchPresentation()
                         }
 
                         onFinishRegistration(0)

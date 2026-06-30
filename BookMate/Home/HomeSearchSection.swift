@@ -313,12 +313,28 @@ struct HomeSearchSection: View {
                 mode: viewModel.searchMode,
                 hasRecentSearches: !viewModel.recentSearches.isEmpty
             )
+            presentPendingDictionarySearchIfNeeded()
+        }
+        .onChange(of: viewModel.pendingDictionarySearchPresentationID) { _, _ in
+            presentPendingDictionarySearchIfNeeded()
         }
         .onDisappear {
             dictionarySuggestionTask?.cancel()
             dictionarySuggestionTask = nil
             guard !isShowingSearchResult else { return }
             clearSearchText()
+        }
+    }
+
+    private func presentPendingDictionarySearchIfNeeded() {
+        guard viewModel.pendingDictionarySearchPresentationID != nil else { return }
+
+        viewModel.pendingDictionarySearchPresentationID = nil
+        clearSearchText()
+        viewModel.searchMode = .dictionary
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            isShowingSearchResult = true
         }
     }
 

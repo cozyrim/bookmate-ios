@@ -104,6 +104,9 @@ final class BookMateViewModel: ObservableObject {
     // 저장 단어 조회 실패 메시지다.
     @Published var wordLoadErrorMessage: String?
 
+    // 책 등록 완료 후 홈의 사전 검색 화면을 열기 위한 1회성 요청이다.
+    @Published var pendingDictionarySearchPresentationID: UUID?
+
     // MARK: - Quote, Memo & Review State
 
     // 현재 열람 중인 책의 문장 목록이다.
@@ -154,6 +157,10 @@ final class BookMateViewModel: ObservableObject {
     private var currentUserProfileImageURL: String?
 
     // MARK: - Common Helpers
+
+    func requestDictionarySearchPresentation() {
+        pendingDictionarySearchPresentationID = UUID()
+    }
 
     // 앱 전역 토스트를 표시한다.
     func showToast(_ message: String, style: AppToast.Style = .info) {

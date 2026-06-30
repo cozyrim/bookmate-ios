@@ -234,7 +234,7 @@ struct SignupView: View {
                     "",
                     text: $email,
                     prompt: Text("example@bookmate.com")
-                        .foregroundStyle(Color("TextSecondary").opacity(0.48))
+                        .foregroundStyle(Color("TextSecondary").opacity(0.34))
                 )
                     .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
@@ -522,7 +522,7 @@ struct SignupView: View {
     private func validationColor(for tone: ValidationTone) -> Color {
         switch tone {
         case .neutral:
-            return Color("TextSecondary").opacity(0.58)
+            return Color("TextSecondary").opacity(0.78)
         case .success:
             return Color("PrimaryDeep")
         case .error:
