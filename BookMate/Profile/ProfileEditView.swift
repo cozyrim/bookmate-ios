@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PhotosUI
+import UIKit
 
 struct ProfileEditView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
@@ -24,6 +25,10 @@ struct ProfileEditView: View {
     @State private var profileImageUploadRequestID: UUID?
     @State private var nicknameAvailability: NicknameAvailabilityResponse?
     @FocusState private var isNicknameFocused: Bool
+
+    private let profileImageMaxUploadBytes = 2 * 1024 * 1024
+    private let profileImageResizeSteps: [CGFloat] = [768, 640, 512]
+    private let profileImageCompressionQualities: [CGFloat] = [0.82, 0.76, 0.70, 0.64, 0.58, 0.52]
 
     private var currentNickname: String {
         authViewModel.profile?.nickname
@@ -132,14 +137,14 @@ struct ProfileEditView: View {
 
                             guard let data = try? await newItem?.loadTransferable(type: Data.self),
                                   let image = UIImage(data: data),
-                                  let jpegData = image.jpegData(compressionQuality: 0.85) else {
+                                  let uploadImage = preparedProfileImageForUpload(image) else {
                                 return
                             }
 
                             guard profileImageUploadRequestID == requestID else { return }
-                            selectedProfileImage = image
+                            selectedProfileImage = uploadImage.image
 
-                            if let uploadedUrl = await authViewModel.uploadProfileImage(imageData: jpegData) {
+                            if let uploadedUrl = await authViewModel.uploadProfileImage(imageData: uploadImage.data) {
                                 guard profileImageUploadRequestID == requestID else { return }
                                 profileImageUrlToSave = uploadedUrl
                             } else if profileImageUploadRequestID == requestID {
@@ -291,25 +296,59 @@ struct ProfileEditView: View {
         isCheckingNickname = false
     }
 
-    private func saveProfileImageToDocuments(_ image: UIImage) -> String? {
-        guard let data = image.jpegData(compressionQuality: 0.85) else {
-            return nil
+    private func preparedProfileImageForUpload(_ image: UIImage) -> (image: UIImage, data: Data)? {
+        for maxDimension in profileImageResizeSteps {
+            let resizedImage = image.resizedForProfileUpload(maxDimension: maxDimension)
+
+            for quality in profileImageCompressionQualities {
+                guard let jpegData = resizedImage.jpegData(compressionQuality: quality) else { continue }
+
+                if jpegData.count <= profileImageMaxUploadBytes {
+                    return (resizedImage, jpegData)
+                }
+            }
         }
 
-        let fileName = "profile-\(UUID().uuidString).jpg"
-        let documentsURL = FileManager.default.urls(
-            for: .documentDirectory,
-            in: .userDomainMask
-        )[0]
+        return nil
+    }
+}
 
-        let fileURL = documentsURL.appendingPathComponent(fileName)
+private extension UIImage {
+    func resizedForProfileUpload(maxDimension: CGFloat) -> UIImage {
+        let normalizedImage = normalizedForProfileUpload()
+        let maxSide = max(normalizedImage.size.width, normalizedImage.size.height)
 
-        do {
-            try data.write(to: fileURL)
-            return fileURL.absoluteString
-        } catch {
-            DebugLogger.log("프로필 이미지 저장 실패:", error)
-            return nil
+        guard maxSide > maxDimension else {
+            return normalizedImage
+        }
+
+        let scale = maxDimension / maxSide
+        let targetSize = CGSize(
+            width: floor(normalizedImage.size.width * scale),
+            height: floor(normalizedImage.size.height * scale)
+        )
+
+        return normalizedImage.renderedForProfileUpload(size: targetSize)
+    }
+
+    private func normalizedForProfileUpload() -> UIImage {
+        guard imageOrientation != .up else {
+            return renderedForProfileUpload(size: size)
+        }
+
+        return renderedForProfileUpload(size: size)
+    }
+
+    private func renderedForProfileUpload(size targetSize: CGSize) -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+
+        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
+        return renderer.image { _ in
+            UIColor.white.setFill()
+            UIRectFill(CGRect(origin: .zero, size: targetSize))
+            draw(in: CGRect(origin: .zero, size: targetSize))
         }
     }
 }
