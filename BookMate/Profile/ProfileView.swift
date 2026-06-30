@@ -10,10 +10,12 @@ import SwiftUI
 struct ProfileView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
     @ObservedObject var viewModel: BookMateViewModel
+    @Environment(\.openURL) private var openURL
     @State private var path = NavigationPath()
     @State private var isShowingProfilePreview = false
     @State private var toast: AppToast?
     
+    private static let supportMailURL = URL(string: "mailto:cnstlr0904@gmail.com")!
     
     private var userName: String {
         authViewModel.profile?.nickname
@@ -41,12 +43,11 @@ struct ProfileView: View {
 
         private let settingRows = [
             ProfileMenuItem(imageName: "book", title: "화면 테마", route: .themeSettings),
-            ProfileMenuItem(imageName: "moon", title: "다크 모드", route: .darkModeSettings),
-            ProfileMenuItem(imageName: "icloud", title: "iCloud 백업")
+            ProfileMenuItem(imageName: "moon", title: "다크 모드", route: .darkModeSettings)
         ]
 
         private let supportRows = [
-            ProfileMenuItem(imageName: "headphones", title: "고객 센터"),
+            ProfileMenuItem(imageName: "envelope", title: "문의하기", url: ProfileView.supportMailURL),
             ProfileMenuItem(imageName: "info.circle", title: "앱 정보", route: .appInfo),
             ProfileMenuItem(imageName: "rectangle.portrait.and.arrow.right", title: "로그아웃", isDestructive: true, showChevron: false)
         ]
@@ -57,11 +58,14 @@ struct ProfileView: View {
             return
         }
 
+        if let url = item.url {
+            openURL(url)
+            return
+        }
+
         guard let route = item.route else { return }
 
         path.append(route)
-        // NavigationLink(value:) 대신 코드로 이동하고 싶으면 path가 필요하지만,
-        // 여기서는 간단히 NavigationLink 방식이 더 좋아.
     }
     
     

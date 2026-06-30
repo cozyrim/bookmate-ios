@@ -22,7 +22,7 @@ struct ProfileMenuItem: Identifiable {
     let imageName: String
     let title: String
     var route: ProfileRoute?
+    var url: URL?
     var isDestructive: Bool = false
     var showChevron: Bool = true
 }
-
