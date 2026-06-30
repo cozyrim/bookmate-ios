@@ -805,11 +805,6 @@ struct HomeView: View {
             if let apiError = error as? APIError,
                case .unauthorized = apiError {
                 viewModel.didReceiveUnauthorized = true
-            } else if notificationInboxItems.isEmpty {
-                viewModel.showToast(
-                    error.bookMateUserMessage(fallback: "알림을 불러오지 못했어요."),
-                    style: .error
-                )
             }
         }
 

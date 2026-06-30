@@ -287,13 +287,6 @@ struct NotificationInboxView: View {
                case .unauthorized = apiError {
                 viewModel.didReceiveUnauthorized = true
             }
-
-            if notifications.isEmpty {
-                toast = AppToast(
-                    message: error.bookMateUserMessage(fallback: "알림을 불러오지 못했어요."),
-                    style: .error
-                )
-            }
         }
     }
 
