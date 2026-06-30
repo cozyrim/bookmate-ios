@@ -32,7 +32,7 @@ enum APIEnvironment {
         #if DEBUG
         return .local
         #else
-        return .staging
+        return .production
         #endif
     }
 
