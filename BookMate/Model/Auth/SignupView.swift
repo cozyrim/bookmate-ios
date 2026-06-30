@@ -522,7 +522,7 @@ struct SignupView: View {
     private func validationColor(for tone: ValidationTone) -> Color {
         switch tone {
         case .neutral:
-            return Color("TextSecondary").opacity(0.78)
+            return Color("TextSecondary").opacity(0.58)
         case .success:
             return Color("PrimaryDeep")
         case .error:
