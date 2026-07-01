@@ -115,6 +115,9 @@ private struct MiniRoomCanvas: View {
     let onBookTap: (Book) -> Void
 
     private let backgroundAspectRatio: CGFloat = 1024 / 1536
+    private var usesPadTopExtension: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad && horizontalSizeClass == .regular
+    }
 
     private var controlForeground: Color {
         if theme == .dark {
@@ -139,12 +142,12 @@ private struct MiniRoomCanvas: View {
             let actionButtonsX = min(width - 104, max(178, width / 2 + canvasWidth * 0.20))
             let defaultActionButtonsY = canvasTop + min(max(52, canvasHeight * 0.073), 66)
             let liftedActionButtonsY = max(64, canvasTop - min(62, max(36, canvasTop * 0.12)))
-            let actionButtonsY = horizontalSizeClass == .regular && canvasTop > 140
+            let actionButtonsY = usesPadTopExtension && canvasTop > 140
                 ? liftedActionButtonsY
                 : defaultActionButtonsY
 
             ZStack(alignment: .top) {
-                if canvasTop > 1 {
+                if usesPadTopExtension && canvasTop > 1 {
                     topExtensionImage(
                         theme.topExtensionImageName,
                         canvasWidth: canvasWidth,
