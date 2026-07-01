@@ -194,10 +194,11 @@ private struct FeatureOnboardingPageView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let isIPadReviewPage = horizontalSizeClass == .regular && page.visual == .review
-            let maxImageWidth = isIPadReviewPage ? CGFloat(440) : CGFloat(324)
-            let maxImageHeight = isIPadReviewPage ? CGFloat(530) : CGFloat(430)
-            let imageHeightRatio = isIPadReviewPage ? CGFloat(0.72) : CGFloat(0.58)
+            let usesRegularFeatureVisual = horizontalSizeClass == .regular
+                && (page.visual == .review || page.visual == .notification)
+            let maxImageWidth = usesRegularFeatureVisual ? CGFloat(440) : CGFloat(324)
+            let maxImageHeight = usesRegularFeatureVisual ? CGFloat(530) : CGFloat(430)
+            let imageHeightRatio = usesRegularFeatureVisual ? CGFloat(0.72) : CGFloat(0.58)
             let imageWidth = min(proxy.size.width, maxImageWidth)
             let imageHeight = min(max(proxy.size.height * imageHeightRatio, 330), maxImageHeight)
 
@@ -516,32 +517,48 @@ private struct OnboardingReviewQuoteCard: View {
 }
 
 private struct NotificationOnboardingVisual: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     let width: CGFloat
     let height: CGFloat
 
     var body: some View {
         VStack(spacing: 12) {
             OnboardingScreenshotCard(
-                imageName: "OnboardingNotificationSettingsScreen",
-                width: width * 0.74,
-                height: height * 0.58,
-                cornerRadius: 30,
+                imageName: settingsImageName,
+                width: settingsImageWidth,
+                height: settingsImageHeight,
+                cornerRadius: horizontalSizeClass == .regular ? 32 : 30,
                 alignment: .top
             )
 
             VStack(spacing: 8) {
                 OnboardingBannerImage(
                     imageName: "OnboardingNotificationReadingBanner",
-                    width: width * 0.82
+                    width: horizontalSizeClass == .regular ? width * 0.74 : width * 0.82
                 )
 
                 OnboardingBannerImage(
                     imageName: "OnboardingNotificationGuestbookBanner",
-                    width: width * 0.86
+                    width: horizontalSizeClass == .regular ? width * 0.78 : width * 0.86
                 )
             }
         }
         .frame(width: width, height: height)
+    }
+
+    private var settingsImageName: String {
+        horizontalSizeClass == .regular
+            ? "OnboardingNotificationSettingsIPad"
+            : "OnboardingNotificationSettingsScreen"
+    }
+
+    private var settingsImageWidth: CGFloat {
+        horizontalSizeClass == .regular ? width * 0.72 : width * 0.74
+    }
+
+    private var settingsImageHeight: CGFloat {
+        horizontalSizeClass == .regular ? height * 0.72 : height * 0.58
     }
 }
 

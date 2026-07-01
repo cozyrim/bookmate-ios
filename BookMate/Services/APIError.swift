@@ -13,6 +13,19 @@ enum APIError: Error {
     case badStatusCode(Int)   // 그 외 에러 상태코드
 }
 
+extension APIError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .unauthorized:
+            return "로그인이 만료됐어요."
+        case .invalidResponse:
+            return "서버 응답을 읽지 못했어요."
+        case .badStatusCode(let statusCode):
+            return "서버 응답 코드 \(statusCode)"
+        }
+    }
+}
+
 extension Error {
     var isNetworkTimeout: Bool {
         let nsError = self as NSError
@@ -38,12 +51,25 @@ extension Error {
         }
 
         if isConnectivityError {
-            return "인터넷 연결을 확인해 주세요."
+            return "서버에 연결하지 못했어요. 로컬 서버가 켜져 있는지 확인해 주세요."
         }
 
         if let apiError = self as? APIError,
            case .unauthorized = apiError {
             return "로그인이 만료됐어요. 다시 로그인해 주세요."
+        }
+
+        if let apiError = self as? APIError,
+           case .badStatusCode(let statusCode) = apiError {
+            if statusCode >= 500 {
+                return "서버에서 처리하지 못했어요. 서버 상태 코드 \(statusCode)"
+            }
+
+            return "요청을 처리하지 못했어요. 서버 상태 코드 \(statusCode)"
+        }
+
+        if self is APIError {
+            return localizedDescription
         }
 
         return fallback

@@ -40,4 +40,17 @@ final class KakaoLoginService {
             }
         }
     }
+
+    func unlink() async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            UserApi.shared.unlink { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                continuation.resume()
+            }
+        }
+    }
 }

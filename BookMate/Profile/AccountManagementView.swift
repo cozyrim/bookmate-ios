@@ -10,6 +10,8 @@ import SwiftUI
 struct AccountManagementView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
     @State private var isShowingWithdrawAlert = false
+    @State private var isShowingWithdrawError = false
+    @State private var withdrawErrorMessage = ""
     
     private var profile: ProfileResponse? {
             authViewModel.profile
@@ -78,14 +80,29 @@ struct AccountManagementView: View {
                                 Button(role: .destructive) {
                                     isShowingWithdrawAlert = true
                                 } label: {
-                                    Text("회원 탈퇴")
+                                    HStack(spacing: 8) {
+                                        if authViewModel.isLoading {
+                                            ProgressView()
+                                                .tint(.red)
+                                        }
+
+                                        Text(authViewModel.isLoading ? "탈퇴 처리 중..." : "회원 탈퇴")
+                                    }
                                 }
+                                .disabled(authViewModel.isLoading)
+                                .opacity(authViewModel.isLoading ? 0.55 : 1)
                                 .alert("정말 탈퇴하시겠어요?", isPresented: $isShowingWithdrawAlert) {
                                     Button("취소", role: .cancel) { }
 
                                     Button("탈퇴하기", role: .destructive) {
                                         Task {
                                             await authViewModel.withdraw()
+
+                                            if authViewModel.isLoggedIn,
+                                               let errorMessage = authViewModel.errorMessage {
+                                                withdrawErrorMessage = errorMessage
+                                                isShowingWithdrawError = true
+                                            }
                                         }
                                     }
                                 } message: {
@@ -104,6 +121,11 @@ struct AccountManagementView: View {
                 .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
                 .toolbar(.hidden, for: .tabBar)
+                .alert("탈퇴하지 못했어요", isPresented: $isShowingWithdrawError) {
+                    Button("확인", role: .cancel) { }
+                } message: {
+                    Text(withdrawErrorMessage)
+                }
                 .task {
                     if authViewModel.profile == nil {
                         await authViewModel.loadProfile()

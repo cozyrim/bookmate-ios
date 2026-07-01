@@ -207,7 +207,18 @@ final class AuthSessionViewModel: ObservableObject {
         errorMessage = nil
 
         do {
+            let provider = profile?.provider ?? currentUser?.provider
+            let shouldUnlinkKakao = provider?.uppercased() == "KAKAO"
+
             try await authAPIService.withdraw(token: token)
+
+            if shouldUnlinkKakao {
+                do {
+                    try await kakaoLoginService.unlink()
+                } catch {
+                    DebugLogger.log("카카오 연결 해제 실패:", error)
+                }
+            }
 
             await PushNotificationService.shared.disableCurrentTokenOnServer(accessToken: token)
             tokenStore.clear()
@@ -222,7 +233,7 @@ final class AuthSessionViewModel: ObservableObject {
                 return
             }
 
-            errorMessage = "회원 탈퇴에 실패했습니다."
+            errorMessage = error.bookMateUserMessage(fallback: "회원 탈퇴에 실패했습니다.")
             DebugLogger.log("회원 탈퇴 실패:", error)
         }
 
