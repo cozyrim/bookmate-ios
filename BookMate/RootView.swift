@@ -34,13 +34,13 @@ struct RootView: View {
 
                     ProgressView()
                 }
-            } else if authViewModel.isLoggedIn {
-                MainTabView(authViewModel: authViewModel)
-                    .environmentObject(authViewModel)
             } else if !hasSeenOnboarding {
                 OnboardingView {
                     hasSeenOnboarding = true
                 }
+            } else if authViewModel.isLoggedIn {
+                MainTabView(authViewModel: authViewModel)
+                    .environmentObject(authViewModel)
             } else {
                 LoginView(authViewModel: authViewModel)
             }

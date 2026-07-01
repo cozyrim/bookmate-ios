@@ -133,6 +133,19 @@ private struct OnboardingPageView: View {
     let page: OnboardingPage
 
     var body: some View {
+        switch page.layout {
+        case .legacy:
+            LegacyOnboardingPageView(page: page)
+        case .feature:
+            FeatureOnboardingPageView(page: page)
+        }
+    }
+}
+
+private struct LegacyOnboardingPageView: View {
+    let page: OnboardingPage
+
+    var body: some View {
         VStack(spacing: 24) {
             Spacer(minLength: 36)
 
@@ -158,58 +171,97 @@ private struct OnboardingPageView: View {
 
             switch page.visual {
             case .book:
-                OnboardingImageCard(
-                    imageName: "OnboardingBookBlue"
-                )
+                OnboardingImageCard(imageName: "OnboardingBookBlue")
             case .dictionary:
                 DictionarySearchIllustration()
             case .room:
-                OnboardingImageCard(
-                    imageName: "OnboardingRoomBlue"
-                )
+                OnboardingImageCard(imageName: "OnboardingRoomBlue")
+            case .waveGuestbook, .review, .notification:
+                EmptyView()
             }
 
             Spacer(minLength: 12)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(page.accessibilityLabel)
     }
 }
 
-private struct OnboardingPage: Identifiable {
-    enum Visual {
-        case book
-        case dictionary
-        case room
+private struct FeatureOnboardingPageView: View {
+    let page: OnboardingPage
+
+    var body: some View {
+        GeometryReader { proxy in
+            let imageWidth = min(proxy.size.width, CGFloat(324))
+            let imageHeight = min(max(proxy.size.height * 0.58, 330), CGFloat(430))
+
+            VStack(spacing: 24) {
+                Spacer(minLength: 36)
+
+                VStack(alignment: .leading, spacing: 18) {
+                    Text(page.title)
+                        .font(.system(size: 29, weight: .heavy))
+                        .foregroundStyle(page.titleColor)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.84)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineSpacing(4)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Text(page.subtitle)
+                        .font(.system(size: 19, weight: .medium))
+                        .foregroundStyle(Color("TextSecondary"))
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.86)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineSpacing(6)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                OnboardingVisualView(
+                    visual: page.visual,
+                    imageWidth: imageWidth,
+                    imageHeight: imageHeight
+                )
+                .accessibilityHidden(true)
+
+                Spacer(minLength: 12)
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(page.accessibilityLabel)
     }
+}
 
-    let id: String
-    let title: String
-    let subtitle: String
-    let titleColor: Color
-    let visual: Visual
+private struct OnboardingVisualView: View {
+    let visual: OnboardingPage.Visual
+    let imageWidth: CGFloat
+    let imageHeight: CGFloat
 
-    static let pages: [OnboardingPage] = [
-        OnboardingPage(
-            id: "remember",
-            title: "책에서 만난 단어를,\n잊지 않게.",
-            subtitle: "읽다가 멈추지 마세요.\n북메이트가 기억해드릴게요.",
-            titleColor: Color("Primary"),
-            visual: .book
-        ),
-        OnboardingPage(
-            id: "search",
-            title: "모르는 단어,\n바로 검색하세요.",
-            subtitle: "책을 읽다 막히는 순간,\n뜻을 찾고 단어장에 기록해보세요.",
-            titleColor: Color("TextPrimary"),
-            visual: .dictionary
-        ),
-        OnboardingPage(
-            id: "room",
-            title: "책장과 미니룸에서\n독서 기록을 모아보세요.",
-            subtitle: "읽은 책과 저장한 단어가\n나만의 공간에 차곡차곡 쌓여요.",
-            titleColor: Color("Primary"),
-            visual: .room
-        )
-    ]
+    var body: some View {
+        switch visual {
+        case .waveGuestbook:
+            Image("OnboardingWaveGuestbook")
+                .resizable()
+                .scaledToFill()
+                .frame(width: imageWidth, height: imageHeight)
+                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 32, style: .continuous)
+                        .stroke(Color("Surface").opacity(0.28), lineWidth: 1)
+                }
+                .shadow(color: Color("Shadow").opacity(0.16), radius: 24, y: 12)
+        case .review:
+            ReviewOnboardingVisual(width: imageWidth, height: imageHeight)
+        case .notification:
+            NotificationOnboardingVisual(width: imageWidth, height: imageHeight)
+        case .book, .dictionary, .room:
+            EmptyView()
+        }
+    }
 }
 
 private struct OnboardingImageCard: View {
@@ -297,6 +349,240 @@ private struct DictionarySearchIllustration: View {
         .shadow(color: Color("Shadow").opacity(0.045), radius: 18, y: 8)
         .padding(.top, 18)
     }
+}
+
+private struct ReviewOnboardingVisual: View {
+    let width: CGFloat
+    let height: CGFloat
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 36, style: .continuous)
+                .fill(Color("Surface").opacity(0.46))
+                .frame(width: width * 0.92, height: height * 0.84)
+                .offset(y: 12)
+
+            OnboardingScreenshotCard(
+                imageName: "OnboardingReviewList",
+                width: width * 0.68,
+                height: height * 0.78,
+                cornerRadius: 30,
+                alignment: .top
+            )
+            .opacity(0.92)
+            .offset(x: width * 0.08, y: -height * 0.08)
+
+            OnboardingReviewQuoteCard(width: width * 0.86)
+                .offset(y: height * 0.30)
+
+            HStack(spacing: 7) {
+                Image(systemName: "star.fill")
+                    .font(.caption.weight(.bold))
+                Text("공개 후기")
+                    .font(.caption.weight(.heavy))
+            }
+            .foregroundStyle(Color("PrimaryDeep"))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(Color("Surface").opacity(0.90), in: Capsule())
+            .shadow(color: Color("Shadow").opacity(0.12), radius: 12, y: 6)
+            .offset(x: -width * 0.27, y: -height * 0.30)
+        }
+        .frame(width: width, height: height)
+    }
+}
+
+private struct OnboardingReviewQuoteCard: View {
+    let width: CGFloat
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Circle()
+                .fill(Color("PrimarySoft").opacity(0.82))
+                .frame(width: 38, height: 38)
+                .overlay {
+                    Image(systemName: "person.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color("PrimaryDeep").opacity(0.74))
+                }
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 2) {
+                    ForEach(0..<5, id: \.self) { _ in
+                        Image(systemName: "star.fill")
+                            .font(.caption2.weight(.bold))
+                    }
+                }
+                .foregroundStyle(Color("Primary"))
+
+                Text("꿈을 향해 나아가는 여정을 쉽고 따뜻하게 풀어낸 책이에요.")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color("TextPrimary"))
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("책 검색에서 보이는 공개 후기")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Color("TextSecondary"))
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 15)
+        .padding(.vertical, 14)
+        .frame(width: width)
+        .background(Color("Surface").opacity(0.96), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Color("Surface").opacity(0.52), lineWidth: 1)
+        }
+        .shadow(color: Color("Shadow").opacity(0.13), radius: 16, y: 8)
+    }
+}
+
+private struct NotificationOnboardingVisual: View {
+    let width: CGFloat
+    let height: CGFloat
+
+    var body: some View {
+        VStack(spacing: 12) {
+            OnboardingScreenshotCard(
+                imageName: "OnboardingNotificationSettingsScreen",
+                width: width * 0.74,
+                height: height * 0.58,
+                cornerRadius: 30,
+                alignment: .top
+            )
+
+            VStack(spacing: 8) {
+                OnboardingBannerImage(
+                    imageName: "OnboardingNotificationReadingBanner",
+                    width: width * 0.82
+                )
+
+                OnboardingBannerImage(
+                    imageName: "OnboardingNotificationGuestbookBanner",
+                    width: width * 0.86
+                )
+            }
+        }
+        .frame(width: width, height: height)
+    }
+}
+
+private struct OnboardingScreenshotCard: View {
+    let imageName: String
+    let width: CGFloat
+    let height: CGFloat
+    let cornerRadius: CGFloat
+    var alignment: Alignment = .center
+
+    var body: some View {
+        Image(imageName)
+            .resizable()
+            .scaledToFill()
+            .frame(width: width, height: height, alignment: alignment)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(Color("Surface").opacity(0.38), lineWidth: 1)
+            }
+            .shadow(color: Color("Shadow").opacity(0.16), radius: 18, y: 10)
+    }
+}
+
+private struct OnboardingBannerImage: View {
+    let imageName: String
+    let width: CGFloat
+
+    var body: some View {
+        Image(imageName)
+            .resizable()
+            .scaledToFit()
+            .frame(width: width)
+            .shadow(color: Color("Shadow").opacity(0.14), radius: 12, y: 6)
+    }
+}
+
+private struct OnboardingPage: Identifiable {
+    enum Visual {
+        case book
+        case dictionary
+        case room
+        case waveGuestbook
+        case review
+        case notification
+    }
+
+    enum Layout {
+        case legacy
+        case feature
+    }
+
+    let id: String
+    let title: String
+    let subtitle: String
+    let titleColor: Color
+    let layout: Layout
+    let visual: Visual
+    let accessibilityLabel: String
+
+    static let pages: [OnboardingPage] = [
+        OnboardingPage(
+            id: "remember",
+            title: "책에서 만난 단어를,\n잊지 않게.",
+            subtitle: "읽다가 멈추지 마세요.\n북메이트가 기억해드릴게요.",
+            titleColor: Color("Primary"),
+            layout: .legacy,
+            visual: .book,
+            accessibilityLabel: "책에서 만난 단어를 잊지 않게. 읽다가 멈추지 마세요. 북메이트가 기억해드릴게요."
+        ),
+        OnboardingPage(
+            id: "search",
+            title: "모르는 단어,\n바로 검색하세요.",
+            subtitle: "책을 읽다 막히는 순간,\n뜻을 찾고 단어장에 기록해보세요.",
+            titleColor: Color("TextPrimary"),
+            layout: .legacy,
+            visual: .dictionary,
+            accessibilityLabel: "모르는 단어, 바로 검색하세요. 책을 읽다 막히는 순간 뜻을 찾고 단어장에 기록해보세요."
+        ),
+        OnboardingPage(
+            id: "room",
+            title: "서재에서\n독서 기록을 모아보세요.",
+            subtitle: "읽은 책과 저장한 단어가\n나만의 공간에 차곡차곡 쌓여요.",
+            titleColor: Color("Primary"),
+            layout: .legacy,
+            visual: .room,
+            accessibilityLabel: "서재에서 독서 기록을 모아보세요. 읽은 책과 저장한 단어가 나만의 공간에 차곡차곡 쌓여요."
+        ),
+        OnboardingPage(
+            id: "waveGuestbook",
+            title: "파도타기 / 방명록",
+            subtitle: "다른 사람의 서재를 타고\n새로운 책을 발견해요",
+            titleColor: Color("TextPrimary"),
+            layout: .feature,
+            visual: .waveGuestbook,
+            accessibilityLabel: "파도타기와 방명록. 다른 사람의 서재를 타고 새로운 책을 발견해요."
+        ),
+        OnboardingPage(
+            id: "reviewSearch",
+            title: "내 감상이\n다음 독자에게 닿도록",
+            subtitle: "완독 후 남긴 감상평을 공개하면\n책을 검색하는 사람도 볼 수 있어요",
+            titleColor: Color("TextPrimary"),
+            layout: .feature,
+            visual: .review,
+            accessibilityLabel: "내 감상이 다음 독자에게 닿도록. 완독 후 남긴 감상평을 공개하면 책을 검색하는 사람도 볼 수 있어요."
+        ),
+        OnboardingPage(
+            id: "notificationSettings",
+            title: "알림 설정",
+            subtitle: "읽을 시간과 새 소식을\n놓치지 않게 알려드려요",
+            titleColor: Color("TextPrimary"),
+            layout: .feature,
+            visual: .notification,
+            accessibilityLabel: "알림 설정. 읽을 시간과 새 소식을 놓치지 않게 알려드려요."
+        )
+    ]
 }
 
 #Preview {
