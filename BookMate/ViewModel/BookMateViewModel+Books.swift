@@ -71,7 +71,7 @@ extension BookMateViewModel {
 
     // 등록 초안으로 서버에 새 책을 저장하고 화면 상태에 즉시 반영한다.
     func registerBook(draft: BookRegistrationDraft) async throws -> Book {
-        guard !isBookAlreadyRegistered(draft) else {
+        guard registeredBook(for: draft) == nil else {
             operationErrorMessage = nil
             showToast("이미 등록된 책입니다.", style: .info)
             BMAnalytics.bookCreateFailed(source: bookRegistrationAnalyticsSource(for: draft), reason: "duplicate")
@@ -169,13 +169,14 @@ extension BookMateViewModel {
         return "title:\(normalizedTitle)|author:\(normalizedAuthor)"
     }
 
-    private func isBookAlreadyRegistered(_ draft: BookRegistrationDraft) -> Bool {
+    // 검색 결과나 등록 초안이 이미 내 책장에 있는 책인지 찾는다.
+    func registeredBook(for draft: BookRegistrationDraft) -> Book? {
         let draftTitle = normalizeBookIdentityText(draft.title)
         let draftAuthor = normalizeBookIdentityText(draft.author)
 
-        guard !draftTitle.isEmpty else { return false }
+        guard !draftTitle.isEmpty else { return nil }
 
-        return books.contains { book in
+        return books.first { book in
             let bookTitle = normalizeBookIdentityText(book.title)
             let bookAuthor = normalizeBookIdentityText(book.author)
             let authorMatches = draftAuthor.isEmpty
@@ -186,6 +187,11 @@ extension BookMateViewModel {
 
             return bookTitle == draftTitle && authorMatches
         }
+    }
+
+    // 책장 탭에서 해당 책 카드 위치로 이동하도록 요청한다.
+    func requestShelfBookPresentation(bookId: UUID) {
+        pendingShelfBookPresentationID = bookId
     }
 
     private func normalizeISBN(_ isbn: String) -> String {

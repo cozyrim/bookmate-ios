@@ -28,6 +28,10 @@ struct BookDiscoveryDetailView: View {
         return text.isEmpty ? "책 소개가 제공되지 않습니다." : text
     }
 
+    private var registeredBook: Book? {
+        viewModel.registeredBook(for: draft)
+    }
+
     var body: some View {
         ZStack {
             Color("AppBackground")
@@ -80,6 +84,24 @@ struct BookDiscoveryDetailView: View {
         .navigationTitle("북메이트")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
+            bottomAction
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(Color("AppBackground").opacity(0.96))
+        }
+    }
+
+    @ViewBuilder
+    private var bottomAction: some View {
+        if let registeredBook {
+            Button {
+                selectedTab = 1
+                viewModel.requestShelfBookPresentation(bookId: registeredBook.id)
+            } label: {
+                bottomActionLabel("내 책장에서 보기")
+            }
+            .buttonStyle(.plain)
+        } else {
             NavigationLink {
                 BookManualEntryView(
                     viewModel: viewModel,
@@ -88,18 +110,20 @@ struct BookDiscoveryDetailView: View {
                     onFinishRegistration: onFinishRegistration
                 )
             } label: {
-                Text("내 책장에 등록하기")
-                    .font(.headline)
-                    .foregroundStyle(Color("PrimaryButtonText"))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Color("Primary"))
-                    .clipShape(Capsule())
+                bottomActionLabel("내 책장에 등록하기")
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
-            .background(Color("AppBackground").opacity(0.96))
+            .buttonStyle(.plain)
         }
+    }
+
+    private func bottomActionLabel(_ title: String) -> some View {
+        Text(title)
+            .font(.headline)
+            .foregroundStyle(Color("PrimaryButtonText"))
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(Color("Primary"))
+            .clipShape(Capsule())
     }
 
     private var coverImage: some View {

@@ -18,6 +18,7 @@ struct ShelfView: View {
 
     @State private var activeBookSheet: BookActionSheet?
     @State private var shelfLayoutStyle: ShelfLayoutStyle = .grid
+    @State private var scrollTargetBookID: UUID?
 
     private enum ShelfLayoutStyle {
         case grid
@@ -94,8 +95,16 @@ struct ShelfView: View {
 
                         Spacer()
                     } else {
-                        ScrollView(showsIndicators: false) {
-                            shelfContent
+                        ScrollViewReader { scrollProxy in
+                            ScrollView(showsIndicators: false) {
+                                shelfContent
+                            }
+                            .onAppear {
+                                scrollToTargetBookIfNeeded(using: scrollProxy)
+                            }
+                            .onChange(of: scrollTargetBookID) { _, _ in
+                                scrollToTargetBookIfNeeded(using: scrollProxy)
+                            }
                         }
                     }
                 }
@@ -278,6 +287,38 @@ struct ShelfView: View {
                     }
                 }
             }
+            .onAppear {
+                presentPendingShelfBookIfNeeded()
+            }
+            .onChange(of: viewModel.pendingShelfBookPresentationID) { _, _ in
+                presentPendingShelfBookIfNeeded()
+            }
+        }
+    }
+
+    private func presentPendingShelfBookIfNeeded() {
+        guard let bookId = viewModel.pendingShelfBookPresentationID else { return }
+        guard viewModel.book(for: bookId) != nil else { return }
+
+        viewModel.pendingShelfBookPresentationID = nil
+
+        DispatchQueue.main.async {
+            path = NavigationPath()
+            scrollTargetBookID = bookId
+        }
+    }
+
+    private func scrollToTargetBookIfNeeded(using scrollProxy: ScrollViewProxy) {
+        guard let bookId = scrollTargetBookID else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.86)) {
+                scrollProxy.scrollTo(bookId, anchor: .center)
+            }
+
+            if scrollTargetBookID == bookId {
+                scrollTargetBookID = nil
+            }
         }
     }
 
@@ -289,6 +330,7 @@ struct ShelfView: View {
                 LazyVStack(spacing: 18) {
                     ForEach(shelfBooksForColumn(isLeftColumn: true)) { shelfBook in
                         shelfBookCard(for: shelfBook, style: .grid)
+                            .id(shelfBook.bookId)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -296,6 +338,7 @@ struct ShelfView: View {
                 LazyVStack(spacing: 18) {
                     ForEach(shelfBooksForColumn(isLeftColumn: false)) { shelfBook in
                         shelfBookCard(for: shelfBook, style: .grid)
+                            .id(shelfBook.bookId)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -309,6 +352,7 @@ struct ShelfView: View {
             LazyVStack(spacing: 16) {
                 ForEach(viewModel.shelfBooks) { shelfBook in
                     shelfBookCard(for: shelfBook, style: .list)
+                        .id(shelfBook.bookId)
                 }
             }
             .padding(.bottom, 110)

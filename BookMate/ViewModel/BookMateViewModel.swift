@@ -57,6 +57,9 @@ final class BookMateViewModel: ObservableObject {
     // 책 목록 조회 실패 메시지다.
     @Published var bookLoadErrorMessage: String?
 
+    // 다른 탭에서 책장 안의 특정 책으로 이동해 달라고 요청하는 1회성 상태다.
+    @Published var pendingShelfBookPresentationID: UUID?
+
     // MARK: - Word & Search State
 
     // 사용자가 책에 저장한 단어 목록이다.
