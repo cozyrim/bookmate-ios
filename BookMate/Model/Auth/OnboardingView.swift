@@ -190,10 +190,16 @@ private struct LegacyOnboardingPageView: View {
 private struct FeatureOnboardingPageView: View {
     let page: OnboardingPage
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     var body: some View {
         GeometryReader { proxy in
-            let imageWidth = min(proxy.size.width, CGFloat(324))
-            let imageHeight = min(max(proxy.size.height * 0.58, 330), CGFloat(430))
+            let isIPadReviewPage = horizontalSizeClass == .regular && page.visual == .review
+            let maxImageWidth = isIPadReviewPage ? CGFloat(440) : CGFloat(324)
+            let maxImageHeight = isIPadReviewPage ? CGFloat(530) : CGFloat(430)
+            let imageHeightRatio = isIPadReviewPage ? CGFloat(0.72) : CGFloat(0.58)
+            let imageWidth = min(proxy.size.width, maxImageWidth)
+            let imageHeight = min(max(proxy.size.height * imageHeightRatio, 330), maxImageHeight)
 
             VStack(spacing: 24) {
                 Spacer(minLength: 36)
@@ -352,6 +358,53 @@ private struct DictionarySearchIllustration: View {
 }
 
 private struct ReviewOnboardingVisual: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    let width: CGFloat
+    let height: CGFloat
+
+    var body: some View {
+        if horizontalSizeClass == .regular {
+            OnboardingIPadReviewVisual(width: width, height: height)
+        } else {
+            ZStack {
+                RoundedRectangle(cornerRadius: 36, style: .continuous)
+                    .fill(Color("Surface").opacity(0.46))
+                    .frame(width: width * 0.92, height: height * 0.84)
+                    .offset(y: 12)
+
+                OnboardingScreenshotCard(
+                    imageName: "OnboardingReviewList",
+                    width: width * 0.68,
+                    height: height * 0.78,
+                    cornerRadius: 30,
+                    alignment: .top
+                )
+                .opacity(0.92)
+                .offset(x: width * 0.08, y: -height * 0.08)
+
+                OnboardingReviewQuoteCard(width: width * 0.86)
+                    .offset(y: height * 0.30)
+
+                HStack(spacing: 7) {
+                    Image(systemName: "star.fill")
+                        .font(.caption.weight(.bold))
+                    Text("공개 후기")
+                        .font(.caption.weight(.heavy))
+                }
+                .foregroundStyle(Color("PrimaryDeep"))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(Color("Surface").opacity(0.90), in: Capsule())
+                .shadow(color: Color("Shadow").opacity(0.12), radius: 12, y: 6)
+                .offset(x: -width * 0.27, y: -height * 0.30)
+            }
+            .frame(width: width, height: height)
+        }
+    }
+}
+
+private struct OnboardingIPadReviewVisual: View {
     let width: CGFloat
     let height: CGFloat
 
@@ -362,18 +415,15 @@ private struct ReviewOnboardingVisual: View {
                 .frame(width: width * 0.92, height: height * 0.84)
                 .offset(y: 12)
 
-            OnboardingScreenshotCard(
-                imageName: "OnboardingReviewList",
-                width: width * 0.68,
-                height: height * 0.78,
-                cornerRadius: 30,
-                alignment: .top
+            OnboardingIPadReviewScreenshotCard(
+                width: width * 0.94,
+                height: height * 0.76
             )
             .opacity(0.92)
-            .offset(x: width * 0.08, y: -height * 0.08)
+            .offset(x: width * 0.03, y: -height * 0.08)
 
-            OnboardingReviewQuoteCard(width: width * 0.86)
-                .offset(y: height * 0.30)
+            OnboardingReviewQuoteCard(width: width * 0.92)
+                .offset(y: height * 0.28)
 
             HStack(spacing: 7) {
                 Image(systemName: "star.fill")
@@ -386,9 +436,34 @@ private struct ReviewOnboardingVisual: View {
             .padding(.vertical, 9)
             .background(Color("Surface").opacity(0.90), in: Capsule())
             .shadow(color: Color("Shadow").opacity(0.12), radius: 12, y: 6)
-            .offset(x: -width * 0.27, y: -height * 0.30)
+            .offset(x: -width * 0.25, y: -height * 0.28)
         }
         .frame(width: width, height: height)
+    }
+}
+
+private struct OnboardingIPadReviewScreenshotCard: View {
+    let width: CGFloat
+    let height: CGFloat
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 36, style: .continuous)
+                .fill(Color("Surface").opacity(0.86))
+
+            Image("OnboardingReviewListIPad")
+                .resizable()
+                .scaledToFit()
+                .frame(width: width * 1.04)
+                .offset(y: height * 0.03)
+        }
+        .frame(width: width, height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 36, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 36, style: .continuous)
+                .stroke(Color("Primary").opacity(0.12), lineWidth: 1.2)
+        }
+        .shadow(color: Color("Shadow").opacity(0.16), radius: 20, y: 10)
     }
 }
 
