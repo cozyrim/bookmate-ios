@@ -102,6 +102,7 @@ struct MiniRoomSceneView: View {
 
 private struct MiniRoomCanvas: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     let theme: MiniRoomTheme
     let books: [Book]
@@ -136,12 +137,16 @@ private struct MiniRoomCanvas: View {
             let guestbookX = min(width - 88, max(88, width / 2 - canvasWidth * 0.25))
             let guestbookY = min(canvasTop + canvasHeight * 0.81, availableHeight - 64)
             let actionButtonsX = min(width - 104, max(178, width / 2 + canvasWidth * 0.20))
-            let actionButtonsY = canvasTop + min(max(52, canvasHeight * 0.073), 66)
+            let defaultActionButtonsY = canvasTop + min(max(52, canvasHeight * 0.073), 66)
+            let liftedActionButtonsY = max(64, canvasTop - min(62, max(36, canvasTop * 0.12)))
+            let actionButtonsY = horizontalSizeClass == .regular && canvasTop > 140
+                ? liftedActionButtonsY
+                : defaultActionButtonsY
 
             ZStack(alignment: .top) {
-                if let topExtensionImageName = theme.topExtensionImageName, canvasTop > 1 {
+                if canvasTop > 1 {
                     topExtensionImage(
-                        topExtensionImageName,
+                        theme.topExtensionImageName,
                         canvasWidth: canvasWidth,
                         visibleHeight: canvasTop,
                         overlap: topExtensionOverlap,

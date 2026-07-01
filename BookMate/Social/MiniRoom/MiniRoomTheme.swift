@@ -66,12 +66,12 @@ enum MiniRoomTheme: String, CaseIterable, Identifiable {
         }
     }
 
-    var topExtensionImageName: String? {
+    var topExtensionImageName: String {
         switch self {
         case .basic, .pink, .mint:
             return "MiniRoomLayeredRoomTopExtension"
         case .dark:
-            return nil
+            return "MiniRoomLayeredRoomTopExtensionDark"
         }
     }
 
