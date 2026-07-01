@@ -17,8 +17,24 @@ struct AccountManagementView: View {
             authViewModel.profile
         }
 
-        private var emailText: String {
-            profile?.email ?? "이메일 정보 없음"
+        private var isKakaoAccount: Bool {
+            profile?.provider.uppercased() == "KAKAO"
+        }
+
+        private var accountInfoIconName: String {
+            isKakaoAccount ? "person.crop.circle" : "envelope"
+        }
+
+        private var accountInfoTitle: String {
+            isKakaoAccount ? "연결 계정" : "이메일"
+        }
+
+        private var accountInfoText: String {
+            if let email = profile?.email, !email.isEmpty {
+                return email
+            }
+
+            return "이메일 정보 없음"
         }
 
         private var providerText: String {
@@ -53,10 +69,11 @@ struct AccountManagementView: View {
                             VStack(spacing: 24) {
                                 SettingsSectionCard(title: "계정 정보") {
                                     SettingsValueRow(
-                                        iconName: "envelope",
-                                        title: "이메일",
-                                        value: emailText,
-                                        showsChevron: false
+                                        iconName: accountInfoIconName,
+                                        title: accountInfoTitle,
+                                        value: accountInfoText,
+                                        showsChevron: false,
+                                        valueLineLimit: nil
                                     )
 
                                     SettingsDivider()

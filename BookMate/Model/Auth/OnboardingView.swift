@@ -147,27 +147,9 @@ private struct LegacyOnboardingPageView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Spacer(minLength: 36)
+            OnboardingTopSpacer()
 
-            VStack(alignment: .leading, spacing: 18) {
-                Text(page.title)
-                    .font(.system(size: 29, weight: .heavy))
-                    .foregroundStyle(page.titleColor)
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.84)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .lineSpacing(4)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text(page.subtitle)
-                    .font(.system(size: 19, weight: .medium))
-                    .foregroundStyle(Color("TextSecondary"))
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.86)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .lineSpacing(6)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            OnboardingCopyBlock(page: page)
 
             switch page.visual {
             case .book:
@@ -194,38 +176,19 @@ private struct FeatureOnboardingPageView: View {
 
     var body: some View {
         GeometryReader { proxy in
+            let usesRegularReviewVisual = horizontalSizeClass == .regular && page.visual == .review
             let usesRegularFeatureVisual = horizontalSizeClass == .regular
                 && (page.visual == .review || page.visual == .notification)
             let maxImageWidth = usesRegularFeatureVisual ? CGFloat(440) : CGFloat(324)
-            let maxImageHeight = usesRegularFeatureVisual ? CGFloat(530) : CGFloat(430)
-            let imageHeightRatio = usesRegularFeatureVisual ? CGFloat(0.72) : CGFloat(0.58)
+            let maxImageHeight = usesRegularReviewVisual ? CGFloat(620) : (usesRegularFeatureVisual ? CGFloat(530) : CGFloat(430))
+            let imageHeightRatio = usesRegularReviewVisual ? CGFloat(0.82) : (usesRegularFeatureVisual ? CGFloat(0.72) : CGFloat(0.58))
             let imageWidth = min(proxy.size.width, maxImageWidth)
             let imageHeight = min(max(proxy.size.height * imageHeightRatio, 330), maxImageHeight)
 
             VStack(spacing: 24) {
-                Spacer(minLength: 36)
+                OnboardingTopSpacer()
 
-                VStack(alignment: .leading, spacing: 18) {
-                    Text(page.title)
-                        .font(.system(size: 29, weight: .heavy))
-                        .foregroundStyle(page.titleColor)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(3)
-                        .minimumScaleFactor(0.84)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineSpacing(4)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                    Text(page.subtitle)
-                        .font(.system(size: 19, weight: .medium))
-                        .foregroundStyle(Color("TextSecondary"))
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(3)
-                        .minimumScaleFactor(0.86)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineSpacing(6)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                OnboardingCopyBlock(page: page)
 
                 OnboardingVisualView(
                     visual: page.visual,
@@ -240,6 +203,51 @@ private struct FeatureOnboardingPageView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(page.accessibilityLabel)
+    }
+}
+
+private struct OnboardingTopSpacer: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    var body: some View {
+        if horizontalSizeClass == .regular {
+            Color.clear
+                .frame(height: 198)
+        } else {
+            Spacer(minLength: 36)
+        }
+    }
+}
+
+private struct OnboardingCopyBlock: View {
+    let page: OnboardingPage
+
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text(page.title)
+                .font(.system(size: 29, weight: .heavy))
+                .foregroundStyle(page.titleColor)
+                .multilineTextAlignment(.leading)
+                .lineLimit(3)
+                .minimumScaleFactor(0.84)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(4)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text(page.subtitle)
+                .font(.system(size: 19, weight: .medium))
+                .foregroundStyle(Color("TextSecondary"))
+                .multilineTextAlignment(.leading)
+                .lineLimit(3)
+                .minimumScaleFactor(0.86)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(height: horizontalSizeClass == .regular ? 152 : nil, alignment: .topLeading)
     }
 }
 
@@ -418,7 +426,7 @@ private struct OnboardingIPadReviewVisual: View {
 
             OnboardingIPadReviewScreenshotCard(
                 width: width * 0.94,
-                height: height * 0.76
+                height: height * 0.88
             )
             .opacity(0.92)
             .offset(x: width * 0.03, y: -height * 0.08)
@@ -456,7 +464,7 @@ private struct OnboardingIPadReviewScreenshotCard: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: width * 1.04)
-                .offset(y: height * 0.03)
+                .frame(width: width, height: height, alignment: .top)
         }
         .frame(width: width, height: height)
         .clipShape(RoundedRectangle(cornerRadius: 36, style: .continuous))

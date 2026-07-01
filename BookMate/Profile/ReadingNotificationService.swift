@@ -5,6 +5,7 @@
 //  Created by 한채림 on 6/3/26.
 //
 
+import Foundation
 import UserNotifications
 
 final class ReadingNotificationService {
@@ -16,6 +17,10 @@ final class ReadingNotificationService {
     private let testReminderIdentifier = "test-reading-reminder"
     private let continueReadingEnabledKey = "continueReadingReminderEnabled"
     private let continueReadingDaysKey = "continueReadingReminderDays"
+    private let readingReminderHourKey = "readingReminderHour"
+    private let readingReminderMinuteKey = "readingReminderMinute"
+    private let defaultReminderHour = 21
+    private let defaultReminderMinute = 0
     
     private init() {}
     
@@ -85,10 +90,12 @@ final class ReadingNotificationService {
         content.sound = .default
         content.userInfo = continueReadingUserInfo(book: book)
 
-        let trigger = UNTimeIntervalNotificationTrigger(
-            timeInterval: TimeInterval(safeDays) * 24 * 60 * 60,
-            repeats: false
+        let triggerDate = continueReadingReminderDate(afterDays: safeDays)
+        let triggerComponents = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute],
+            from: triggerDate
         )
+        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerComponents, repeats: false)
 
         let request = UNNotificationRequest(
             identifier: continueReadingReminderIdentifier,
@@ -98,7 +105,7 @@ final class ReadingNotificationService {
 
         do {
             try await UNUserNotificationCenter.current().add(request)
-            DebugLogger.log("이어보기 알림 예약 완료:", safeDays)
+            DebugLogger.log("이어보기 알림 예약 완료:", safeDays, triggerDate)
         } catch {
             DebugLogger.log("이어보기 알림 예약 실패:", error)
         }
@@ -142,6 +149,33 @@ final class ReadingNotificationService {
     private var continueReadingReminderDays: Int {
         let savedDays = UserDefaults.standard.integer(forKey: continueReadingDaysKey)
         return savedDays == 0 ? 3 : savedDays
+    }
+
+    private func continueReadingReminderDate(afterDays days: Int) -> Date {
+        let calendar = Calendar.current
+        let baseDate = calendar.date(byAdding: .day, value: days, to: Date()) ?? Date()
+        let time = continueReadingReminderTime()
+
+        return calendar.date(
+            bySettingHour: time.hour,
+            minute: time.minute,
+            second: 0,
+            of: baseDate
+        ) ?? baseDate
+    }
+
+    private func continueReadingReminderTime() -> (hour: Int, minute: Int) {
+        let defaults = UserDefaults.standard
+        let savedHour = defaults.object(forKey: readingReminderHourKey) as? Int
+        let savedMinute = defaults.object(forKey: readingReminderMinuteKey) as? Int
+
+        let hour = savedHour ?? defaultReminderHour
+        let minute = savedMinute ?? defaultReminderMinute
+
+        return (
+            hour: min(max(hour, 0), 23),
+            minute: min(max(minute, 0), 59)
+        )
     }
 
     private func continueReadingMessage(book: Book?, shelfBook: ShelfBook?) -> (title: String, body: String) {

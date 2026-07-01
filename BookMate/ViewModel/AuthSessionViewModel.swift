@@ -20,6 +20,7 @@ final class AuthSessionViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var isCheckingSession = true
     @Published var errorMessage: String?
+    @Published var accountDeletionSuccessMessage: String?
 
     // 프로필 화면에서 보여줄 사용자 상세 정보를 저장한다.
     @Published var profile: ProfileResponse?
@@ -225,6 +226,7 @@ final class AuthSessionViewModel: ObservableObject {
             currentUser = nil
             profile = nil
             isLoggedIn = false
+            accountDeletionSuccessMessage = "회원 탈퇴가 완료되었어요."
             BMAnalytics.setUser(nil)
             BMAnalytics.logoutCompleted()
         } catch {
@@ -233,7 +235,7 @@ final class AuthSessionViewModel: ObservableObject {
                 return
             }
 
-            errorMessage = error.bookMateUserMessage(fallback: "회원 탈퇴에 실패했습니다.")
+            errorMessage = "잠시 후 다시 시도해 주세요."
             DebugLogger.log("회원 탈퇴 실패:", error)
         }
 

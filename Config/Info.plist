@@ -11,7 +11,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>Bookmate</string>
 	<key>CFBundleDisplayName</key>
 	<string>북메이트</string>
 	<key>CFBundlePackageType</key>

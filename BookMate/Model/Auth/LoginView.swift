@@ -33,8 +33,7 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             ZStack{
-                Color("AppBackground")
-                    .ignoresSafeArea()
+                AppBackgroundView()
                 
                 VStack(spacing: 20) {
                     Image("BookMatePlainIcon")
@@ -45,7 +44,7 @@ struct LoginView: View {
                         .shadow(color: Color("Shadow").opacity(0.08), radius: 18, x: 0, y: 8)
                         .padding(.bottom, 4)
 
-                    Text("북메이트")
+                    Text("Bookmate")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundStyle(Color("TextSecondary"))

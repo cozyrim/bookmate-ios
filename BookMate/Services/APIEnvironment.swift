@@ -62,6 +62,11 @@ enum APIEnvironment {
         }
 
         let host = components.host ?? ""
+        if host.hasSuffix("kakaocdn.net") {
+            components.scheme = "https"
+            return components.url
+        }
+
         let isLocalServer = host == simulatorHost
             || host == physicalDeviceHost
             || host == "localhost"

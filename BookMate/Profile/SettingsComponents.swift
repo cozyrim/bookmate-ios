@@ -103,6 +103,7 @@ struct SettingsValueRow: View {
     let title: String
     let value: String
     var showsChevron = true
+    var valueLineLimit: Int? = 1
 
     var body: some View {
         HStack(spacing: 16) {
@@ -112,13 +113,19 @@ struct SettingsValueRow: View {
                 .font(.callout)
                 .fontWeight(.semibold)
                 .foregroundStyle(Color("TextPrimary"))
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .layoutPriority(2)
 
             Spacer()
 
             Text(value)
                 .font(.callout)
                 .foregroundStyle(Color("TextSecondary").opacity(0.78))
-                .lineLimit(1)
+                .lineLimit(valueLineLimit)
+                .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
+                .layoutPriority(1)
 
             if showsChevron {
                 Image(systemName: "chevron.right")

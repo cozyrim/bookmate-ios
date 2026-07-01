@@ -19,6 +19,18 @@ enum KakaoLoginError: Error {
 
 final class KakaoLoginService {
     func login() async throws -> String {
+        try await requestToken { completion in
+            if UserApi.isKakaoTalkLoginAvailable() {
+                UserApi.shared.loginWithKakaoTalk(completion: completion)
+            } else {
+                UserApi.shared.loginWithKakaoAccount(completion: completion)
+            }
+        }
+    }
+
+    private func requestToken(
+        _ startLogin: (@escaping (OAuthToken?, Error?) -> Void) -> Void
+    ) async throws -> String {
         try await withCheckedThrowingContinuation { continuation in
             let completion: (OAuthToken?, Error?) -> Void = { oauthToken, error in
                 if let error {
@@ -33,11 +45,8 @@ final class KakaoLoginService {
                 
                 continuation.resume(returning: accessToken)
             }
-            if UserApi.isKakaoTalkLoginAvailable() {
-                UserApi.shared.loginWithKakaoTalk(completion: completion)
-            } else {
-                UserApi.shared.loginWithKakaoAccount(completion: completion)
-            }
+
+            startLogin(completion)
         }
     }
 

@@ -668,7 +668,7 @@ struct HomeView: View {
         HStack(alignment: .top, spacing: 14) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 7) {
-                    Text("BookMate 오늘 만난 문장")
+                    Text("Bookmate 오늘 만난 문장")
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundStyle(Color("TextSecondary"))

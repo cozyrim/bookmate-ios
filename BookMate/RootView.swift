@@ -21,6 +21,7 @@ import SwiftUI
 struct RootView: View {
     @StateObject private var authViewModel = AuthSessionViewModel()
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @State private var toast: AppToast?
 //    RootView가 AuthSessionViewModel을 처음 만들고 소유한다.
 //    앱의 로그인 상태는 RootView가 들고 있는다.
 
@@ -47,6 +48,12 @@ struct RootView: View {
         }
         .phoneWidthOnWideScreens()
         .dismissKeyboardOnTap()
+        .appToast($toast)
+        .onChange(of: authViewModel.accountDeletionSuccessMessage) { _, message in
+            guard let message else { return }
+            toast = AppToast(message: message, style: .success)
+            authViewModel.accountDeletionSuccessMessage = nil
+        }
     }
 }
 #Preview {

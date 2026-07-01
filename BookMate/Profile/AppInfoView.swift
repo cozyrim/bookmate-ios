@@ -83,7 +83,7 @@ struct AppInfoView: View {
                             }
                         }
 
-                        Text("© 2026 BookMate")
+                        Text("© 2026 Bookmate")
                             .font(.caption)
                             .foregroundStyle(Color("TextMuted"))
                             .padding(.top, 8)

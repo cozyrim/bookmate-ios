@@ -174,7 +174,7 @@ struct NotificationSettingsView: View {
                 UIApplication.shared.open(url)
             }
         } message: {
-            Text("알림을 받으려면 iPhone 설정에서 BookMate 알림 권한을 켜주세요.")
+            Text("알림을 받으려면 iPhone 설정에서 Bookmate 알림 권한을 켜주세요.")
         }
 
 
