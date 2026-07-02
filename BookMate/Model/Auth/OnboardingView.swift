@@ -179,14 +179,18 @@ private struct FeatureOnboardingPageView: View {
             let usesRegularReviewVisual = horizontalSizeClass == .regular && page.visual == .review
             let usesRegularFeatureVisual = horizontalSizeClass == .regular
                 && (page.visual == .review || page.visual == .notification)
+            let usesTallCompactReviewVisual = horizontalSizeClass != .regular
+                && page.visual == .review
+                && proxy.size.height > 1_000
             let maxImageWidth = usesRegularFeatureVisual ? CGFloat(440) : CGFloat(324)
-            let maxImageHeight = usesRegularReviewVisual ? CGFloat(620) : (usesRegularFeatureVisual ? CGFloat(530) : CGFloat(430))
-            let imageHeightRatio = usesRegularReviewVisual ? CGFloat(0.82) : (usesRegularFeatureVisual ? CGFloat(0.72) : CGFloat(0.58))
+            let maxImageHeight = usesRegularReviewVisual ? CGFloat(580) : (usesRegularFeatureVisual ? CGFloat(530) : CGFloat(430))
+            let imageHeightRatio = usesRegularReviewVisual ? CGFloat(0.76) : (usesRegularFeatureVisual ? CGFloat(0.72) : CGFloat(0.58))
             let imageWidth = min(proxy.size.width, maxImageWidth)
             let imageHeight = min(max(proxy.size.height * imageHeightRatio, 330), maxImageHeight)
+            let visualYOffset = (usesRegularReviewVisual || usesTallCompactReviewVisual) ? CGFloat(-22) : CGFloat(0)
 
             VStack(spacing: 24) {
-                OnboardingTopSpacer()
+                OnboardingTopSpacer(compactFixedHeight: usesTallCompactReviewVisual ? 78 : nil)
 
                 OnboardingCopyBlock(page: page)
 
@@ -195,6 +199,7 @@ private struct FeatureOnboardingPageView: View {
                     imageWidth: imageWidth,
                     imageHeight: imageHeight
                 )
+                .offset(y: visualYOffset)
                 .accessibilityHidden(true)
 
                 Spacer(minLength: 12)
@@ -207,12 +212,17 @@ private struct FeatureOnboardingPageView: View {
 }
 
 private struct OnboardingTopSpacer: View {
+    var compactFixedHeight: CGFloat? = nil
+
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
         if horizontalSizeClass == .regular {
             Color.clear
                 .frame(height: 198)
+        } else if let compactFixedHeight {
+            Color.clear
+                .frame(height: compactFixedHeight)
         } else {
             Spacer(minLength: 36)
         }
@@ -425,14 +435,14 @@ private struct OnboardingIPadReviewVisual: View {
                 .offset(y: 12)
 
             OnboardingIPadReviewScreenshotCard(
-                width: width * 0.94,
-                height: height * 0.88
+                width: width * 0.90,
+                height: height * 0.82
             )
             .opacity(0.92)
-            .offset(x: width * 0.03, y: -height * 0.08)
+            .offset(x: width * 0.03, y: -height * 0.04)
 
             OnboardingReviewQuoteCard(width: width * 0.92)
-                .offset(y: height * 0.28)
+                .offset(y: height * 0.27)
 
             HStack(spacing: 7) {
                 Image(systemName: "star.fill")
@@ -445,7 +455,7 @@ private struct OnboardingIPadReviewVisual: View {
             .padding(.vertical, 9)
             .background(Color("Surface").opacity(0.90), in: Capsule())
             .shadow(color: Color("Shadow").opacity(0.12), radius: 12, y: 6)
-            .offset(x: -width * 0.25, y: -height * 0.28)
+            .offset(x: -width * 0.25, y: -height * 0.25)
         }
         .frame(width: width, height: height)
     }
