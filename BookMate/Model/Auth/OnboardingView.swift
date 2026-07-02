@@ -176,9 +176,14 @@ private struct FeatureOnboardingPageView: View {
 
     var body: some View {
         GeometryReader { proxy in
+            let usesRegularLandscapeLayout = horizontalSizeClass == .regular
+                && proxy.size.width > proxy.size.height
             let usesRegularReviewVisual = horizontalSizeClass == .regular && page.visual == .review
             let usesRegularFeatureVisual = horizontalSizeClass == .regular
                 && (page.visual == .review || page.visual == .notification)
+            let usesTallCompactFeatureVisual = horizontalSizeClass != .regular
+                && (page.visual == .review || page.visual == .notification)
+                && proxy.size.height > 1_000
             let usesTallCompactReviewVisual = horizontalSizeClass != .regular
                 && page.visual == .review
                 && proxy.size.height > 1_000
@@ -187,24 +192,46 @@ private struct FeatureOnboardingPageView: View {
             let imageHeightRatio = usesRegularReviewVisual ? CGFloat(0.76) : (usesRegularFeatureVisual ? CGFloat(0.72) : CGFloat(0.58))
             let imageWidth = min(proxy.size.width, maxImageWidth)
             let imageHeight = min(max(proxy.size.height * imageHeightRatio, 330), maxImageHeight)
-            let visualYOffset = (usesRegularReviewVisual || usesTallCompactReviewVisual) ? CGFloat(-22) : CGFloat(0)
+            let visualYOffset = (usesRegularFeatureVisual || usesTallCompactFeatureVisual) ? CGFloat(-22) : CGFloat(0)
+            let landscapeHorizontalPadding = min(proxy.size.width * 0.06, 56)
+            let landscapeAvailableWidth = proxy.size.width - (landscapeHorizontalPadding * 2)
+            let landscapeSpacing = min(max(proxy.size.width * 0.04, 28), 44)
+            let landscapeCopyWidth = min(max(landscapeAvailableWidth * 0.36, 250), 340)
+            let landscapeImageWidth = min(max(landscapeAvailableWidth - landscapeCopyWidth - landscapeSpacing, 300), 440)
+            let landscapeImageHeight = min(max(proxy.size.height * 0.78, 360), 500)
 
-            VStack(spacing: 24) {
-                OnboardingTopSpacer(compactFixedHeight: usesTallCompactReviewVisual ? 78 : nil)
+            if usesRegularLandscapeLayout {
+                HStack(alignment: .center, spacing: landscapeSpacing) {
+                    OnboardingCopyBlock(page: page)
+                        .frame(width: landscapeCopyWidth, alignment: .leading)
 
-                OnboardingCopyBlock(page: page)
+                    OnboardingVisualView(
+                        visual: page.visual,
+                        imageWidth: landscapeImageWidth,
+                        imageHeight: landscapeImageHeight
+                    )
+                    .accessibilityHidden(true)
+                }
+                .padding(.horizontal, landscapeHorizontalPadding)
+                .frame(width: proxy.size.width, height: proxy.size.height)
+            } else {
+                VStack(spacing: 24) {
+                    OnboardingTopSpacer(compactFixedHeight: usesTallCompactReviewVisual ? 78 : nil)
 
-                OnboardingVisualView(
-                    visual: page.visual,
-                    imageWidth: imageWidth,
-                    imageHeight: imageHeight
-                )
-                .offset(y: visualYOffset)
-                .accessibilityHidden(true)
+                    OnboardingCopyBlock(page: page)
 
-                Spacer(minLength: 12)
+                    OnboardingVisualView(
+                        visual: page.visual,
+                        imageWidth: imageWidth,
+                        imageHeight: imageHeight
+                    )
+                    .offset(y: visualYOffset)
+                    .accessibilityHidden(true)
+
+                    Spacer(minLength: 12)
+                }
+                .frame(width: proxy.size.width, height: proxy.size.height)
             }
-            .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(page.accessibilityLabel)
