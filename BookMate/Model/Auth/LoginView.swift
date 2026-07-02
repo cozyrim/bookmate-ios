@@ -126,10 +126,12 @@ struct LoginView: View {
                         }
                     }
                     .signInWithAppleButtonStyle(.black)
+                    .environment(\.locale, Locale(identifier: "ko_KR"))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 56)
+                    .frame(height: 52)
                     .clipShape(Capsule())
                     .disabled(authViewModel.isLoading)
+                    .accessibilityLabel("Apple로 로그인")
                     
                     NavigationLink {
                         SignupView(authViewModel: authViewModel)
