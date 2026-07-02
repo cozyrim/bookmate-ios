@@ -48,17 +48,42 @@ struct APIClient {
     /// 서버 응답 상태 코드를 검증해요.
     /// - 401: APIError.unauthorized
     /// - 2xx 이외: APIError.badStatusCode
-    func validate(_ response: URLResponse) throws {
+    func validate(
+        _ response: URLResponse,
+        data: Data? = nil,
+        treatsUnauthorizedAsExpiredSession: Bool = true
+    ) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
 
         if httpResponse.statusCode == 401 {
+            if !treatsUnauthorizedAsExpiredSession {
+                throw APIError.serverStatusCode(httpResponse.statusCode, errorMessage(from: data))
+            }
+
             throw APIError.unauthorized
         }
 
         guard (200..<300).contains(httpResponse.statusCode) else {
+            if let data {
+                throw APIError.serverStatusCode(httpResponse.statusCode, errorMessage(from: data))
+            }
+
             throw APIError.badStatusCode(httpResponse.statusCode)
         }
+    }
+
+    private func errorMessage(from data: Data?) -> String? {
+        guard let data, !data.isEmpty else {
+            return nil
+        }
+
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+
+        return object["message"] as? String
+            ?? object["error"] as? String
     }
 }

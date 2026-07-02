@@ -121,7 +121,7 @@ struct AuthAPIService {
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
-        try client.validate(response)
+        try client.validate(response, data: data, treatsUnauthorizedAsExpiredSession: false)
 
         return try JSONDecoder().decode(AuthResponse.self, from: data)
     }

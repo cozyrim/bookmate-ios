@@ -7,13 +7,18 @@
 
 import SwiftUI
 import AuthenticationServices
+import UIKit
 
 struct LoginView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
     
     @State private var email = ""
     @State private var password = ""
+    @State private var appleAuthorizationCoordinator = AppleAuthorizationCoordinator()
     @FocusState private var focusedField: LoginField?
+    
+    private static let loginButtonFont = Font.system(size: 18, weight: .bold)
+    private static let loginButtonHeight: CGFloat = 56
     
     private enum LoginField {
         case email
@@ -26,6 +31,21 @@ struct LoginView: View {
                 email: email,
                 password: password
             )
+        }
+    }
+
+    private func startAppleLogin() {
+        appleAuthorizationCoordinator.start { result in
+            switch result {
+            case .success(let authorization):
+                Task {
+                    await authViewModel.loginWithApple(authorization: authorization)
+                }
+            case .failure(let error):
+                Task { @MainActor in
+                    authViewModel.handleAppleAuthorizationFailure(error)
+                }
+            }
         }
     }
     
@@ -83,9 +103,9 @@ struct LoginView: View {
                         submitLogin()
                     } label: {
                         Text(authViewModel.isLoading ? "로그인 중..." : "로그인")
-                            .fontWeight(.bold)
+                            .font(Self.loginButtonFont)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 56)
+                            .frame(height: Self.loginButtonHeight)
                             .background(Color("Primary"))
                             .foregroundStyle(Color("PrimaryButtonText"))
                             .clipShape(Capsule())
@@ -101,35 +121,32 @@ struct LoginView: View {
                             Image(systemName: "message.fill")
 
                             Text("카카오로 로그인")
-                                .fontWeight(.bold)
                         }
+                        .font(Self.loginButtonFont)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 56)
+                        .frame(height: Self.loginButtonHeight)
                         .background(Color(red: 1.0, green: 0.90, blue: 0.0))
                         .foregroundStyle(Color("LightButtonText").opacity(0.88))
                         .clipShape(Capsule())
                     }
                     .disabled(authViewModel.isLoading)
 
-                    SignInWithAppleButton(.signIn) { request in
-                        request.requestedScopes = [.fullName, .email]
-                    } onCompletion: { result in
-                        switch result {
-                        case .success(let authorization):
-                            Task {
-                                await authViewModel.loginWithApple(authorization: authorization)
-                            }
-                        case .failure(let error):
-                            Task { @MainActor in
-                                authViewModel.handleAppleAuthorizationFailure(error)
-                            }
+                    Button {
+                        startAppleLogin()
+                    } label: {
+                        HStack {
+                            Image(systemName: "apple.logo")
+
+                            Text("Apple로 로그인")
                         }
+                        .font(Self.loginButtonFont)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: Self.loginButtonHeight)
+                        .background(Color.black)
+                        .foregroundStyle(Color.white)
+                        .clipShape(Capsule())
                     }
-                    .signInWithAppleButtonStyle(.black)
-                    .environment(\.locale, Locale(identifier: "ko_KR"))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .clipShape(Capsule())
+                    .buttonStyle(.plain)
                     .disabled(authViewModel.isLoading)
                     .accessibilityLabel("Apple로 로그인")
                     
@@ -156,4 +173,64 @@ struct LoginView: View {
 }
 #Preview {
     LoginView(authViewModel: AuthSessionViewModel())
+}
+
+private final class AppleAuthorizationCoordinator: NSObject {
+    private var completion: ((Result<ASAuthorization, Error>) -> Void)?
+
+    func start(completion: @escaping (Result<ASAuthorization, Error>) -> Void) {
+        self.completion = completion
+
+        let provider = ASAuthorizationAppleIDProvider()
+        let request = provider.createRequest()
+        request.requestedScopes = [.fullName, .email]
+
+        let controller = ASAuthorizationController(authorizationRequests: [request])
+        controller.delegate = self
+        controller.presentationContextProvider = self
+        controller.performRequests()
+    }
+
+    private func finish(with result: Result<ASAuthorization, Error>) {
+        completion?(result)
+        completion = nil
+    }
+}
+
+extension AppleAuthorizationCoordinator: ASAuthorizationControllerDelegate {
+    func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithAuthorization authorization: ASAuthorization
+    ) {
+        finish(with: .success(authorization))
+    }
+
+    func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithError error: Error
+    ) {
+        finish(with: .failure(error))
+    }
+}
+
+extension AppleAuthorizationCoordinator: ASAuthorizationControllerPresentationContextProviding {
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        let scenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+        let windows = scenes.flatMap(\.windows)
+
+        if let keyWindow = windows.first(where: \.isKeyWindow) {
+            return keyWindow
+        }
+
+        if let firstWindow = windows.first {
+            return firstWindow
+        }
+
+        if let scene = scenes.first {
+            return UIWindow(windowScene: scene)
+        }
+
+        preconditionFailure("Apple 로그인 표시를 위한 window scene을 찾을 수 없습니다.")
+    }
 }
