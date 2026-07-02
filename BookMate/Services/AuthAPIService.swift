@@ -43,6 +43,14 @@ struct AuthAPIService {
     private struct KakaoLoginBody: Encodable {
         let accessToken: String
     }
+
+    private struct AppleLoginBody: Encodable {
+        let identityToken: String
+        let authorizationCode: String?
+        let userIdentifier: String
+        let email: String?
+        let fullName: String?
+    }
     
     
     
@@ -90,6 +98,31 @@ struct AuthAPIService {
         
         try client.validate(response)
         
+        return try JSONDecoder().decode(AuthResponse.self, from: data)
+    }
+
+    func loginWithApple(credentials: AppleLoginCredentials) async throws -> AuthResponse {
+        let url = baseURL
+            .appendingPathComponent("api")
+            .appendingPathComponent("auth")
+            .appendingPathComponent("apple")
+
+        let body = AppleLoginBody(
+            identityToken: credentials.identityToken,
+            authorizationCode: credentials.authorizationCode,
+            userIdentifier: credentials.userIdentifier,
+            email: credentials.email,
+            fullName: credentials.fullName
+        )
+
+        var request = client.makeUnauthenticatedRequest(url: url, method: "POST")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        try client.validate(response)
+
         return try JSONDecoder().decode(AuthResponse.self, from: data)
     }
     

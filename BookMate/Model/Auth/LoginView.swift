@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AuthenticationServices
 
 struct LoginView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
@@ -108,6 +109,26 @@ struct LoginView: View {
                         .foregroundStyle(Color("LightButtonText").opacity(0.88))
                         .clipShape(Capsule())
                     }
+                    .disabled(authViewModel.isLoading)
+
+                    SignInWithAppleButton(.signIn) { request in
+                        request.requestedScopes = [.fullName, .email]
+                    } onCompletion: { result in
+                        switch result {
+                        case .success(let authorization):
+                            Task {
+                                await authViewModel.loginWithApple(authorization: authorization)
+                            }
+                        case .failure(let error):
+                            Task { @MainActor in
+                                authViewModel.handleAppleAuthorizationFailure(error)
+                            }
+                        }
+                    }
+                    .signInWithAppleButtonStyle(.black)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .clipShape(Capsule())
                     .disabled(authViewModel.isLoading)
                     
                     NavigationLink {

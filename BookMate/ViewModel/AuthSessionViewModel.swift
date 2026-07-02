@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import AuthenticationServices
 
 @MainActor
 final class AuthSessionViewModel: ObservableObject {
@@ -30,6 +31,7 @@ final class AuthSessionViewModel: ObservableObject {
     private let authAPIService = AuthAPIService()
     private let tokenStore: AuthTokenStore = KeychainTokenStore()
     private let kakaoLoginService = KakaoLoginService()
+    private let appleLoginService = AppleLoginService()
 
     // MARK: - Lifecycle
 
@@ -93,6 +95,43 @@ final class AuthSessionViewModel: ObservableObject {
         }
 
         isLoading = false
+    }
+
+    // Apple identityToken을 백엔드 토큰으로 교환하고 로그인 상태를 저장한다.
+    func loginWithApple(authorization: ASAuthorization) async {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let credentials = try appleLoginService.credentials(from: authorization)
+            let response = try await authAPIService.loginWithApple(credentials: credentials)
+
+            tokenStore.save(response.accessToken)
+            currentUser = response.user
+            isLoggedIn = true
+            BMAnalytics.setUser(response.user)
+            BMAnalytics.loginCompleted(method: "apple")
+
+            await loadProfile()
+            await PushNotificationService.shared.syncTokenWithServerIfPossible()
+        } catch {
+            BMAnalytics.loginFailed(method: "apple", error: error)
+            errorMessage = "Apple 로그인에 실패했습니다."
+            DebugLogger.log("Apple 로그인 실패:", error)
+        }
+
+        isLoading = false
+    }
+
+    func handleAppleAuthorizationFailure(_ error: Error) {
+        if let authorizationError = error as? ASAuthorizationError,
+           authorizationError.code == .canceled {
+            return
+        }
+
+        BMAnalytics.loginFailed(method: "apple", error: error)
+        errorMessage = "Apple 로그인에 실패했습니다."
+        DebugLogger.log("Apple 로그인 실패:", error)
     }
 
     // 회원가입 후 받은 토큰으로 바로 로그인 상태를 만든다.
