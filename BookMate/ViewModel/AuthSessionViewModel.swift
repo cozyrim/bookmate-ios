@@ -116,7 +116,7 @@ final class AuthSessionViewModel: ObservableObject {
             await PushNotificationService.shared.syncTokenWithServerIfPossible()
         } catch {
             BMAnalytics.loginFailed(method: "apple", error: error)
-            errorMessage = error.bookMateUserMessage(fallback: "Apple 로그인에 실패했습니다.")
+            errorMessage = error.bookMateUserMessage(fallback: "로그인에 실패했습니다.")
             DebugLogger.log("Apple 로그인 실패:", error)
         }
 
@@ -130,7 +130,7 @@ final class AuthSessionViewModel: ObservableObject {
         }
 
         BMAnalytics.loginFailed(method: "apple", error: error)
-        errorMessage = "Apple 로그인에 실패했습니다."
+        errorMessage = "로그인에 실패했습니다."
         DebugLogger.log("Apple 로그인 실패:", error)
     }
 

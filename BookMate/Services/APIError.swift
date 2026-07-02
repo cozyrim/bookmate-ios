@@ -65,7 +65,7 @@ extension Error {
         if let apiError = self as? APIError,
            case .badStatusCode(let statusCode) = apiError {
             if statusCode >= 500 {
-                return "서버에서 처리하지 못했어요. 서버 상태 코드 \(statusCode)"
+                return fallback
             }
 
             return "요청을 처리하지 못했어요. 서버 상태 코드 \(statusCode)"
@@ -73,12 +73,12 @@ extension Error {
 
         if let apiError = self as? APIError,
            case .serverStatusCode(let statusCode, let message) = apiError {
-            if let message, !message.isEmpty {
-                return message
+            if statusCode >= 500 {
+                return fallback
             }
 
-            if statusCode >= 500 {
-                return "서버에서 처리하지 못했어요. 서버 상태 코드 \(statusCode)"
+            if let message, !message.isEmpty {
+                return message
             }
 
             return "요청을 처리하지 못했어요. 서버 상태 코드 \(statusCode)"
