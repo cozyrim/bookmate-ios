@@ -71,7 +71,38 @@ final class PushNotificationService: NSObject {
         }
     }
 
-    func syncTokenWithServerIfPossible() async {
+    func requestAuthorizationAndRegisterForRemoteNotifications() async {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+
+        switch settings.authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            break
+        case .notDetermined:
+            do {
+                let granted = try await UNUserNotificationCenter.current()
+                    .requestAuthorization(options: [.alert, .sound, .badge])
+
+                guard granted else {
+                    return
+                }
+            } catch {
+                DebugLogger.log("알림 권한 요청 실패:", error)
+                return
+            }
+        case .denied:
+            return
+        @unknown default:
+            return
+        }
+
+        await MainActor.run {
+            UIApplication.shared.registerForRemoteNotifications()
+        }
+
+        await syncTokenWithServerIfPossible(forceRefreshToken: true)
+    }
+
+    func syncTokenWithServerIfPossible(forceRefreshToken: Bool = false) async {
         guard await syncState.beginSyncIfPossible() else { return }
 
         await registerForRemoteNotificationsIfAuthorized()
@@ -81,7 +112,7 @@ final class PushNotificationService: NSObject {
             return
         }
 
-        guard let fcmToken = await currentFCMToken() else {
+        guard let fcmToken = await currentFCMToken(forceRefresh: forceRefreshToken) else {
             await syncState.finishSync(succeeded: true)
             return
         }
@@ -115,9 +146,10 @@ final class PushNotificationService: NSObject {
 
     func handleAPNsDeviceToken(_ deviceToken: Data) {
         Messaging.messaging().apnsToken = deviceToken
+        latestFCMToken = nil
 
         Task {
-            await syncTokenWithServerIfPossible()
+            await syncTokenWithServerIfPossible(forceRefreshToken: true)
         }
     }
 
@@ -147,12 +179,12 @@ final class PushNotificationService: NSObject {
         return "\(version)(\(build))"
     }
 
-    private func currentFCMToken() async -> String? {
-        if let latestFCMToken {
+    private func currentFCMToken(forceRefresh: Bool = false) async -> String? {
+        if !forceRefresh, let latestFCMToken {
             return latestFCMToken
         }
 
-        if let fcmToken = Messaging.messaging().fcmToken {
+        if !forceRefresh, let fcmToken = Messaging.messaging().fcmToken {
             latestFCMToken = fcmToken
             return fcmToken
         }

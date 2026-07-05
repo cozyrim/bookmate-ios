@@ -22,6 +22,7 @@ final class AuthSessionViewModel: ObservableObject {
     @Published var isCheckingSession = true
     @Published var errorMessage: String?
     @Published var accountDeletionSuccessMessage: String?
+    @Published var shouldRequestNotificationPermissionAfterSignup = false
 
     // 프로필 화면에서 보여줄 사용자 상세 정보를 저장한다.
     @Published var profile: ProfileResponse?
@@ -148,6 +149,7 @@ final class AuthSessionViewModel: ObservableObject {
 
             tokenStore.save(response.accessToken)
             currentUser = response.user
+            shouldRequestNotificationPermissionAfterSignup = true
             isLoggedIn = true
             BMAnalytics.setUser(response.user)
             BMAnalytics.signUpCompleted(method: "email")
@@ -383,9 +385,9 @@ final class AuthSessionViewModel: ObservableObject {
                 return false
             }
 
-            errorMessage = "미니룸 배경 저장에 실패했습니다."
+            errorMessage = "서재 배경 저장에 실패했습니다."
             isLoading = false
-            DebugLogger.log("미니룸 배경 저장 실패:", error)
+            DebugLogger.log("서재 배경 저장 실패:", error)
             return false
         }
     }

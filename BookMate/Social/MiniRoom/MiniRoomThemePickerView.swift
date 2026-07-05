@@ -23,7 +23,7 @@ struct MiniRoomThemePickerView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 20) {
-                SettingsScreenHeader(title: "미니룸 배경")
+                SettingsScreenHeader(title: "서재 배경")
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 18) {
