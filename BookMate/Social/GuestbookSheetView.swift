@@ -15,6 +15,7 @@ struct GuestbookSheetView: View {
     @State private var activeHighlightedMessageId: UUID?
     @State private var didScrollToHighlightedMessage = false
     @State private var toast: AppToast?
+    @State private var pendingMessageIDs: Set<UUID> = []
 
     private let tokenStore = KeychainTokenStore()
     private let moderationService = ModerationAPIService()
@@ -127,6 +128,7 @@ struct GuestbookSheetView: View {
 
     private func messageRow(_ message: GuestbookMessageResponse) -> some View {
         let isHighlighted = message.id == activeHighlightedMessageId
+        let isPending = pendingMessageIDs.contains(message.id)
 
         return HStack(alignment: .top, spacing: 10) {
             ProfileImageView(
@@ -146,17 +148,20 @@ struct GuestbookSheetView: View {
                     .foregroundStyle(Color("TextPrimary"))
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(BookMateDateFormatter.serverDateTimeDisplayString(from: message.createdAt))
+                Text(isPending ? "전송 중..." : BookMateDateFormatter.serverDateTimeDisplayString(from: message.createdAt))
                     .font(.caption2)
-                    .foregroundStyle(Color("TextMuted"))
+                    .foregroundStyle(isPending ? Color("PrimaryDeep") : Color("TextMuted"))
             }
 
             Spacer(minLength: 0)
 
-            messageActions(for: message)
+            if !isPending {
+                messageActions(for: message)
+            }
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 10)
+        .opacity(isPending ? 0.72 : 1)
         .background {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(isHighlighted ? Color("Primary").opacity(0.13) : Color.clear)
@@ -262,31 +267,76 @@ struct GuestbookSheetView: View {
     private func postMessage(_ content: String) async -> Bool {
         let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let token = tokenStore.load(), !trimmedContent.isEmpty else { return false }
-        
+
+        let totalSignpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("PostGuestbookTotal", id: totalSignpostID)
+
         isPosting = true
-        let signpostID = PerformanceLogger.makeSignpostID()
-        PerformanceLogger.begin("PostGuestbookAPI", id: signpostID)
-        
-        
+
+        let optimisticMessage = makeOptimisticMessage(content: trimmedContent)
+        let optimisticSignpostID = PerformanceLogger.makeSignpostID()
+        PerformanceLogger.begin("PostGuestbookOptimisticUI", id: optimisticSignpostID)
+        pendingMessageIDs.insert(optimisticMessage.id)
+        messages.insert(optimisticMessage, at: 0)
+        PerformanceLogger.end("PostGuestbookOptimisticUI", id: optimisticSignpostID)
+
         defer {
             isPosting = false
-            PerformanceLogger.end("PostGuestbookAPI", id: signpostID)
+            PerformanceLogger.end("PostGuestbookTotal", id: totalSignpostID)
         }
-        
+
         do {
+            let apiSignpostID = PerformanceLogger.makeSignpostID()
+            PerformanceLogger.begin("PostGuestbookAPI", id: apiSignpostID)
+            defer {
+                PerformanceLogger.end("PostGuestbookAPI", id: apiSignpostID)
+            }
+
             let newMessage = try await socialService.writeGuestbook(
                 token: token,
                 userId: targetUser.id,
                 content: trimmedContent
             )
-            
-            messages.insert(newMessage, at: 0)
+
+            replaceOptimisticMessage(id: optimisticMessage.id, with: newMessage)
             return true
         } catch {
+            pendingMessageIDs.remove(optimisticMessage.id)
+            messages.removeAll { $0.id == optimisticMessage.id }
             print("방명록 작성 실패: \(error)")
             toast = AppToast(message: "방명록 작성에 실패했어요.", style: .error)
             return false
         }
+    }
+
+    private func makeOptimisticMessage(content: String) -> GuestbookMessageResponse {
+        GuestbookMessageResponse(
+            id: UUID(),
+            writerId: authViewModel.currentUser?.id ?? UUID(),
+            writerNickname: authViewModel.currentUser?.nickname ?? "나",
+            writerProfileImageUrl: authViewModel.currentUser?.profileImageUrl,
+            content: content,
+            createdAt: pendingCreatedAtString()
+        )
+    }
+
+    private func replaceOptimisticMessage(id: UUID, with message: GuestbookMessageResponse) {
+        pendingMessageIDs.remove(id)
+
+        guard let index = messages.firstIndex(where: { $0.id == id }) else {
+            messages.insert(message, at: 0)
+            return
+        }
+
+        messages[index] = message
+    }
+
+    private func pendingCreatedAtString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter.string(from: Date())
     }
 
     private func deleteMessage(messageId: UUID) {
@@ -365,10 +415,12 @@ private struct GuestbookComposerView: View {
 
                     Button {
                         let content = trimmedDraft
+                        draft = ""
+
                         Task {
                             let didPost = await onSubmit(content)
-                            if didPost {
-                                draft = ""
+                            if !didPost {
+                                draft = content
                             }
                         }
                     } label: {
