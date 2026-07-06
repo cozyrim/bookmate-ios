@@ -114,6 +114,7 @@ struct MyRoomView: View {
         switch notificationRequest.destination {
         case .myGuestbook(let messageId):
             PerformanceLogger.event("NotificationGuestbookOpened")
+            path = NavigationPath()
             highlightedGuestbookMessageId = messageId
             fetchGuestbook()
             showingGuestbook = true
