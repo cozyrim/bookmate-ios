@@ -333,25 +333,32 @@ private struct VerticalBookTitle: View {
     let width: CGFloat
     let height: CGFloat
 
+    private enum Typography {
+        static let maxCharacterCount = 14
+        static let maxFontSize: CGFloat = 10.8
+        static let minFontSize: CGFloat = 6.2
+        static let fontName = "AppleSDGothicNeo-SemiBold"
+    }
+
     private var rawCharacters: [String] {
         let compact = title
-            .replacingOccurrences(of: " ", with: "")
-            .replacingOccurrences(of: "\n", with: "")
+            .precomposedStringWithCanonicalMapping
+            .components(separatedBy: .whitespacesAndNewlines)
+            .joined()
+
         return compact.isEmpty ? ["책"] : compact.map { String($0) }
     }
 
     private var characters: [String] {
-        let maxCount = 14
-
-        guard rawCharacters.count > maxCount else {
+        guard rawCharacters.count > Typography.maxCharacterCount else {
             return rawCharacters
         }
 
-        return Array(rawCharacters.prefix(maxCount - 1)) + ["..."]
+        return Array(rawCharacters.prefix(Typography.maxCharacterCount - 1)) + ["..."]
     }
 
-    private var rowHeight: CGFloat {
-        max(1, height / CGFloat(max(maxRows, 1)))
+    private var characterFrameHeight: CGFloat {
+        max(fontSize * 1.08, fontSize + 1)
     }
 
     private var characterFrameWidth: CGFloat {
@@ -359,9 +366,11 @@ private struct VerticalBookTitle: View {
     }
 
     private var fontSize: CGFloat {
-        let widthLimit = characterFrameWidth * 0.78
-        let heightLimit = rowHeight * 0.7
-        return min(11.5, max(6.2, min(widthLimit, heightLimit)))
+        let rows = max(maxRows, 1)
+        let totalSpacing = rowSpacing * CGFloat(max(rows - 1, 0))
+        let widthLimit = characterFrameWidth * 0.76
+        let heightLimit = ((height - totalSpacing) / CGFloat(rows)) * 0.86
+        return min(Typography.maxFontSize, max(Typography.minFontSize, min(widthLimit, heightLimit)))
     }
 
     private var titleColumns: [[String]] {
@@ -381,20 +390,29 @@ private struct VerticalBookTitle: View {
         titleColumns.count > 1 ? max(1, width * 0.08) : 0
     }
 
+    private var rowSpacing: CGFloat {
+        max(0.2, min(0.7, height * 0.003))
+    }
+
     var body: some View {
         HStack(alignment: .center, spacing: columnSpacing) {
             ForEach(Array(titleColumns.enumerated()), id: \.offset) { _, column in
-                Text(column.joined(separator: "\n"))
-                    .font(.system(size: fontSize, weight: .black))
-                    .foregroundStyle(Color(red: 0.13, green: 0.10, blue: 0.08).opacity(0.82))
-                    .lineLimit(column.count)
-                    .minimumScaleFactor(0.82)
-                    .allowsTightening(true)
-                    .multilineTextAlignment(.center)
-                    .shadow(color: Color.white.opacity(0.35), radius: 0.35, y: 0.2)
-                    .frame(width: characterFrameWidth, height: height, alignment: .center)
+                VStack(spacing: rowSpacing) {
+                    ForEach(Array(column.enumerated()), id: \.offset) { _, character in
+                        Text(character)
+                            .font(.custom(Typography.fontName, size: fontSize))
+                            .foregroundStyle(Color(red: 0.13, green: 0.10, blue: 0.08).opacity(0.80))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                            .allowsTightening(false)
+                            .multilineTextAlignment(.center)
+                            .frame(width: characterFrameWidth, height: characterFrameHeight, alignment: .center)
+                    }
+                }
+                .frame(width: characterFrameWidth, height: height, alignment: .center)
             }
         }
+        .shadow(color: Color.white.opacity(0.32), radius: 0.35, y: 0.2)
         .frame(width: width, height: height, alignment: .center)
         .allowsHitTesting(false)
     }
