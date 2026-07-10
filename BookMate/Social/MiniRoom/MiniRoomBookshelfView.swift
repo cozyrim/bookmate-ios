@@ -337,7 +337,7 @@ private struct VerticalBookTitle: View {
         static let maxCharacterCount = 14
         static let maxFontSize: CGFloat = 10.8
         static let minFontSize: CGFloat = 6.2
-        static let fontName = "AppleSDGothicNeo-SemiBold"
+        static let fontName = "AppleSDGothicNeo-Bold"
     }
 
     private var rawCharacters: [String] {
