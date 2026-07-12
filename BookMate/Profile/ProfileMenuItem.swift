@@ -14,6 +14,7 @@ enum ProfileRoute: Hashable {
     case themeSettings // 화면 테마 설정 화면
     case appInfo // 앱 정보 화면
     case darkModeSettings // 다크 모드 화면
+    case feedback // 피드백 남기기 화면
 }
 
 

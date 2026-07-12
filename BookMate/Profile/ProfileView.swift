@@ -10,12 +10,9 @@ import SwiftUI
 struct ProfileView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
     @ObservedObject var viewModel: BookMateViewModel
-    @Environment(\.openURL) private var openURL
     @State private var path = NavigationPath()
     @State private var isShowingProfilePreview = false
     @State private var toast: AppToast?
-    
-    private static let supportMailURL = URL(string: "mailto:cnstlr0904@gmail.com")!
     
     private var userName: String {
         authViewModel.profile?.nickname
@@ -47,7 +44,7 @@ struct ProfileView: View {
         ]
 
         private let supportRows = [
-            ProfileMenuItem(imageName: "envelope", title: "문의하기", url: ProfileView.supportMailURL),
+            ProfileMenuItem(imageName: "bubble.left.and.bubble.right", title: "피드백 남기기", route: .feedback),
             ProfileMenuItem(imageName: "info.circle", title: "앱 정보", route: .appInfo),
             ProfileMenuItem(imageName: "rectangle.portrait.and.arrow.right", title: "로그아웃", isDestructive: true, showChevron: false)
         ]
@@ -55,11 +52,6 @@ struct ProfileView: View {
     private func handleMenuTap(_ item: ProfileMenuItem) {
         if item.isDestructive {
             authViewModel.logout()
-            return
-        }
-
-        if let url = item.url {
-            openURL(url)
             return
         }
 
@@ -120,6 +112,9 @@ struct ProfileView: View {
                     
                 case .darkModeSettings:
                     DarkModeSettingsView()
+
+                case .feedback:
+                    FeedbackView()
                 }
             }
         }
