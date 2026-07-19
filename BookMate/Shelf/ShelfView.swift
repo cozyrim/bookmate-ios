@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ShelfView: View {
     @ObservedObject var viewModel: BookMateViewModel
@@ -19,6 +20,7 @@ struct ShelfView: View {
     @State private var activeBookSheet: BookActionSheet?
     @State private var shelfLayoutStyle: ShelfLayoutStyle = .grid
     @State private var scrollTargetBookID: UUID?
+    @State private var draggedShelfBookID: UUID?
 
     private enum ShelfLayoutStyle {
         case grid
@@ -456,6 +458,13 @@ struct ShelfView: View {
                     }
                 )
                 .buttonStyle(.plain)
+                .modifier(
+                    ShelfBookReorderableModifier(
+                        bookID: shelfBook.bookId,
+                        draggedBookID: $draggedShelfBookID,
+                        move: viewModel.moveShelfBook
+                    )
+                )
 
             case .list:
                 ShelfBookListCardView(
@@ -478,8 +487,60 @@ struct ShelfView: View {
                     }
                 )
                 .buttonStyle(.plain)
+                .modifier(
+                    ShelfBookReorderableModifier(
+                        bookID: shelfBook.bookId,
+                        draggedBookID: $draggedShelfBookID,
+                        move: viewModel.moveShelfBook
+                    )
+                )
             }
         }
+    }
+}
+
+private struct ShelfBookReorderableModifier: ViewModifier {
+    let bookID: UUID
+    @Binding var draggedBookID: UUID?
+    let move: (UUID, UUID) -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .onDrag {
+                draggedBookID = bookID
+                return NSItemProvider(object: bookID.uuidString as NSString)
+            }
+            .onDrop(
+                of: [UTType.text.identifier],
+                delegate: ShelfBookReorderDropDelegate(
+                    targetBookID: bookID,
+                    draggedBookID: $draggedBookID,
+                    move: move
+                )
+            )
+    }
+}
+
+private struct ShelfBookReorderDropDelegate: DropDelegate {
+    let targetBookID: UUID
+    @Binding var draggedBookID: UUID?
+    let move: (UUID, UUID) -> Void
+
+    func dropEntered(info: DropInfo) {
+        guard let draggedBookID, draggedBookID != targetBookID else { return }
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+            move(draggedBookID, targetBookID)
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        draggedBookID = nil
+        return true
     }
 }
 

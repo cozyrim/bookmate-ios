@@ -194,6 +194,21 @@ extension BookMateViewModel {
         pendingShelfBookPresentationID = bookId
     }
 
+    // 길게 누른 책 카드를 다른 카드 위로 옮겼을 때 책장 순서를 갱신한다.
+    func moveShelfBook(_ draggedBookID: UUID, to targetBookID: UUID) {
+        guard draggedBookID != targetBookID,
+              let sourceIndex = shelfBooks.firstIndex(where: { $0.bookId == draggedBookID }),
+              let targetIndex = shelfBooks.firstIndex(where: { $0.bookId == targetBookID }) else {
+            return
+        }
+
+        var reorderedShelfBooks = shelfBooks
+        let draggedShelfBook = reorderedShelfBooks.remove(at: sourceIndex)
+        reorderedShelfBooks.insert(draggedShelfBook, at: targetIndex)
+        shelfBooks = reorderedShelfBooks
+        saveShelfBookOrder()
+    }
+
     private func normalizeISBN(_ isbn: String) -> String {
         var bestCandidate = ""
 
@@ -236,6 +251,7 @@ extension BookMateViewModel {
             books.removeAll { $0.id == book.id }
             savedWords.removeAll { $0.bookId == book.id }
             shelfBooks.removeAll { $0.bookId == book.id }
+            removeBookFromSavedShelfOrder(book.id)
 
             operationErrorMessage = nil
             showToast("책을 삭제했어요.", style: .success)
@@ -380,11 +396,44 @@ extension BookMateViewModel {
         )
     }
 
-    // books 배열을 기준으로 shelfBooks를 다시 만든다.
+    // books 배열을 기준으로 shelfBooks를 다시 만들되, 사용자가 정한 책장 순서는 유지한다.
     private func syncShelfBooksFromBooks() {
-        shelfBooks = books.map { book in
-            makeShelfBook(from: book)
+        let shelfBooksByBookID = Dictionary(
+            uniqueKeysWithValues: books.map { book in
+                (book.id, makeShelfBook(from: book))
+            }
+        )
+        let savedOrder = savedShelfBookOrder()
+        let savedBookIDs = Set(savedOrder)
+        let orderedBookIDs = savedOrder.filter { shelfBooksByBookID[$0] != nil }
+            + books.map(\.id).filter { !savedBookIDs.contains($0) }
+
+        shelfBooks = orderedBookIDs.compactMap { shelfBooksByBookID[$0] }
+    }
+
+    private var shelfBookOrderKey: String {
+        let ownerKey = currentUserId?.uuidString ?? "guest"
+        return "shelfBookOrder.\(ownerKey)"
+    }
+
+    private func savedShelfBookOrder() -> [UUID] {
+        UserDefaults.standard.stringArray(forKey: shelfBookOrderKey)?.compactMap(UUID.init(uuidString:)) ?? []
+    }
+
+    private func saveShelfBookOrder() {
+        UserDefaults.standard.set(
+            shelfBooks.map { $0.bookId.uuidString },
+            forKey: shelfBookOrderKey
+        )
+    }
+
+    private func removeBookFromSavedShelfOrder(_ bookID: UUID) {
+        guard var savedOrder = UserDefaults.standard.stringArray(forKey: shelfBookOrderKey) else {
+            return
         }
+
+        savedOrder.removeAll { $0 == bookID.uuidString }
+        UserDefaults.standard.set(savedOrder, forKey: shelfBookOrderKey)
     }
 
     private func rescheduleContinueReadingReminderIfNeeded() async {
