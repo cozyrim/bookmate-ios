@@ -129,6 +129,7 @@ extension BookMateViewModel {
                 books[existingIndex] = normalizedSavedBook
             } else {
                 books.insert(normalizedSavedBook, at: 0)
+                prependBookToSavedShelfOrder(normalizedSavedBook.id)
             }
 
             syncShelfBooksFromBooks()
@@ -423,6 +424,18 @@ extension BookMateViewModel {
     private func saveShelfBookOrder() {
         UserDefaults.standard.set(
             shelfBooks.map { $0.bookId.uuidString },
+            forKey: shelfBookOrderKey
+        )
+    }
+
+    // 새로 등록한 책은 사용자가 정한 기존 순서를 유지하면서 최상단에 표시한다.
+    private func prependBookToSavedShelfOrder(_ bookID: UUID) {
+        var savedOrder = savedShelfBookOrder()
+        savedOrder.removeAll { $0 == bookID }
+        savedOrder.insert(bookID, at: 0)
+
+        UserDefaults.standard.set(
+            savedOrder.map(\.uuidString),
             forKey: shelfBookOrderKey
         )
     }
