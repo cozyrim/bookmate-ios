@@ -50,7 +50,7 @@ struct ReadingMemoAPIService {
             urlComponents.queryItems = [URLQueryItem(name: "bookId", value: bookId.uuidString)]
             
             let request = client.makeRequest(url: urlComponents.url!)
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await client.data(for: request)
             try client.validate(response)
             
             let memoResponses = try JSONDecoder().decode([ReadingMemoResponse].self, from: data)
@@ -66,7 +66,7 @@ struct ReadingMemoAPIService {
             let body = ReadingMemoCreateRequest(bookId: bookId, date: date, page: page, text: text)
             request.httpBody = try JSONEncoder().encode(body)
             
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await client.data(for: request)
             try client.validate(response)
             
             let memoResponse = try JSONDecoder().decode(ReadingMemoResponse.self, from: data)
@@ -82,7 +82,7 @@ struct ReadingMemoAPIService {
             let body = ReadingMemoUpdateRequest(date: memo.date, page: memo.page, text: memo.text)
             request.httpBody = try JSONEncoder().encode(body)
             
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await client.data(for: request)
             try client.validate(response)
             
             let memoResponse = try JSONDecoder().decode(ReadingMemoResponse.self, from: data)
@@ -93,7 +93,7 @@ struct ReadingMemoAPIService {
         func deleteMemo(id: UUID) async throws {
             let url = baseURL.appendingPathComponent("api/reading-memos/\(id.uuidString)")
             let request = client.makeRequest(url: url, method: "DELETE")
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (_, response) = try await client.data(for: request)
             try client.validate(response)
         }
 }

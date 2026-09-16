@@ -34,7 +34,7 @@ struct ModerationAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         return try JSONDecoder().decode(ModerationReportEnvelope.self, from: data)
@@ -50,7 +50,7 @@ struct ModerationAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(BlockUserRequest(blockedUserId: userId.uuidString))
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         return try JSONDecoder().decode(UserBlockResponse.self, from: data)
@@ -64,7 +64,7 @@ struct ModerationAPIService {
             .appendingPathComponent(userId.uuidString)
 
         let request = client.makeRequest(url: url, method: "DELETE")
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await client.data(for: request)
         try client.validate(response)
     }
 
@@ -75,7 +75,7 @@ struct ModerationAPIService {
             .appendingPathComponent("blocks")
 
         let request = client.makeRequest(url: url)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         return try JSONDecoder().decode([UserBlockResponse].self, from: data)
@@ -97,7 +97,7 @@ struct ModerationAPIService {
             ContentCheckRequest(content: content, context: context)
         )
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         return try JSONDecoder().decode(ContentCheckResponse.self, from: data)

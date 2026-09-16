@@ -20,8 +20,17 @@ struct AuthUser: Decodable, Identifiable { // 서버에서 로그인 성공 후 
 
 struct AuthResponse: Decodable {
     let accessToken: String
+    // Optional during the server-first rollout so a newly shipped app can still
+    // sign in against an API instance that has not yet deployed refresh tokens.
+    let refreshToken: String?
     let tokenType: String
     let user: AuthUser
+}
+
+struct TokenRefreshResponse: Decodable {
+    let accessToken: String
+    let refreshToken: String
+    let tokenType: String
 }
 
 struct ProfileResponse: Decodable {

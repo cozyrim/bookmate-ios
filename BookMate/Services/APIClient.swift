@@ -45,6 +45,24 @@ struct APIClient {
         return request
     }
 
+    /// Executes an API request and retries it once after refreshing an expired access token.
+    /// Requests without an Authorization header are sent unchanged.
+    func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        let initialResult = try await URLSession.shared.data(for: request)
+
+        guard isUnauthorized(initialResult.1),
+              let failedAccessToken = bearerToken(in: request) else {
+            return initialResult
+        }
+
+        let refreshedAccessToken = try await TokenRefreshCoordinator.shared
+            .accessToken(afterUnauthorizedRequestWith: failedAccessToken)
+
+        var retryRequest = request
+        retryRequest.setValue("Bearer \(refreshedAccessToken)", forHTTPHeaderField: "Authorization")
+        return try await URLSession.shared.data(for: retryRequest)
+    }
+
     /// 서버 응답 상태 코드를 검증해요.
     /// - 401: APIError.unauthorized
     /// - 2xx 이외: APIError.badStatusCode
@@ -85,5 +103,19 @@ struct APIClient {
 
         return object["message"] as? String
             ?? object["error"] as? String
+    }
+
+    private func isUnauthorized(_ response: URLResponse) -> Bool {
+        (response as? HTTPURLResponse)?.statusCode == 401
+    }
+
+    private func bearerToken(in request: URLRequest) -> String? {
+        guard let authorization = request.value(forHTTPHeaderField: "Authorization"),
+              authorization.hasPrefix("Bearer ") else {
+            return nil
+        }
+
+        let token = String(authorization.dropFirst("Bearer ".count)).trimmingCharacters(in: .whitespaces)
+        return token.isEmpty ? nil : token
     }
 }

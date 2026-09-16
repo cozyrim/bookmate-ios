@@ -8,20 +8,35 @@
 import Foundation
 
 protocol AuthTokenStore {
+    func save(accessToken: String, refreshToken: String)
     func save(_ token: String)
     func load() -> String?
+    func loadRefreshToken() -> String?
     func clear()
 }
 
 final class KeychainTokenStore: AuthTokenStore {
     private let service = "BookMateMini"
-    private let account = "accessToken"
+    private let accessTokenAccount = "accessToken"
+    private let refreshTokenAccount = "refreshToken"
     
     
     // 로그인 성공 후 토큰 저장
+    func save(accessToken: String, refreshToken: String) {
+        // Save the refresh token first. If the app stops between the two writes,
+        // the old access token can still be refreshed with the new credential.
+        save(refreshToken, for: refreshTokenAccount)
+        save(accessToken, for: accessTokenAccount)
+    }
+
     func save(_ token: String) {
-        clear()
-        
+        delete(account: refreshTokenAccount)
+        save(token, for: accessTokenAccount)
+    }
+
+    private func save(_ token: String, for account: String) {
+        delete(account: account)
+
         let tokenData = Data(token.utf8)
         
         // 토큰을 keychain에 저장할 때 필요한 설명서
@@ -38,7 +53,7 @@ final class KeychainTokenStore: AuthTokenStore {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword, // 저장할 데이터 종류 - 일반 비밀번호 형태
             kSecAttrService as String: service, // 어떤 서비스 이름으로 저장? - "BookMateMini" 앱에서 쓰는 토큰 저장소
-            kSecAttrAccount as String: account, // 어떤 항목인지 구분하는 이름 - BookMateMini 서비스 안의 accessToken 항목
+            kSecAttrAccount as String: account, // 어떤 항목인지 구분하는 이름 - BookMateMini 서비스 안의 토큰 항목
             kSecValueData as String: tokenData, // 실제로 저장할 값 - Keychain은 문자열을 바로 저장하기보다 Data 형태로 저장해서 "abc.def.ghi" 같은 토큰 문자열을 Data로 바꿔서 넣음
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly // 언제 접근가능하게 할지 정하는 보안 옵션 - 기기가 잠금 해제되어 있을 때만 접근 가능
 //            이 기기에서만 사용 가능
@@ -57,6 +72,14 @@ final class KeychainTokenStore: AuthTokenStore {
     
     // 앱이 다시 켜졌을 때 토큰 꺼내기
     func load() -> String? {
+        load(account: accessTokenAccount)
+    }
+
+    func loadRefreshToken() -> String? {
+        load(account: refreshTokenAccount)
+    }
+
+    private func load(account: String) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -82,6 +105,11 @@ final class KeychainTokenStore: AuthTokenStore {
 
     // 로그아웃할 때 토큰 삭제
     func clear() {
+        delete(account: accessTokenAccount)
+        delete(account: refreshTokenAccount)
+    }
+
+    private func delete(account: String) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

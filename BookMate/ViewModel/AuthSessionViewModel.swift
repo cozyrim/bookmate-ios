@@ -53,7 +53,7 @@ final class AuthSessionViewModel: ObservableObject {
         do {
             let response = try await authAPIService.login(email: email, password: password)
 
-            tokenStore.save(response.accessToken)
+            saveSessionTokens(from: response)
             currentUser = response.user
             isLoggedIn = true
             BMAnalytics.setUser(response.user)
@@ -81,7 +81,7 @@ final class AuthSessionViewModel: ObservableObject {
                 accessToken: kakaoAccessToken
             )
 
-            tokenStore.save(response.accessToken)
+            saveSessionTokens(from: response)
             currentUser = response.user
             isLoggedIn = true
             BMAnalytics.setUser(response.user)
@@ -107,7 +107,7 @@ final class AuthSessionViewModel: ObservableObject {
             let credentials = try appleLoginService.credentials(from: authorization)
             let response = try await authAPIService.loginWithApple(credentials: credentials)
 
-            tokenStore.save(response.accessToken)
+            saveSessionTokens(from: response)
             currentUser = response.user
             isLoggedIn = true
             BMAnalytics.setUser(response.user)
@@ -147,7 +147,7 @@ final class AuthSessionViewModel: ObservableObject {
                 nickname: nickname
             )
 
-            tokenStore.save(response.accessToken)
+            saveSessionTokens(from: response)
             currentUser = response.user
             shouldRequestNotificationPermissionAfterSignup = true
             isLoggedIn = true
@@ -438,6 +438,15 @@ final class AuthSessionViewModel: ObservableObject {
         }
 
         return fields.isEmpty ? ["none"] : fields
+    }
+
+    private func saveSessionTokens(from response: AuthResponse) {
+        guard let refreshToken = response.refreshToken else {
+            tokenStore.save(response.accessToken)
+            return
+        }
+
+        tokenStore.save(accessToken: response.accessToken, refreshToken: refreshToken)
     }
 
     // MARK: - Helpers
