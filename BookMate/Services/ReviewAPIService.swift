@@ -54,7 +54,7 @@ struct ReviewAPIService {
             .appendingPathComponent("me")
 
         let request = client.makeRequest(url: url)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         if let httpResponse = response as? HTTPURLResponse,
@@ -81,7 +81,7 @@ struct ReviewAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         let reviewResponse = try JSONDecoder().decode(ReviewResponse.self, from: data)
@@ -106,7 +106,7 @@ struct ReviewAPIService {
         ]
 
         let request = client.makeRequest(url: components.url!)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         let reviewResponses = try JSONDecoder().decode([ReviewResponse].self, from: data)

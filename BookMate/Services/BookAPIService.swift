@@ -85,7 +85,7 @@ struct BookAPIService {
             .appendingPathComponent("books")
 
         let request = client.makeRequest(url: url)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         let bookResponse = try JSONDecoder().decode([BookResponse].self, from: data)
@@ -101,7 +101,7 @@ struct BookAPIService {
             .appendingPathComponent(id.uuidString)
 
         let request = client.makeRequest(url: url)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         let bookResponse = try JSONDecoder().decode(BookResponse.self, from: data)
@@ -139,7 +139,7 @@ struct BookAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(requestBody)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         let bookResponse = try JSONDecoder().decode(BookResponse.self, from: data)
@@ -185,7 +185,7 @@ struct BookAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(requestBody)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         let bookResponse = try JSONDecoder().decode(BookResponse.self, from: data)
@@ -201,7 +201,7 @@ struct BookAPIService {
             .appendingPathComponent(id.uuidString)
 
         let request = client.makeRequest(url: url, method: "DELETE")
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await client.data(for: request)
         try client.validate(response)
     }
 }

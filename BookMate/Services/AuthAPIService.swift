@@ -75,7 +75,7 @@ struct AuthAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         
         try client.validate(response)
         
@@ -94,7 +94,7 @@ struct AuthAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         
         try client.validate(response)
         
@@ -119,7 +119,7 @@ struct AuthAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
 
         try client.validate(response, data: data, treatsUnauthorizedAsExpiredSession: false)
 
@@ -144,7 +144,7 @@ struct AuthAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         
         try client.validate(response)
         
@@ -159,7 +159,7 @@ struct AuthAPIService {
 
         let request = client.makeUnauthenticatedRequest(url: url, method: "GET")
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         let suggestion = try JSONDecoder().decode(NicknameSuggestionResponse.self, from: data)
@@ -179,7 +179,7 @@ struct AuthAPIService {
 
         let request = client.makeUnauthenticatedRequest(url: components.url!, method: "GET")
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         return try JSONDecoder().decode(EmailAvailabilityResponse.self, from: data)
@@ -198,7 +198,7 @@ struct AuthAPIService {
 
         let request = client.makeUnauthenticatedRequest(url: components.url!, method: "GET")
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         return try JSONDecoder().decode(NicknameAvailabilityResponse.self, from: data)
@@ -212,7 +212,7 @@ struct AuthAPIService {
         
         let request = client.makeRequest(url: url, method: "GET", accessToken: token)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         
         try client.validate(response)
         
@@ -237,7 +237,7 @@ struct AuthAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         
         try client.validate(response)
         
@@ -252,7 +252,7 @@ struct AuthAPIService {
         
         let request = client.makeRequest(url: url, method: "DELETE", accessToken: token)
         
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await client.data(for: request)
         
         try client.validate(response)
     }
@@ -282,7 +282,7 @@ struct AuthAPIService {
         
         request.httpBody = body
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         
         try client.validate(response)
         

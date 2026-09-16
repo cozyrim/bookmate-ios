@@ -19,7 +19,7 @@ struct SocialAPIService {
             
             let request = client.makeRequest(url: components.url!, method: "GET", accessToken: token)
             
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await client.data(for: request)
             try client.validate(response)
             
             return try JSONDecoder().decode([PublicUserResponse].self, from: data)
@@ -35,7 +35,7 @@ struct SocialAPIService {
             
         let request = client.makeRequest(url: url, method: "GET", accessToken: token)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
         
         return try JSONDecoder().decode(PublicUserResponse.self, from: data)
@@ -53,7 +53,7 @@ struct SocialAPIService {
                 
             let request = client.makeRequest(url: url, method: "GET", accessToken: token)
             
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await client.data(for: request)
             try client.validate(response)
             
             let bookResponses = try JSONDecoder().decode([PublicBookResponse].self, from: data)
@@ -73,7 +73,7 @@ struct SocialAPIService {
                 
             let request = client.makeRequest(url: url, method: "GET", accessToken: token)
             
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await client.data(for: request)
             try client.validate(response)
             
             return try JSONDecoder().decode([GuestbookMessageResponse].self, from: data)
@@ -94,7 +94,7 @@ struct SocialAPIService {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONEncoder().encode(requestBody)
             
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await client.data(for: request)
             try client.validate(response)
             
             return try JSONDecoder().decode(GuestbookMessageResponse.self, from: data)
@@ -110,7 +110,7 @@ struct SocialAPIService {
                 
             let request = client.makeRequest(url: url, method: "DELETE", accessToken: token)
             
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (_, response) = try await client.data(for: request)
             try client.validate(response)
         }
 }

@@ -49,7 +49,7 @@ struct NotificationAPIService {
             .appendingPathComponent("notifications")
 
         let request = client.makeRequest(url: url)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         return try JSONDecoder().decode([AppNotificationItem].self, from: data)
@@ -62,7 +62,7 @@ struct NotificationAPIService {
             .appendingPathComponent("unread-count")
 
         let request = client.makeRequest(url: url)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await client.data(for: request)
         try client.validate(response)
 
         return try JSONDecoder().decode(UnreadCountResponse.self, from: data).unreadCount
@@ -76,7 +76,7 @@ struct NotificationAPIService {
             .appendingPathComponent("read")
 
         let request = client.makeRequest(url: url, method: "POST")
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await client.data(for: request)
         try client.validate(response)
     }
 
@@ -87,7 +87,7 @@ struct NotificationAPIService {
             .appendingPathComponent("read-all")
 
         let request = client.makeRequest(url: url, method: "POST")
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await client.data(for: request)
         try client.validate(response)
     }
 
@@ -112,7 +112,7 @@ struct NotificationAPIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await client.data(for: request)
         try client.validate(response)
     }
 
@@ -129,7 +129,7 @@ struct NotificationAPIService {
 
         let request = client.makeRequest(url: components.url!, method: "DELETE", accessToken: accessToken)
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await client.data(for: request)
         try client.validate(response)
     }
 }
