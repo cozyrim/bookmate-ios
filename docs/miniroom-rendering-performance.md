@@ -8,7 +8,7 @@
 
 ## 해결 과정
 
-아래는 개선 당시 `perf-miniroom-before`와 `perf-miniroom-after` 사이의 변경. 비공개 개발 저장소의 태그 차이와 개인 개발 기록을 대조.
+아래는 개선 당시 `perf-miniroom-before`와 `perf-miniroom-after` 사이의 변경. 성능 비교 태그의 코드 차이와 개인 개발 기록을 대조.
 
 | 변경 | 선택 이유 |
 | --- | --- |

@@ -4,7 +4,7 @@
 
 단어 뜻만 저장하면 어느 책에서 어떤 문맥으로 만났는지 놓치기 쉬움. 북메이트는 단어·문장·메모를 책 단위로 모아, 뜻을 찾는 순간부터 독서 기록까지 연결.
 
-[서비스 소개](https://bookmate.kr) · [서버 코드](https://github.com/cozyrim/bookmate-server-public) · [실행 방법](docs/setup.md)
+[서비스 소개](https://bookmate.kr) · [서버 코드](https://github.com/cozyrim/bookmate-server) · [실행 방법](docs/setup.md)
 
 ## 주요 기능
 
