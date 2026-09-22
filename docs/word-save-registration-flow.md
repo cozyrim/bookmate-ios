@@ -1,0 +1,45 @@
+# 책 등록 후 단어 저장 흐름 복귀
+
+## 문제와 판단
+
+사전에서 단어를 찾았지만 저장할 책이 아직 없는 상황. 책부터 등록하도록 화면을 나누기만 하면, 등록 후 단어를 다시 검색하고 저장할 책도 다시 선택해야 함.
+
+사용자의 목적은 단어 저장이므로, 책 등록은 그 과정의 중간 단계로 처리. 검색 결과와 등록을 마친 뒤 돌아갈 목적지는 공유 상태에 남기고, 저장 시트는 책 등록 후 다시 표시하는 방식 선택.
+
+## 유지한 상태
+
+| 상태 | 역할 |
+| --- | --- |
+| `dictionarySearchResult` | 저장할 단어와 뜻 유지 |
+| `shouldResumeWordSaveAfterBookRegistration` | 책 등록 후 단어 저장으로 복귀할지 구분 |
+| `wordSaveBookIdToSelectAfterRegistration` | 새로 등록한 책을 저장 대상으로 우선 선택 |
+| `isWordSaveResumeSheetPresented` | 복귀용 저장 시트 표시 |
+
+이 상태는 `BookMateViewModel`에서 관리. 시트 내부 값만 사용하면 시트를 닫고 등록 화면으로 이동할 때 저장 맥락을 이어가기 어려워 공통 ViewModel에 배치.
+
+## 처리 흐름
+
+1. 저장 시트에서 책 등록 선택 → 재개 상태를 설정하고 시트 닫기.
+2. 도서 검색 또는 직접 입력으로 책 등록 → 등록된 책 ID를 복귀 상태에 전달.
+3. 기존 사전 검색 결과가 남아 있으면 홈 화면에서 저장 시트 재개.
+4. 새로 등록한 책이 목록에 있으면 우선 선택. 일반 진입 시에는 설정에 따라 마지막 선택 책 사용.
+5. 저장 성공·취소·책장 이동 시 재개 상태 정리. 검색 결과가 없으면 다시 검색하도록 안내.
+
+시트 닫기와 등록 화면 열기가 겹치지 않도록 진입부에 0.25초 지연 사용. 현재 방식은 고정 시간에 의존하므로 전환 완료 이벤트를 사용하는 구조로 바꿀 여지가 있음.
+
+## 확인할 시나리오와 한계
+
+아래는 검증 계획이며 자동화 테스트 통과 기록은 아님.
+
+| 조건 | 확인할 동작 |
+| --- | --- |
+| 책이 없는 상태에서 단어 검색 | 책 등록 후 같은 단어의 저장 시트 표시 |
+| 새 책 등록 후 저장 재개 | 방금 등록한 책 우선 선택 |
+| 등록 취소·책장 이동 | 이전 재개 상태가 다음 검색에 남지 않음 |
+| 검색 결과가 사라진 상태 | 빈 저장 화면 대신 재검색 안내 |
+
+보존 범위는 사전 검색 결과와 저장 대상 책. 입력 중이던 책 속 문장 `bookComment`는 `SaveWordSheet`의 로컬 `@State`라 화면 재생성 후 보존을 보장하지 않음. 앱 종료 후 초안 복원도 구현 범위에 포함되지 않음.
+
+관련 코드: [BookMateViewModel+Words.swift](../BookMate/ViewModel/BookMateViewModel+Words.swift)의 재개 관련 메서드, [SaveWordSheet.swift](../BookMate/Search/SaveWordSheet.swift), [BookRegistrationCompleteView.swift](../BookMate/Book/BookRegistrationCompleteView.swift).
+
+[README로 돌아가기](../README.md)

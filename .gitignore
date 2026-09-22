@@ -1,5 +1,54 @@
-BookMate-mini/Secrets.xcconfig
+# Local configuration and credentials
 .local/
+Secrets.xcconfig
+GoogleService-Info.plist
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*.pfx
+*.pem
+*.mobileprovision
+*service-account*.json
+*serviceAccount*.json
+*firebase-adminsdk*.json
+
+# Xcode and build output
 .DS_Store
 *.xcuserstate
 xcuserdata/
+DerivedData/
+build/
+*.xcarchive
+*.ipa
+*.dSYM/
+
+# Local assistant tools and generated work
+.agents/
+.skills/
+.claude/
+.codex/
+.cursor/
+.windsurf/
+.continue/
+.gemini/
+.opencode/
+opencode.json
+opencode.jsonc
+.copilot/
+.playwright-mcp/
+.mcp.json
+mcp.json
+.cursorrules
+.windsurfrules
+.aider*
+_workspace/
+
+# Publish only the reader-facing Markdown documents listed here.
+*.md
+!/README.md
+!/docs/setup.md
+!/docs/guestbook-send-performance.md
+!/docs/token-refresh.md
+!/docs/word-save-registration-flow.md

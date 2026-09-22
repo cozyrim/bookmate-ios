@@ -1,79 +1,64 @@
-# Guestbook Send Performance
+# 방명록 전송 후 화면 반응 개선
 
-## Goal
+## 문제와 판단
 
-방명록 전송 버튼을 누른 뒤 사용자가 기다리는 시간을 줄인다.
+방명록 전송 후 서버 응답까지 기다려야 작성한 글이 목록에 표시되는 흐름. 네트워크가 느리면 사용자는 버튼이 동작했는지 바로 확인하기 어려움.
 
-측정 기준은 평균 응답 시간만 보지 않고 다음 지표를 함께 본다.
+저장 완료와 화면 반응을 분리하는 방식 선택. 글은 먼저 보여주되 서버에 저장됐다고 오해하지 않도록 전송 중 상태 표시. 실패했을 때 다시 입력할 부담도 줄일 필요.
 
-- `PostGuestbookOptimisticUI`: 전송 요청 직후 임시 방명록을 화면에 삽입하는 시간
-- `PostGuestbookAPI`: 방명록 작성 API round trip 시간
-- `PostGuestbookTotal`: 전송 시작부터 서버 응답으로 임시 메시지를 교체할 때까지의 전체 시간
+## 처리 흐름
 
-## iOS Change
-
-전송 버튼을 누르면 입력창을 먼저 비우고, 임시 방명록을 리스트 상단에 바로 삽입한다.
-
-서버 응답이 성공하면 임시 메시지를 실제 서버 메시지로 교체한다. 실패하면 임시 메시지를 제거하고 입력 내용을 다시 복구한다.
-
-```swift
-let optimisticMessage = makeOptimisticMessage(content: trimmedContent)
-pendingMessageIDs.insert(optimisticMessage.id)
-messages.insert(optimisticMessage, at: 0)
-
-let newMessage = try await socialService.writeGuestbook(...)
-replaceOptimisticMessage(id: optimisticMessage.id, with: newMessage)
+```mermaid
+flowchart TD
+    Send[전송 · 입력창 비우기] --> Pending[임시 UUID로 글 삽입 · 전송 중 표시]
+    Pending --> API[방명록 API 요청]
+    API -->|성공| Replace[임시 글을 서버 응답으로 교체]
+    API -->|실패| Restore[임시 글 삭제 · 전송 내용 복구 · 오류 안내]
 ```
 
-측정은 `os_signpost`로 구간을 나누어 기록한다.
+- `pendingMessageIDs`로 임시 글과 저장된 글 구분. 전송 중 글에는 삭제·신고 등 후속 동작을 표시하지 않음.
+- `isPosting`으로 응답을 기다리는 동안 전송 버튼 비활성화.
+- 성공 시 임시 UUID의 위치를 찾아 서버 응답으로 교체. 별도 목록 재조회 없이 저장된 글 반영.
+- 실패 시 임시 글과 pending 상태 제거. 작성 컴포넌트가 전송했던 내용을 입력창에 복구.
+- 입력 상태는 `GuestbookComposerView` 내부 `@State`로 관리.
 
-```swift
-PerformanceLogger.begin("PostGuestbookOptimisticUI", id: optimisticSignpostID)
-messages.insert(optimisticMessage, at: 0)
-PerformanceLogger.end("PostGuestbookOptimisticUI", id: optimisticSignpostID)
-```
+관련 코드: [GuestbookSheetView.swift](../BookMate/Social/GuestbookSheetView.swift)의 `postMessage`, `replaceOptimisticMessage`, `GuestbookComposerView`.
 
-## Server Change
+## 서버 응답에서 분리한 작업
 
-방명록 저장 응답 경로에서 FCM 발송을 분리한다.
+별도 `bookmate-server`의 방명록 저장 흐름도 함께 정리. 기존 개발 기록은 저장 요청 안에서 FCM 발송까지 기다리는 구조였으며, 현재 서버 코드는 트랜잭션 커밋 후 `@Async` 메서드에 푸시 발송을 넘기는 방식.
 
-기존 흐름은 방명록 저장 후 FCM 발송까지 같은 요청 안에서 처리했다.
+- 방명록 저장 응답이 외부 FCM 발송 완료까지 기다리지 않도록 분리.
+- 커밋 후 발송을 요청해 저장에 실패한 글의 알림이 나가는 상황 방지.
+- 비동기 작업은 영속 큐가 아니므로 프로세스 종료 시 전달 보장과 재시도 정책은 별도 보완 필요.
 
-```java
-GuestbookEntity savedMessage = guestbookRepository.save(message);
-pushNotificationService.sendGuestbookMessageNotification(targetUser, writer, savedMessage);
-return GuestbookMessageResponse.from(savedMessage);
-```
+이 부분은 iOS 화면의 낙관적 갱신과 구분되는 서버 변경. 이 저장소에는 서버 구현을 포함하지 않으며, 위 설명은 기존 개발 기록과 별도 서버의 `GuestbookService`, `PushNotificationService` 구현을 대조한 내용.
 
-개선 후에는 방명록 저장 트랜잭션이 커밋된 뒤 비동기 작업으로 푸시 발송을 넘긴다.
+## 측정 기준
 
-```java
-GuestbookEntity savedMessage = guestbookRepository.save(message);
-sendGuestbookNotificationAfterCommit(targetUser, writer, savedMessage);
-return GuestbookMessageResponse.from(savedMessage);
-```
+화면 상태를 먼저 바꾸는 처리와 서버 호출을 구분해 확인하도록 [PerformanceLogger.swift](../BookMate/Utils/PerformanceLogger.swift)에 `os_signpost` 사용.
 
-```java
-@Async
-@Transactional
-public void sendGuestbookMessageNotificationAsync(...) {
-    sendToUser(targetUserId, payload);
-}
-```
+| 구간 | 현재 코드가 측정하는 범위 |
+| --- | --- |
+| `PostGuestbookOptimisticUI` | pending ID 추가와 배열 삽입. 실제 화면 렌더링 완료 시점은 포함하지 않음 |
+| `PostGuestbookAPI` | 서비스 호출 시작부터 응답 교체 또는 오류 처리까지. 순수 서버 처리 시간과는 차이 있음 |
+| `PostGuestbookTotal` | 전송 처리 시작부터 성공·실패 처리와 전송 상태 정리까지 |
 
-## Measuring Again
+확인 가능한 변화는 **서버 응답 전에 전송 중인 글을 화면 상태에 반영하도록 순서를 변경한 점**. 전후 측정 결과가 저장소에 없어 지연 감소율이나 평균 응답 시간은 제시하지 않음.
 
-Instruments에서 `os_signpost` Instrument를 열고 다음 이름을 필터링한다.
+## 확인할 시나리오
 
-- `PostGuestbookOptimisticUI`
-- `PostGuestbookAPI`
-- `PostGuestbookTotal`
+아래는 검증 계획이며 자동화 테스트 통과 기록은 아님.
 
-권장 측정 방식:
+| 조건 | 확인할 동작 |
+| --- | --- |
+| 느린 네트워크에서 전송 | 응답 전에 임시 글 표시, 전송 중 안내, 중복 전송 차단 |
+| 정상 응답 | 임시 글 하나가 실제 글 하나로 교체 |
+| 서버 오류·연결 끊김 | 임시 글 제거, 전송한 내용 복구, 실패 안내 |
+| 전송 대기 중 다른 내용 입력 후 실패 | 기존 복구 로직이 새 입력을 덮어쓰는지 확인 |
 
-- 실기기에서 측정
-- 같은 네트워크에서 20회 이상 반복
-- 첫 1-2회는 워밍업으로 제외
-- `p50`, `p95`, `max`, `avg`를 기록
+현재 실패 복구는 `draft = content`로 전송했던 내용을 대입하므로, 대기 중 새로 입력한 내용 보존은 보완 필요. 타임아웃 전에 서버 저장이 끝난 경우 재전송 중복 여부는 서버의 멱등성 처리까지 확인해야 함.
 
-포트폴리오에는 `PostGuestbookOptimisticUI`를 사용자 체감 개선 지표로, `PostGuestbookAPI`와 `PostGuestbookTotal`을 원인 분석 지표로 사용한다.
+성능 비교 시 같은 실기기·네트워크·빌드 조건에서 전후 각각 20회 이상 반복하고 첫 1–2회는 워밍업으로 제외. `p50`, `p95`, `max`, `avg` 기록. 실제 화면 표시 시점은 Instruments의 화면 갱신 구간과 함께 확인.
+
+[README로 돌아가기](../README.md)
