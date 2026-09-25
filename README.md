@@ -77,9 +77,3 @@ flowchart LR
 | Kingfisher · UserNotifications · os_signpost | 이미지 로딩·캐시, 로컬 알림, 처리 구간 측정 |
 
 `BookMateViewModel`은 책·단어·문장·메모·리뷰 기능을 extension 파일로 구분. 인증은 `AuthSessionViewModel`, 네트워크 요청은 `Services/`에서 관리. 일부 화면은 서비스를 직접 호출하는 구조.
-
-## 실행 및 검증
-
-- iOS 26.2 이상, 해당 SDK를 지원하는 Xcode 필요. Swift 언어 모드는 5.0.
-- 본인 개발 환경의 API 설정과 Firebase 구성 필요. [설정 순서](docs/setup.md) 참고.
-- 현재 XCTest 타깃은 기본 템플릿 수준. 위 사례의 기능 회귀 테스트와 최신 버전의 실기기 성능 재측정은 보완 항목이며, 각 상세 문서에 확인 시나리오 정리.
