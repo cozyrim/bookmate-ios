@@ -46,3 +46,12 @@ Firebase 구성과 카카오 Native App Key는 앱 초기화에 필요. 빈 예�
 - `.xcconfig`로 주입한 값도 빌드 결과의 Info.plist에 포함. 배포 앱에서 비밀 유지가 필요한 API 키는 서버에서 관리해야 함.
 
 [README로 돌아가기](../README.md)
+
+## 운영 Firebase 설정 확인 — 2026-09-25
+
+- iOS API 키의 앱 제한을 실제 Bundle Identifier로 설정. 기존 API 허용 목록과 키 값 유지.
+- 앱 구성의 키로 Firebase Installations 요청 검증: 올바른 앱 식별자 200, 다른 식별자 403. 검증용 설치 등록은 즉시 삭제, 실제 사용자 설치 정보 조회 없음.
+- 앱 식별자 제한은 사용 범위를 줄이는 설정. 헤더 위조까지 막는 앱 인증이나 서버의 사용자·소유권 검사를 대신하지 않음.
+- 서버의 Firebase 계정은 FCM API 관리자 역할로 축소. 실제 알림을 보내지 않는 검증 모드 성공. 기기에서의 푸시 수신은 별도 확인 필요.
+
+[서버 운영 보안 적용 내역](https://github.com/cozyrim/bookmate-server/blob/main/docs/auth-and-access.md)
