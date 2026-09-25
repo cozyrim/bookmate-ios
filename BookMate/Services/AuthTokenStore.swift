@@ -7,15 +7,19 @@
 
 import Foundation
 
+@MainActor
 protocol AuthTokenStore {
     func save(accessToken: String, refreshToken: String)
     func save(_ token: String)
     func load() -> String?
     func loadRefreshToken() -> String?
     func clear()
+    func replace(expectedRefreshToken: String, accessToken: String, refreshToken: String) -> Bool
 }
 
+@MainActor
 final class KeychainTokenStore: AuthTokenStore {
+    private(set) static var sessionGeneration = UUID()
     private let service = "BookMateMini"
     private let accessTokenAccount = "accessToken"
     private let refreshTokenAccount = "refreshToken"
@@ -23,6 +27,7 @@ final class KeychainTokenStore: AuthTokenStore {
     
     // 로그인 성공 후 토큰 저장
     func save(accessToken: String, refreshToken: String) {
+        Self.sessionGeneration = UUID()
         // Save the refresh token first. If the app stops between the two writes,
         // the old access token can still be refreshed with the new credential.
         save(refreshToken, for: refreshTokenAccount)
@@ -30,8 +35,17 @@ final class KeychainTokenStore: AuthTokenStore {
     }
 
     func save(_ token: String) {
+        Self.sessionGeneration = UUID()
         delete(account: refreshTokenAccount)
         save(token, for: accessTokenAccount)
+    }
+
+    // MainActor makes the comparison and both writes atomic with logout/login.
+    func replace(expectedRefreshToken: String, accessToken: String, refreshToken: String) -> Bool {
+        guard loadRefreshToken() == expectedRefreshToken else { return false }
+        save(refreshToken, for: refreshTokenAccount)
+        save(accessToken, for: accessTokenAccount)
+        return true
     }
 
     private func save(_ token: String, for account: String) {
@@ -105,6 +119,7 @@ final class KeychainTokenStore: AuthTokenStore {
 
     // 로그아웃할 때 토큰 삭제
     func clear() {
+        Self.sessionGeneration = UUID()
         delete(account: accessTokenAccount)
         delete(account: refreshTokenAccount)
     }

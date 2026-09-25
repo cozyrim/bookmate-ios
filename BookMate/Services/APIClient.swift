@@ -48,7 +48,11 @@ struct APIClient {
     /// Executes an API request and retries it once after refreshing an expired access token.
     /// Requests without an Authorization header are sent unchanged.
     func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        let generation = KeychainTokenStore.sessionGeneration
         let initialResult = try await URLSession.shared.data(for: request)
+        if bearerToken(in: request) != nil, generation != KeychainTokenStore.sessionGeneration {
+            throw CancellationError()
+        }
 
         guard isUnauthorized(initialResult.1),
               let failedAccessToken = bearerToken(in: request) else {
@@ -58,9 +62,12 @@ struct APIClient {
         let refreshedAccessToken = try await TokenRefreshCoordinator.shared
             .accessToken(afterUnauthorizedRequestWith: failedAccessToken)
 
+        guard generation == KeychainTokenStore.sessionGeneration else { throw CancellationError() }
         var retryRequest = request
         retryRequest.setValue("Bearer \(refreshedAccessToken)", forHTTPHeaderField: "Authorization")
-        return try await URLSession.shared.data(for: retryRequest)
+        let result = try await URLSession.shared.data(for: retryRequest)
+        guard generation == KeychainTokenStore.sessionGeneration else { throw CancellationError() }
+        return result
     }
 
     /// 서버 응답 상태 코드를 검증해요.

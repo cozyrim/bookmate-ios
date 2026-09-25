@@ -1,95 +1,56 @@
-//
-//  TokenRefreshCoordinator.swift
-//  BookMate
-//
-//  Expired access-token recovery shared by all authenticated API requests.
-//
-
 import Foundation
 
-actor TokenRefreshCoordinator {
+@MainActor
+final class TokenRefreshCoordinator {
     static let shared = TokenRefreshCoordinator()
+    private var refreshTask: (id: UUID, credential: String, task: Task<String, Error>)?
 
-    private var refreshTask: Task<String, Error>?
-
-    /// Shares one refresh request across concurrent 401 responses and avoids a
-    /// second refresh when another request already replaced the access token.
     func accessToken(afterUnauthorizedRequestWith failedAccessToken: String) async throws -> String {
-        let tokenStore = KeychainTokenStore()
-
-        if let currentAccessToken = tokenStore.load(), currentAccessToken != failedAccessToken {
-            return currentAccessToken
+        let store = KeychainTokenStore()
+        guard let current = store.load() else { throw CancellationError() }
+        if current != failedAccessToken { return current }
+        guard let credential = store.loadRefreshToken() else { throw APIError.unauthorized }
+        if let pending = refreshTask, pending.credential == credential {
+            return try await pending.task.value
         }
-
-        if let refreshTask {
-            return try await refreshTask.value
+        let id = UUID()
+        let task = Task { try await TokenRefreshService().refreshAccessToken(expectedRefreshToken: credential) }
+        refreshTask = (id, credential, task)
+        defer {
+            if refreshTask?.id == id { refreshTask = nil }
         }
-
-        let task = Task {
-            try await TokenRefreshService().refreshAccessToken()
-        }
-        refreshTask = task
-
-        do {
-            let refreshedAccessToken = try await task.value
-            refreshTask = nil
-            return refreshedAccessToken
-        } catch {
-            refreshTask = nil
-            throw error
-        }
+        return try await task.value
     }
 }
 
-private struct TokenRefreshService {
-    private let baseURL = APIEnvironment.baseURL
-    private let tokenStore: AuthTokenStore = KeychainTokenStore()
+@MainActor
+struct TokenRefreshService {
+    var baseURL = APIEnvironment.baseURL
+    var tokenStore: AuthTokenStore = KeychainTokenStore()
+    var session: URLSession = .shared
 
-    private struct RefreshBody: Encodable {
-        let refreshToken: String
-    }
-
-    func refreshAccessToken() async throws -> String {
-        guard let refreshToken = tokenStore.loadRefreshToken() else {
-            throw APIError.unauthorized
-        }
-
-        let url = baseURL
-            .appendingPathComponent("api")
-            .appendingPathComponent("auth")
-            .appendingPathComponent("refresh")
-
+    func refreshAccessToken(expectedRefreshToken: String) async throws -> String {
+        let url = baseURL.appendingPathComponent("api/auth/refresh")
         var request = URLRequest(url: url, timeoutInterval: APIClient.defaultTimeoutInterval)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(RefreshBody(refreshToken: refreshToken))
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
+        request.httpBody = try JSONEncoder().encode(["refreshToken": expectedRefreshToken])
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
+        guard (200..<300).contains(http.statusCode) else {
+            guard tokenStore.loadRefreshToken() == expectedRefreshToken else { throw CancellationError() }
+            if http.statusCode == 401 { throw APIError.unauthorized }
+            throw APIError.serverStatusCode(http.statusCode, nil)
         }
-
-        guard (200..<300).contains(httpResponse.statusCode) else {
-            if (400..<500).contains(httpResponse.statusCode) {
-                throw APIError.unauthorized
-            }
-
-            throw APIError.serverStatusCode(httpResponse.statusCode, nil)
+        let tokens: TokenRefreshResponse
+        do { tokens = try JSONDecoder().decode(TokenRefreshResponse.self, from: data) }
+        catch { throw APIError.invalidResponse }
+        guard tokenStore.replace(expectedRefreshToken: expectedRefreshToken,
+                                 accessToken: tokens.accessToken, refreshToken: tokens.refreshToken) else {
+            // Logout may have raced a rotation. Revoke only the discarded credential.
+            try? await AuthAPIService().logout(refreshToken: tokens.refreshToken, baseURL: baseURL, session: session)
+            throw CancellationError()
         }
-
-        let refreshedTokens: TokenRefreshResponse
-        do {
-            refreshedTokens = try JSONDecoder().decode(TokenRefreshResponse.self, from: data)
-        } catch {
-            throw APIError.invalidResponse
-        }
-
-        tokenStore.save(
-            accessToken: refreshedTokens.accessToken,
-            refreshToken: refreshedTokens.refreshToken
-        )
-
-        return refreshedTokens.accessToken
+        return tokens.accessToken
     }
 }

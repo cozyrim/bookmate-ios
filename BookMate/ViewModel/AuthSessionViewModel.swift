@@ -212,11 +212,17 @@ final class AuthSessionViewModel: ObservableObject {
             isLoggedIn = true
             BMAnalytics.setUser(currentUser)
             await PushNotificationService.shared.syncTokenWithServerIfPossible()
+        } catch is CancellationError {
+            // A logout or newer login superseded this request.
         } catch {
-            tokenStore.clear()
-            currentUser = nil
-            isLoggedIn = false
-            BMAnalytics.setUser(nil)
+            if case APIError.unauthorized = error {
+                tokenStore.clear()
+                currentUser = nil
+                isLoggedIn = false
+                BMAnalytics.setUser(nil)
+            } else {
+                errorMessage = "로그인 상태를 확인하지 못했어요. 잠시 후 다시 시도해 주세요."
+            }
             DebugLogger.log("로그인 세션 복구 실패:", error)
         }
 
@@ -226,11 +232,18 @@ final class AuthSessionViewModel: ObservableObject {
     // 저장된 토큰과 사용자 상태를 지우고 로그아웃 상태로 전환한다.
     func logout() {
         let accessToken = tokenStore.load()
+        let refreshToken = tokenStore.loadRefreshToken()
+        tokenStore.clear()
+        let loggedOutGeneration = KeychainTokenStore.sessionGeneration
         Task {
+            if let refreshToken {
+                do { try await authAPIService.logout(refreshToken: refreshToken) }
+                catch { DebugLogger.log("서버 로그아웃 요청 실패. 로컬 세션은 삭제됨.") }
+            }
+            guard loggedOutGeneration == KeychainTokenStore.sessionGeneration else { return }
             await PushNotificationService.shared.disableCurrentTokenOnServer(accessToken: accessToken)
         }
 
-        tokenStore.clear()
         currentUser = nil
         isLoggedIn = false
         profile = nil

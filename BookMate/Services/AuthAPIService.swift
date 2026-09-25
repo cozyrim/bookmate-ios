@@ -8,7 +8,6 @@
 import Foundation
 
 
-// signup, loginWithKakao, fetchProfile, updateProfile, logout를 추가하면 됨
 struct AuthAPIService {
     private let baseURL = APIEnvironment.baseURL
     private let client = APIClient() // ← 공통 네트워크 헬퍼
@@ -244,6 +243,18 @@ struct AuthAPIService {
         return try JSONDecoder().decode(ProfileResponse.self, from: data)
     }
     
+    // Use the captured refresh credential without the automatic refresh/retry path.
+    func logout(refreshToken: String, baseURL: URL = APIEnvironment.baseURL,
+                session: URLSession = .shared) async throws {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/auth/logout"),
+                                 timeoutInterval: APIClient.defaultTimeoutInterval)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(["refreshToken": refreshToken])
+        let (_, response) = try await session.data(for: request)
+        try client.validate(response, treatsUnauthorizedAsExpiredSession: false)
+    }
+
     func withdraw(token: String) async throws {
         let url = baseURL
             .appendingPathComponent("api")
