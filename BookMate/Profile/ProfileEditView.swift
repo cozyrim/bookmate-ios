@@ -8,6 +8,7 @@
 import SwiftUI
 import PhotosUI
 import UIKit
+import ImageIO
 
 struct ProfileEditView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
@@ -136,7 +137,7 @@ struct ProfileEditView: View {
                             }
 
                             guard let data = try? await newItem?.loadTransferable(type: Data.self),
-                                  let image = UIImage(data: data),
+                                  let image = downsampledProfileImage(from: data, maxDimension: 768),
                                   let uploadImage = preparedProfileImageForUpload(image) else {
                                 return
                             }
@@ -294,6 +295,39 @@ struct ProfileEditView: View {
         isCheckingNickname = true
         nicknameAvailability = await authViewModel.checkNicknameAvailability(nickname: nicknameToCheck)
         isCheckingNickname = false
+    }
+
+    private func downsampledProfileImage(
+        from data: Data,
+        maxDimension: Int
+    ) -> UIImage? {
+        let sourceOptions = [
+            kCGImageSourceShouldCache: false
+        ] as CFDictionary
+
+        guard let source = CGImageSourceCreateWithData(
+            data as CFData,
+            sourceOptions
+        ) else {
+            return nil
+        }
+
+        let thumbnailOptions: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxDimension,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true
+        ]
+
+        guard let thumbnail = CGImageSourceCreateThumbnailAtIndex(
+            source,
+            0,
+            thumbnailOptions as CFDictionary
+        ) else {
+            return nil
+        }
+
+        return UIImage(cgImage: thumbnail)
     }
 
     private func preparedProfileImageForUpload(_ image: UIImage) -> (image: UIImage, data: Data)? {

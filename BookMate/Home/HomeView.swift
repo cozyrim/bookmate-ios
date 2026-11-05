@@ -13,6 +13,14 @@ struct HomeView: View {
     @Binding var selectedTab: Int
     @State private var path = NavigationPath()
     @State private var activeBookSheet: BookActionSheet?
+    private enum NextBookAction {
+        case edit(Book)
+        case delete(Book)
+        case progress(Book)
+        case memo(Book)
+    }
+
+    @State private var nextBookAction: NextBookAction?
     @State private var isShowingDeleteAlert = false
     @State private var selectedBookToDelete: Book?
 
@@ -160,7 +168,10 @@ struct HomeView: View {
                         .zIndex(10)
                 }
             }
-            .sheet(item: $activeBookSheet) { sheet in
+            .sheet(
+                item: $activeBookSheet,
+                onDismiss: handleBookSheetDismiss
+            ) { sheet in
                 switch sheet {
                 case .options(let book):
                     MoreOptionsSheet(
@@ -169,36 +180,20 @@ struct HomeView: View {
                         moveTitle: "읽은 쪽수 업데이트",
                         memoTitle: "메모하기",
                         onEdit: {
+                            nextBookAction = .edit(book)
                             activeBookSheet = nil
-
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                                Task {
-                                    await viewModel.loadMyReview(bookId: book.id)
-                                    activeBookSheet = .edit(book)
-                                }
-                            }
                         },
                         onDelete: {
+                            nextBookAction = .delete(book)
                             activeBookSheet = nil
-
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                                selectedBookToDelete = book
-                                isShowingDeleteAlert = true
-                            }
                         },
                         onMove: {
-                                activeBookSheet = nil
-
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                                    activeBookSheet = .progress(book)
-                                }
-                            },
-                        onMemo: {
+                            nextBookAction = .progress(book)
                             activeBookSheet = nil
-
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                                path.append(HomeRoute.bookDetailMemo(book.id))
-                            }
+                        },
+                        onMemo: {
+                            nextBookAction = .memo(book)
+                            activeBookSheet = nil
                         }
                     )
                     .presentationDetents([.height(360)])
@@ -378,6 +373,30 @@ struct HomeView: View {
             }
             .padding(24)
             .presentationDetents([.height(180)])
+        }
+    }
+
+    private func handleBookSheetDismiss() {
+        guard let action = nextBookAction else { return }
+
+        nextBookAction = nil
+
+        switch action {
+        case .edit(let book):
+            Task {
+                await viewModel.loadMyReview(bookId: book.id)
+                activeBookSheet = .edit(book)
+            }
+
+        case .delete(let book):
+            selectedBookToDelete = book
+            isShowingDeleteAlert = true
+
+        case .progress(let book):
+            activeBookSheet = .progress(book)
+
+        case .memo(let book):
+            path.append(HomeRoute.bookDetailMemo(book.id))
         }
     }
 

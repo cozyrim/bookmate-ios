@@ -1,5 +1,5 @@
 import SwiftUI
-import UIKit
+import Kingfisher
 
 struct BookCoverCell: View {
     var isSelected: Bool = false
@@ -48,7 +48,10 @@ struct BookCoverCell: View {
         Group {
             if let url = URL(string: imageName),
                imageName.hasPrefix("http") {
-                RemoteBookCoverImage(url: url)
+                RemoteBookCoverImage(
+                    url: url,
+                    targetSize: CGSize(width: imageWidth, height: imageHeight)
+                )
             } else {
                 Image(imageName)
                     .resizable()
@@ -59,62 +62,29 @@ struct BookCoverCell: View {
 }
 
 private struct RemoteBookCoverImage: View {
+    @Environment(\.displayScale) private var displayScale
+
     let url: URL
-    @State private var loadedImage: UIImage?
-    @State private var didFail = false
+    let targetSize: CGSize
 
     var body: some View {
-        Group {
-            if let loadedImage {
-                Image(uiImage: loadedImage)
-                    .resizable()
-                    .scaledToFit()
-            } else if didFail {
+        KFImage(url)
+            .setProcessor(
+                DownsamplingImageProcessor(size: targetSize)
+            )
+            .scaleFactor(displayScale)
+            .cacheOriginalImage()
+            .placeholder {
+                ProgressView()
+            }
+            .onFailureView {
                 Image("책기본이미지")
                     .resizable()
                     .scaledToFit()
-            } else {
-                ProgressView()
             }
-        }
-        .task(id: url) {
-            await loadImage()
-        }
-    }
-
-    @MainActor
-    private func loadImage() async {
-        loadedImage = nil
-        didFail = false
-
-        do {
-            let request = URLRequest(url: url, timeoutInterval: APIClient.defaultTimeoutInterval)
-            let (data, response) = try await URLSession.shared.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200..<300).contains(httpResponse.statusCode),
-                  let image = UIImage(data: data) else {
-                throw URLError(.badServerResponse)
-            }
-
-            loadedImage = image
-        } catch {
-            if Task.isCancelled || isCancelledImageRequest(error) {
-                return
-            }
-
-            didFail = true
-            DebugLogger.log("커버 이미지 로딩 실패:", url.absoluteString, error.localizedDescription)
-        }
-    }
-
-    private func isCancelledImageRequest(_ error: Error) -> Bool {
-        if error is CancellationError {
-            return true
-        }
-
-        let nsError = error as NSError
-        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
+            .cancelOnDisappear(true)
+            .resizable()
+            .scaledToFit()
     }
 }
 
