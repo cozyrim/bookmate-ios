@@ -164,6 +164,7 @@ struct HomeSearchSection: View {
                     Image(systemName: "magnifyingglass")
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("home.search.submit")
                 .disabled(viewModel.isLoading)
 
                 TextField(

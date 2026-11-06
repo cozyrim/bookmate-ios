@@ -26,7 +26,7 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10))
         input.typeText("여행")
         XCTAssertEqual(input.value as? String, "여행")
-        app.scrollViews.firstMatch.buttons["검색"].firstMatch.tap()
+        app.buttons["home.search.submit"].tap()
         let definition = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "여행의 뜻을 확인합니다.")).firstMatch
         XCTAssertTrue(definition.waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["저장하기"].firstMatch.exists)
