@@ -53,3 +53,7 @@ _workspace/
 !/docs/token-refresh.md
 !/docs/word-save-registration-flow.md
 !/docs/miniroom-rendering-performance.md
+
+# Shared review workflow documentation and PR template
+!/.github/pull_request_template.md
+!/docs/pr-review.md
