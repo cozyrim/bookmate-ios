@@ -23,7 +23,7 @@ extension BookMateViewModel {
         }
         
         do {
-            books = try await bookAPIService.fetchBooks()
+            books = try await bookRepository.fetchBooks()
                 .map { normalizedBookForReadingState($0) }
             syncShelfBooksFromBooks()
             bookLoadErrorMessage = nil
@@ -58,7 +58,7 @@ extension BookMateViewModel {
         bookSearchErrorMessage = nil
 
         do {
-            bookSearchResults = try await kakaoBookSearchService.searchBooks(query: trimmed)
+            bookSearchResults = try await bookSearchRepository.searchBooks(query: trimmed)
             BMAnalytics.searchCompleted(mode: .book, resultCount: bookSearchResults.count)
         } catch {
             bookSearchResults = []
@@ -110,10 +110,10 @@ extension BookMateViewModel {
             if let draftTotalPages = draft.totalPages {
                 totalPages = draftTotalPages
             } else {
-                totalPages = await bookPageLookupService.fetchPageCount(isbn: draft.isbn)
+                totalPages = await bookPageRepository.fetchPageCount(isbn: draft.isbn)
             }
 
-            let savedBook = try await bookAPIService.createBook(
+            let savedBook = try await bookRepository.createBook(
                 title: draft.title,
                 author: draft.author,
                 imageName: draft.imageName,
@@ -247,7 +247,7 @@ extension BookMateViewModel {
         }
 
         do {
-            try await bookAPIService.deleteBook(id: book.id)
+            try await bookRepository.deleteBook(id: book.id)
 
             books.removeAll { $0.id == book.id }
             savedWords.removeAll { $0.bookId == book.id }
@@ -298,7 +298,7 @@ extension BookMateViewModel {
 
         do {
             let updatedBook = normalizedBookForReadingState(
-                try await bookAPIService.updateBook(bookToUpdate)
+                try await bookRepository.updateBook(bookToUpdate)
             )
 
             if let index = books.firstIndex(where: { $0.id == updatedBook.id }) {
@@ -331,7 +331,7 @@ extension BookMateViewModel {
 
     // ISBN으로 페이지 수를 조회해 책 등록 폼의 페이지 값을 자동 입력한다.
     func lookupBookPageCount(isbn: String) async -> Int? {
-        await bookPageLookupService.fetchPageCount(isbn: isbn)
+        await bookPageRepository.fetchPageCount(isbn: isbn)
     }
 
     private func readingProgressBucket(_ progress: Double) -> String {
@@ -412,41 +412,23 @@ extension BookMateViewModel {
         shelfBooks = orderedBookIDs.compactMap { shelfBooksByBookID[$0] }
     }
 
-    private var shelfBookOrderKey: String {
-        let ownerKey = currentUserId?.uuidString ?? "guest"
-        return "shelfBookOrder.\(ownerKey)"
-    }
-
     private func savedShelfBookOrder() -> [UUID] {
-        UserDefaults.standard.stringArray(forKey: shelfBookOrderKey)?.compactMap(UUID.init(uuidString:)) ?? []
+        dependencies.shelfOrder.load(ownerID: currentUserId)
     }
 
     private func saveShelfBookOrder() {
-        UserDefaults.standard.set(
-            shelfBooks.map { $0.bookId.uuidString },
-            forKey: shelfBookOrderKey
-        )
+        dependencies.shelfOrder.save(shelfBooks.map(\.bookId), ownerID: currentUserId)
     }
 
-    // 새로 등록한 책은 사용자가 정한 기존 순서를 유지하면서 최상단에 표시한다.
     private func prependBookToSavedShelfOrder(_ bookID: UUID) {
-        var savedOrder = savedShelfBookOrder()
-        savedOrder.removeAll { $0 == bookID }
-        savedOrder.insert(bookID, at: 0)
-
-        UserDefaults.standard.set(
-            savedOrder.map(\.uuidString),
-            forKey: shelfBookOrderKey
-        )
+        var order = savedShelfBookOrder()
+        order.removeAll { $0 == bookID }
+        order.insert(bookID, at: 0)
+        dependencies.shelfOrder.save(order, ownerID: currentUserId)
     }
 
     private func removeBookFromSavedShelfOrder(_ bookID: UUID) {
-        guard var savedOrder = UserDefaults.standard.stringArray(forKey: shelfBookOrderKey) else {
-            return
-        }
-
-        savedOrder.removeAll { $0 == bookID.uuidString }
-        UserDefaults.standard.set(savedOrder, forKey: shelfBookOrderKey)
+        dependencies.shelfOrder.remove(bookID, ownerID: currentUserId)
     }
 
     private func rescheduleContinueReadingReminderIfNeeded() async {

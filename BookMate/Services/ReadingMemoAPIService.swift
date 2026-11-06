@@ -40,7 +40,7 @@ private struct ReadingMemoResponse: Decodable {
     }
 }
 
-struct ReadingMemoAPIService {
+struct ReadingMemoAPIService: ReadingMemoRepository {
     private let baseURL = APIEnvironment.baseURL
         private let client = APIClient()
     

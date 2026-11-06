@@ -73,7 +73,7 @@ enum BookAPIError: Error {
     case invalidRequestBody
 }
 
-struct BookAPIService {
+struct BookAPIService: BookRepository {
     private let baseURL = APIEnvironment.baseURL
     private let client = APIClient() // ← 공통 네트워크 헬퍼
 
