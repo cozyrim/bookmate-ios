@@ -109,52 +109,103 @@ final class BookMateViewModel: ObservableObject {
     // MARK: - Quote, Memo & Review State
 
     // 현재 열람 중인 책의 문장 목록이다.
-    @Published var quotes: [Quote] = []
+    var quotes: [Quote] {
+        get { quoteFeature.quotes }
+        set { quoteFeature.quotes = newValue }
+    }
 
     // 문장 목록 조회 실패 메시지다.
-    @Published var quoteLoadErrorMessage: String?
+    var quoteLoadErrorMessage: String? {
+        get { quoteFeature.quoteLoadErrorMessage }
+        set { quoteFeature.quoteLoadErrorMessage = newValue }
+    }
 
     // 현재 열람 중인 책의 독서 메모 목록이다.
-    @Published var readingMemos: [ReadingMemo] = []
+    var readingMemos: [ReadingMemo] {
+        get { memoFeature.readingMemos }
+        set { memoFeature.readingMemos = newValue }
+    }
 
     // 현재 메모리에 반영된 리뷰 목록이다.
-    @Published var reviews: [Review] = Review.sampleReviews
+    var reviews: [Review] {
+        get { reviewFeature.reviews }
+        set { reviewFeature.reviews = newValue }
+    }
 
-    @Published var publicBookReviews: [Review] = []
-    @Published var isPublicReviewLoading = false
-    @Published var publicReviewErrorMessage: String?
+    var publicBookReviews: [Review] {
+        get { reviewFeature.publicBookReviews }
+        set { reviewFeature.publicBookReviews = newValue }
+    }
+    var isPublicReviewLoading: Bool {
+        get { reviewFeature.isPublicReviewLoading }
+        set { reviewFeature.isPublicReviewLoading = newValue }
+    }
+    var publicReviewErrorMessage: String? {
+        get { reviewFeature.publicReviewErrorMessage }
+        set { reviewFeature.publicReviewErrorMessage = newValue }
+    }
 
     // MARK: - App State
 
     // 사용자 작업 실패 메시지다.
-    @Published var operationErrorMessage: String?
+    var operationErrorMessage: String? {
+        get { context.operationErrorMessage }
+        set { context.operationErrorMessage = newValue }
+    }
 
     // 화면에 보여줄 토스트 상태다.
-    @Published var toast: AppToast?
+    var toast: AppToast? {
+        get { context.toast }
+        set { context.toast = newValue }
+    }
 
     // API에서 401을 받았을 때 로그인 만료 처리를 트리거한다.
-    @Published var didReceiveUnauthorized = false
+    var didReceiveUnauthorized: Bool {
+        get { context.didReceiveUnauthorized }
+        set { context.didReceiveUnauthorized = newValue }
+    }
 
     // MARK: - Services
 
-    let bookPageLookupService = BookPageLookupService()
-    let kakaoBookSearchService = KakaoBookSearchService()
-    let bookAPIService = BookAPIService()
-    let wordAPIService = WordAPIService()
-    let quoteAPIService = QuoteAPIService()
-    let dictionaryExampleLookupService = DictionaryExampleLookupService()
-    let memoAPIService = ReadingMemoAPIService()
-    let reviewAPIService = ReviewAPIService()
+    let context: AppContext
+    let quoteFeature: QuoteViewModel
+    let memoFeature: ReadingMemoViewModel
+    let reviewFeature: ReviewViewModel
+    private var featureSubscriptions = Set<AnyCancellable>()
+    let dependencies: AppDependencies
+    var bookRepository: any BookRepository { dependencies.books }
+    var wordRepository: any WordRepository { dependencies.words }
+    var quoteRepository: any QuoteRepository { dependencies.quotes }
+    var memoRepository: any ReadingMemoRepository { dependencies.memos }
+    var reviewRepository: any ReviewRepository { dependencies.reviews }
+    var bookSearchRepository: any BookSearchRepository { dependencies.bookSearch }
+    var bookPageRepository: any BookPageRepository { dependencies.bookPages }
+    var dictionaryExampleRepository: any DictionaryExampleRepository { dependencies.dictionaryExamples }
     let recentSearchRepository: any RecentSearchRepository
 
-    init(recentSearchRepository: (any RecentSearchRepository)? = nil) {
-        self.recentSearchRepository = recentSearchRepository ?? UserDefaultsRecentSearchRepository()
+    init(dependencies: AppDependencies? = nil, recentSearchRepository: (any RecentSearchRepository)? = nil) {
+        let dependencies = dependencies ?? AppDependencies()
+        self.dependencies = dependencies
+        let context = AppContext()
+        self.context = context
+        self.quoteFeature = QuoteViewModel(repository: dependencies.quotes, context: context)
+        self.memoFeature = ReadingMemoViewModel(repository: dependencies.memos, context: context)
+        self.reviewFeature = ReviewViewModel(repository: dependencies.reviews, context: context)
+        self.recentSearchRepository = recentSearchRepository ?? dependencies.recentSearches
+        [context.objectWillChange, quoteFeature.objectWillChange,
+         memoFeature.objectWillChange, reviewFeature.objectWillChange].forEach { publisher in
+            publisher.sink { [weak self] _ in self?.objectWillChange.send() }
+                .store(in: &featureSubscriptions)
+        }
     }
 
     // MARK: - Current User
 
     var recentSearchOwnerId: UUID?
-    var currentUserId: UUID?
+    var currentUserId: UUID? {
+        get { context.currentUserId }
+        set { context.currentUserId = newValue }
+    }
 
     private var currentUserNickname: String = "나"
     var inFlightBookRegistrationTasks: [String: Task<Book, Error>] = [:]
@@ -168,18 +219,12 @@ final class BookMateViewModel: ObservableObject {
 
     // 앱 전역 토스트를 표시한다.
     func showToast(_ message: String, style: AppToast.Style = .info) {
-        toast = AppToast(message: message, style: style)
+        context.showToast(message, style: style)
     }
 
     // 인증 만료 오류를 감지하고 로그인 만료 상태를 표시한다.
     func handleUnauthorizedIfNeeded(_ error: Error) -> Bool {
-        if case APIError.unauthorized = error {
-            didReceiveUnauthorized = true
-            showToast("로그인이 만료됐어요. 다시 로그인해 주세요.", style: .error)
-            return true
-        }
-
-        return false
+        context.handleUnauthorizedIfNeeded(error)
     }
 
     // 로그인한 사용자 정보를 ViewModel 상태에 반영한다.

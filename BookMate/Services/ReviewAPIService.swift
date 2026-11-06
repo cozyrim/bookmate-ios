@@ -41,7 +41,7 @@ private struct ReviewResponse: Decodable {
     }
 }
 
-struct ReviewAPIService {
+struct ReviewAPIService: ReviewRepository {
     private let baseURL = APIEnvironment.baseURL
     private let client = APIClient()
 

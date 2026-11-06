@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class DictionaryExampleLookupService {
+final class DictionaryExampleLookupService: DictionaryExampleRepository {
     func fetchExample(word: String, targetCode: String) async -> String? {
         if let example = await fetchFromStdDict(targetCode: targetCode) {
             return example

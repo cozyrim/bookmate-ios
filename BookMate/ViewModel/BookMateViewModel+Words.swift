@@ -224,7 +224,7 @@ extension BookMateViewModel {
             }
 
             let selectedText = normalizedDictionaryWord(selectedItem.word)
-            let exampleSentence = await dictionaryExampleLookupService.fetchExample(
+            let exampleSentence = await dictionaryExampleRepository.fetchExample(
                 word: selectedText,
                 targetCode: selectedItem.targetCode
             )
@@ -325,7 +325,7 @@ extension BookMateViewModel {
 
         guard entry.exampleSentence == nil else { return }
 
-        let exampleSentence = await dictionaryExampleLookupService.fetchExample(
+        let exampleSentence = await dictionaryExampleRepository.fetchExample(
             word: entry.text,
             targetCode: entry.targetCode
         )
@@ -400,7 +400,7 @@ extension BookMateViewModel {
         }
 
         do {
-            let savedWord = try await wordAPIService.saveWord(
+            let savedWord = try await wordRepository.saveWord(
                 bookId: bookId,
                 text: dictionarySearchResult.text,
                 meaning: dictionarySearchResult.meaning,
@@ -439,7 +439,7 @@ extension BookMateViewModel {
         }
 
         do {
-            savedWords = try await wordAPIService.fetchWords()
+            savedWords = try await wordRepository.fetchWords()
             wordLoadErrorMessage = nil
         } catch {
             if handleUnauthorizedIfNeeded(error) {
@@ -462,7 +462,7 @@ extension BookMateViewModel {
         }
 
         do {
-            try await wordAPIService.deleteWord(id: word.id)
+            try await wordRepository.deleteWord(id: word.id)
 
             savedWords.removeAll { $0.id == word.id }
             savedWordSearchResults.removeAll { $0.id == word.id }
@@ -495,7 +495,7 @@ extension BookMateViewModel {
         }
 
         do {
-            let updatedWord = try await wordAPIService.updateWord(word)
+            let updatedWord = try await wordRepository.updateWord(word)
 
             if let index = savedWords.firstIndex(where: { $0.id == updatedWord.id }) {
                 savedWords[index] = updatedWord

@@ -19,7 +19,7 @@ private struct GoogleBookVolumeInfo: Decodable {
     let pageCount: Int?
 }
 
-final class BookPageLookupService {
+final class BookPageLookupService: BookPageRepository {
     private let aladinBookLookupService = AladinBookLookupService()
     
     func fetchPageCount(isbn: String) async -> Int? {

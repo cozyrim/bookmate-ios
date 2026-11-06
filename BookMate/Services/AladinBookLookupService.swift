@@ -33,7 +33,7 @@ enum AladinBookLookupError: Error {
         case badStatusCode(Int)
 }
 
-final class AladinBookLookupService {
+final class AladinBookLookupService: BookMetadataRepository {
     private let apiKey: String
     private let session: URLSession
     

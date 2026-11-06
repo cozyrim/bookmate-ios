@@ -40,7 +40,7 @@ private struct QuoteResponse: Decodable {
     }
 }
 
-struct QuoteAPIService {
+struct QuoteAPIService: QuoteRepository {
     private let baseURL = APIEnvironment.baseURL
     private let client = APIClient() // ← 공통 네트워크 헬퍼
 

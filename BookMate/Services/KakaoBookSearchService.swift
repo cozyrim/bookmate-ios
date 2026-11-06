@@ -57,7 +57,7 @@ enum KakaoBookSearchError: LocalizedError {
     }
 }
 
-final class KakaoBookSearchService {
+final class KakaoBookSearchService: BookSearchRepository {
     private let apiKey: String
     private let session: URLSession
 
@@ -121,5 +121,11 @@ final class KakaoBookSearchService {
         }
 
         return trimmedKey
+    }
+}
+
+extension KakaoBookSearchService {
+    func searchBooks(query: String) async throws -> [KakaoBook] {
+        try await searchBooks(query: query, page: 1, size: 20)
     }
 }
