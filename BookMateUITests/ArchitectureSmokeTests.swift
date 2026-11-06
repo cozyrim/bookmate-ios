@@ -11,6 +11,7 @@ final class ArchitectureSmokeTests: XCTestCase {
                 let button = tab(label, in: app)
                 XCTAssertTrue(button.waitForExistence(timeout: 10), label)
                 button.tap()
+                assertDestination(label, in: app)
                 capture("\(appearance)-tab-\(index)", app: app)
             }
             app.terminate()
@@ -54,6 +55,27 @@ final class ArchitectureSmokeTests: XCTestCase {
     private func tab(_ label: String, in app: XCUIApplication) -> XCUIElement {
         let tabButton = app.tabBars.buttons[label].firstMatch
         return tabButton.exists ? tabButton : app.buttons[label].firstMatch
+    }
+
+    private func assertDestination(_ label: String, in app: XCUIApplication) {
+        let expected: XCUIElement
+        switch label {
+        case "홈":
+            expected = app.staticTexts["최근 저장 단어"].firstMatch
+        case "책":
+            expected = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "싯타르타,")).firstMatch
+        case "단어장":
+            XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "전체 책")).firstMatch.waitForExistence(timeout: 10))
+            expected = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "찰나")).firstMatch
+        case "서재":
+            expected = app.staticTexts["독서가님의 책장"].firstMatch
+        case "프로필":
+            expected = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "프로필 수정")).firstMatch
+        default:
+            XCTFail("Missing destination assertion: \(label)")
+            return
+        }
+        XCTAssertTrue(expected.waitForExistence(timeout: 10), "Destination: \(label)")
     }
 
     private func capture(_ name: String, app: XCUIApplication) {

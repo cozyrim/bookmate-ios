@@ -42,6 +42,8 @@ let model = BookMateViewModel(dependencies: dependencies)
 
 인증의 토큰 저장소·소셜 로그인·푸시 동기화, 책장의 로컬 순서 저장과 독서 알림 예약도 교체 가능한 경계로 전달한다. 시스템 권한 창, 화면 이동, 키보드와 로컬 UI 설정은 기존 플랫폼 흐름을 유지한다.
 
+토큰 저장소 주입은 인증·소셜 ViewModel의 세션 처리 경계에 적용된다. 기본 API Service 내부의 APIClient와 refresh 조율은 기존 Keychain 구성을 유지한다. 따라서 커스텀 토큰 저장소로 요청을 검증할 때는 해당 요청 Repository도 함께 주입해야 한다. 토큰 저장소 하나만 교체해 모든 live 요청의 인증 전송이 바뀌는 구성은 아니다.
+
 ## 데이터와 동작 호환성
 
 - 최근 검색어의 사용자·검색 종류별 키와 JSON Data 형식을 유지한다.
