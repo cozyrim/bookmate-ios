@@ -70,7 +70,7 @@ private final class MiniRoomBooksStore: ObservableObject {
 
     init(viewModel: BookMateViewModel) {
         self.books = viewModel.books
-        self.cancellable = viewModel.$books
+        self.cancellable = viewModel.libraryFeature.$books
             .removeDuplicates()
             .sink { [weak self] books in
                 PerformanceLogger.event("MiniRoomBooksUpdated")

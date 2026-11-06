@@ -16,30 +16,41 @@ final class BookMateViewModel: ObservableObject {
 
     typealias SearchMode = RecentSearchScope.Mode
 
-    enum ArchiveSortOrder: String, CaseIterable {
-        case latest = "최신순"
-        case oldest = "오래된 순"
-        case alphabetical = "가나다순"
-    }
+    typealias ArchiveSortOrder = WordViewModel.ArchiveSortOrder
 
     // MARK: - Archive State
 
     // nil이면 전체 카테고리를 의미한다.
-    @Published var archiveSelectedCategory: String? = nil
+    var archiveSelectedCategory: String? {
+        get { wordFeature.archiveSelectedCategory }
+        set { wordFeature.archiveSelectedCategory = newValue }
+    }
 
     // nil이면 전체 책을 의미한다.
-    @Published var archiveSelectedBookId: UUID? = nil
+    var archiveSelectedBookId: UUID? {
+        get { wordFeature.archiveSelectedBookId }
+        set { wordFeature.archiveSelectedBookId = newValue }
+    }
 
     // 단어 아카이브 정렬 기준이다.
-    @Published var archiveSortOrder: ArchiveSortOrder = .latest
+    var archiveSortOrder: ArchiveSortOrder {
+        get { wordFeature.archiveSortOrder }
+        set { wordFeature.archiveSortOrder = newValue }
+    }
 
     // MARK: - Book State
 
     // 서버에서 불러온 내 책 목록이다.
-    @Published var books: [Book] = []
+    var books: [Book] {
+        get { libraryFeature.books }
+        set { libraryFeature.books = newValue }
+    }
 
     // 책장 화면 렌더링에 사용하는 책별 진행 상태 목록이다.
-    @Published var shelfBooks: [ShelfBook] = ShelfBook.sampleShelfBooks
+    var shelfBooks: [ShelfBook] {
+        get { libraryFeature.shelfBooks }
+        set { libraryFeature.shelfBooks = newValue }
+    }
 
     // 새 책 등록 시 카카오 책 검색 결과를 담는다.
     var bookSearchResults: [KakaoBook] {
@@ -60,15 +71,24 @@ final class BookMateViewModel: ObservableObject {
     }
 
     // 책 목록 조회 실패 메시지다.
-    @Published var bookLoadErrorMessage: String?
+    var bookLoadErrorMessage: String? {
+        get { libraryFeature.bookLoadErrorMessage }
+        set { libraryFeature.bookLoadErrorMessage = newValue }
+    }
 
     // 다른 탭에서 책장 안의 특정 책으로 이동해 달라고 요청하는 1회성 상태다.
-    @Published var pendingShelfBookPresentationID: UUID?
+    var pendingShelfBookPresentationID: UUID? {
+        get { libraryFeature.pendingShelfBookPresentationID }
+        set { libraryFeature.pendingShelfBookPresentationID = newValue }
+    }
 
     // MARK: - Word & Search State
 
     // 사용자가 책에 저장한 단어 목록이다.
-    @Published var savedWords: [Word] = []
+    var savedWords: [Word] {
+        get { wordFeature.savedWords }
+        set { wordFeature.savedWords = newValue }
+    }
 
     // 검색창 TextField에 입력 중인 문자열이다.
     var searchText: String {
@@ -89,16 +109,28 @@ final class BookMateViewModel: ObservableObject {
     }
 
     // 단어 저장 시트 표시 상태다.
-    @Published var isWordSaveSheetPresented = false
+    var isWordSaveSheetPresented: Bool {
+        get { wordFeature.isWordSaveSheetPresented }
+        set { wordFeature.isWordSaveSheetPresented = newValue }
+    }
 
     // 단어 저장 중 책 등록을 시작했을 때, 등록 완료 후 저장 시트로 돌아갈지 나타낸다.
-    @Published var shouldResumeWordSaveAfterBookRegistration = false
+    var shouldResumeWordSaveAfterBookRegistration: Bool {
+        get { wordFeature.shouldResumeWordSaveAfterBookRegistration }
+        set { wordFeature.shouldResumeWordSaveAfterBookRegistration = newValue }
+    }
 
     // 책 등록 완료 후 홈 화면 위에 단어 저장 시트를 다시 띄울지 나타낸다.
-    @Published var isWordSaveResumeSheetPresented = false
+    var isWordSaveResumeSheetPresented: Bool {
+        get { wordFeature.isWordSaveResumeSheetPresented }
+        set { wordFeature.isWordSaveResumeSheetPresented = newValue }
+    }
 
     // 책 등록 후 단어 저장 시트에서 자동 선택할 책 ID다.
-    @Published var wordSaveBookIdToSelectAfterRegistration: UUID?
+    var wordSaveBookIdToSelectAfterRegistration: UUID? {
+        get { wordFeature.wordSaveBookIdToSelectAfterRegistration }
+        set { wordFeature.wordSaveBookIdToSelectAfterRegistration = newValue }
+    }
 
     // 저장 단어 검색 모드에서 보여줄 검색 결과다.
     var savedWordSearchResults: [Word] {
@@ -137,7 +169,10 @@ final class BookMateViewModel: ObservableObject {
     }
 
     // 저장 단어 조회 실패 메시지다.
-    @Published var wordLoadErrorMessage: String?
+    var wordLoadErrorMessage: String? {
+        get { wordFeature.wordLoadErrorMessage }
+        set { wordFeature.wordLoadErrorMessage = newValue }
+    }
 
     // 책 등록 완료 후 홈의 사전 검색 화면을 열기 위한 1회성 요청이다.
     @Published var pendingDictionarySearchPresentationID: UUID?
@@ -204,20 +239,14 @@ final class BookMateViewModel: ObservableObject {
     // MARK: - Services
 
     let context: AppContext
+    let libraryFeature: BookLibraryViewModel
+    let wordFeature: WordViewModel
     let searchFeature: SearchViewModel
     let quoteFeature: QuoteViewModel
     let memoFeature: ReadingMemoViewModel
     let reviewFeature: ReviewViewModel
     private var featureSubscriptions = Set<AnyCancellable>()
     let dependencies: AppDependencies
-    var bookRepository: any BookRepository { dependencies.books }
-    var wordRepository: any WordRepository { dependencies.words }
-    var quoteRepository: any QuoteRepository { dependencies.quotes }
-    var memoRepository: any ReadingMemoRepository { dependencies.memos }
-    var reviewRepository: any ReviewRepository { dependencies.reviews }
-    var bookSearchRepository: any BookSearchRepository { dependencies.bookSearch }
-    var bookPageRepository: any BookPageRepository { dependencies.bookPages }
-    var dictionaryExampleRepository: any DictionaryExampleRepository { dependencies.dictionaryExamples }
     let recentSearchRepository: any RecentSearchRepository
 
     init(dependencies: AppDependencies? = nil, recentSearchRepository: (any RecentSearchRepository)? = nil) {
@@ -225,12 +254,16 @@ final class BookMateViewModel: ObservableObject {
         self.dependencies = dependencies
         let context = AppContext()
         self.context = context
-        self.searchFeature = SearchViewModel(dependencies: dependencies, recentSearchRepository: recentSearchRepository)
+        let searchFeature = SearchViewModel(dependencies: dependencies, recentSearchRepository: recentSearchRepository)
+        self.searchFeature = searchFeature
+        let wordFeature = WordViewModel(repository: dependencies.words, search: searchFeature, context: context)
+        self.wordFeature = wordFeature
+        self.libraryFeature = BookLibraryViewModel(dependencies: dependencies, words: wordFeature, context: context)
         self.quoteFeature = QuoteViewModel(repository: dependencies.quotes, context: context)
         self.memoFeature = ReadingMemoViewModel(repository: dependencies.memos, context: context)
         self.reviewFeature = ReviewViewModel(repository: dependencies.reviews, context: context)
         self.recentSearchRepository = recentSearchRepository ?? dependencies.recentSearches
-        [context.objectWillChange, searchFeature.objectWillChange, quoteFeature.objectWillChange,
+        [context.objectWillChange, libraryFeature.objectWillChange, wordFeature.objectWillChange, searchFeature.objectWillChange, quoteFeature.objectWillChange,
          memoFeature.objectWillChange, reviewFeature.objectWillChange].forEach { publisher in
             publisher.sink { [weak self] _ in self?.objectWillChange.send() }
                 .store(in: &featureSubscriptions)
@@ -249,7 +282,6 @@ final class BookMateViewModel: ObservableObject {
     }
 
     private var currentUserNickname: String = "나"
-    var inFlightBookRegistrationTasks: [String: Task<Book, Error>] = [:]
     private var currentUserProfileImageURL: String?
 
     // MARK: - Common Helpers
