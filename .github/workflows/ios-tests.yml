@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   test:
-    runs-on: macos-26-intel
+    runs-on: macos-26
     timeout-minutes: 60
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
@@ -34,7 +34,7 @@ jobs:
       - name: Build app and run unit tests
         run: |
           set -o pipefail
-          xcodebuild test -project BookMate.xcodeproj -scheme BookMate \
+          bash scripts/ci/run-with-sampling.sh xcodebuild test -project BookMate.xcodeproj -scheme BookMate \
             -configuration Debug -destination "$TEST_DESTINATION" \
             -only-testing:BookMateTests -only-testing:BookMateUITests/ArchitectureSmokeTests -parallel-testing-enabled NO \
             -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO \
@@ -42,7 +42,7 @@ jobs:
       - name: Run iPad UI smoke tests
         run: |
           set -o pipefail
-          xcodebuild test-without-building -project BookMate.xcodeproj -scheme BookMate \
+          bash scripts/ci/run-with-sampling.sh xcodebuild test-without-building -project BookMate.xcodeproj -scheme BookMate \
             -configuration Debug -destination "$IPAD_DESTINATION" \
             -only-testing:BookMateUITests/ArchitectureSmokeTests -parallel-testing-enabled NO \
             -resultBundlePath iPadResults.xcresult CODE_SIGNING_ALLOWED=NO \
@@ -64,4 +64,5 @@ jobs:
             xcodebuild.log
             ipad-tests.log
             release-build.log
+            RuntimeSamples
           retention-days: 7
