@@ -60,7 +60,9 @@
 ```mermaid
 flowchart LR
     View[SwiftUI 화면] --> VM[ViewModel · 화면 상태]
-    VM --> Service[기능별 API Service]
+    Dependencies[AppDependencies · 생성자 주입] -.-> VM
+    VM --> Repository[Repository 계약]
+    Repository --> Service[기존 API Service 구현]
     Service --> Client[APIClient · 인증 헤더와 재시도]
     Client --> Server[BookMate REST 서버]
     Client --> Refresh[TokenRefreshCoordinator · actor]
@@ -76,4 +78,6 @@ flowchart LR
 | Firebase Analytics · Crashlytics · Messaging | 사용 이벤트, 크래시 수집, 푸시 알림 |
 | Kingfisher · UserNotifications · os_signpost | 이미지 로딩·캐시, 로컬 알림, 처리 구간 측정 |
 
-`BookMateViewModel`은 책·단어·문장·메모·리뷰 기능을 extension 파일로 구분. 인증은 `AuthSessionViewModel`, 네트워크 요청은 `Services/`에서 관리. 일부 화면은 서비스를 직접 호출하는 구조.
+기능별 ViewModel은 `Features/`에서 상태와 동작을 관리하고, `AppDependencies`가 Repository와 플랫폼 서비스를 전달. 기존 화면의 공통 호출은 `BookMateViewModel`이 기능으로 연결하며 상태를 복제하지 않음.
+
+[기능별 책임·상태 소유권·의존성 주입·검증 범위](docs/architecture.md)

@@ -12,31 +12,64 @@ concurrency:
 jobs:
   test:
     runs-on: macos-26
-    timeout-minutes: 40
+    timeout-minutes: 60
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
       - name: Prepare isolated test configuration
         run: python3 scripts/ci/prepare-test-config.py
-      - name: Select an available iPhone simulator
+      - name: Select SDK-matched simulators and configure keyboard
         run: |
           python3 - <<'PY'
-          import json, os, subprocess
+          import json, os, pathlib, plistlib, subprocess
           devices = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))['devices']
-          phones = [device for runtime, values in devices.items() if 'iOS' in runtime for device in values if 'iPhone' in device['name']]
-          assert phones, 'No iPhone simulator is installed'
+          sdk = subprocess.check_output(['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-version'], text=True).strip()
+          runtime_suffix = '.iOS-' + sdk.replace('.', '-')
+          matching = [device for runtime, values in devices.items() if runtime.endswith(runtime_suffix) for device in values]
+          tablets = [device for device in matching if 'iPad' in device['name']]
+          phones = [device for device in matching if device['name'] == 'iPhone 17 Pro']
+          assert phones and tablets, f'iPhone 17 Pro and iPad on iOS {sdk} are required'
+          preference_path = pathlib.Path.home() / 'Library/Preferences/com.apple.iphonesimulator.plist'
+          preferences = plistlib.loads(preference_path.read_bytes()) if preference_path.exists() else {}
+          preferences['ConnectHardwareKeyboard'] = False
+          for device in [phones[0], tablets[0]]:
+              preferences.setdefault('DevicePreferences', {}).setdefault(device['udid'], {})['ConnectHardwareKeyboard'] = False
+          subprocess.run(['defaults', 'import', 'com.apple.iphonesimulator', '-'], input=plistlib.dumps(preferences), check=True)
+          print(f"Xcode SDK {sdk}: {phones[0]['name']} / {tablets[0]['name']}")
           with open(os.environ['GITHUB_ENV'], 'a') as file:
+              file.write(f"PHONE_UDID={phones[0]['udid']}\n")
+              file.write(f"IPAD_UDID={tablets[0]['udid']}\n")
               file.write(f"TEST_DESTINATION=platform=iOS Simulator,id={phones[0]['udid']}\n")
+              file.write(f"IPAD_DESTINATION=platform=iOS Simulator,id={tablets[0]['udid']}\n")
           PY
-      - name: Build app and run unit tests
+      - name: Build app and run iPhone unit and UI tests
         run: |
           set -o pipefail
-          xcodebuild test -project BookMate.xcodeproj -scheme BookMate \
+          xcrun simctl boot "$PHONE_UDID"
+          xcrun simctl bootstatus "$PHONE_UDID" -b
+          bash scripts/ci/run-with-sampling.sh xcodebuild test -project BookMate.xcodeproj -scheme BookMate \
             -configuration Debug -destination "$TEST_DESTINATION" \
-            -only-testing:BookMateTests -parallel-testing-enabled NO \
+            -only-testing:BookMateTests -only-testing:BookMateUITests/ArchitectureSmokeTests -parallel-testing-enabled NO \
             -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO \
             BOOKMATE_API_ENVIRONMENT=local 2>&1 | tee xcodebuild.log
+      - name: Run iPad UI smoke tests
+        run: |
+          set -o pipefail
+          xcrun simctl shutdown "$PHONE_UDID"
+          xcrun simctl boot "$IPAD_UDID"
+          xcrun simctl bootstatus "$IPAD_UDID" -b
+          bash scripts/ci/run-with-sampling.sh xcodebuild test-without-building -project BookMate.xcodeproj -scheme BookMate \
+            -configuration Debug -destination "$IPAD_DESTINATION" \
+            -only-testing:BookMateUITests/ArchitectureSmokeTests -parallel-testing-enabled NO \
+            -resultBundlePath iPadResults.xcresult CODE_SIGNING_ALLOWED=NO \
+            BOOKMATE_API_ENVIRONMENT=local 2>&1 | tee ipad-tests.log
+      - name: Compile Release app
+        run: |
+          set -o pipefail
+          xcodebuild build -project BookMate.xcodeproj -scheme BookMate \
+            -configuration Release -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO BOOKMATE_API_ENVIRONMENT=local 2>&1 | tee release-build.log
       - name: Save test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -44,5 +77,9 @@ jobs:
           name: ios-test-results
           path: |
             TestResults.xcresult
+            iPadResults.xcresult
             xcodebuild.log
+            ipad-tests.log
+            release-build.log
+            RuntimeSamples
           retention-days: 7

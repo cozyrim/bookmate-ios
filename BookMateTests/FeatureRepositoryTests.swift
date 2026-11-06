@@ -19,6 +19,14 @@ final class FeatureRepositoryTests: XCTestCase {
         XCTAssertEqual(model.quotes, [quote])
         XCTAssertEqual(model.quoteFeature.quotes, [quote])
         XCTAssertGreaterThan(notifications, 0)
+
+        notifications = 0
+        let previousToast = model.toast?.message
+        let replacement = Quote(text: "별도 상태 변경", bookId: quote.bookId)
+        model.quoteFeature.quotes = [replacement]
+        XCTAssertEqual(model.quotes, [replacement])
+        XCTAssertGreaterThan(notifications, 0)
+        XCTAssertEqual(model.toast?.message, previousToast)
         withExtendedLifetime(subscription) {}
     }
 
