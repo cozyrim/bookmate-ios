@@ -32,7 +32,7 @@ final class ArchitectureSmokeTests: XCTestCase {
     func testLibraryDetailKeepsWordQuoteAndDiaryTabs() {
         let app = launch()
         tab("책", in: app).tap()
-        let book = app.staticTexts["싯타르타"].firstMatch
+        let book = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "싯타르타,")).firstMatch
         XCTAssertTrue(book.waitForExistence(timeout: 10))
         book.tap()
         for label in ["단어", "문장", "다이어리"] {
