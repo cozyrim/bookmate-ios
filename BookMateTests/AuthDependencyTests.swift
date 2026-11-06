@@ -99,7 +99,6 @@ private final class AuthRepositoryStub: AuthRepository {
     var profileResponse: ProfileResponse?
     var profileError: Error = AuthStubError.rejected
     var profileRequests = 0
-    func encode(to encoder: Encoder) throws { throw AuthStubError.rejected }
     func login(email: String, password: String) async throws -> AuthResponse { guard let loginResponse else { throw AuthStubError.rejected }; return loginResponse }
     func loginWithKakao(accessToken: String) async throws -> AuthResponse { throw AuthStubError.rejected }
     func loginWithApple(credentials: AppleLoginCredentials) async throws -> AuthResponse { throw AuthStubError.rejected }
