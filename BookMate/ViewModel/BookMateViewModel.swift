@@ -14,11 +14,7 @@ import Combine
 final class BookMateViewModel: ObservableObject {
     // MARK: - Types
 
-    enum SearchMode {
-        case dictionary
-        case book
-        case savedWords
-    }
+    typealias SearchMode = RecentSearchScope.Mode
 
     enum ArchiveSortOrder: String, CaseIterable {
         case latest = "최신순"
@@ -149,6 +145,11 @@ final class BookMateViewModel: ObservableObject {
     let dictionaryExampleLookupService = DictionaryExampleLookupService()
     let memoAPIService = ReadingMemoAPIService()
     let reviewAPIService = ReviewAPIService()
+    let recentSearchRepository: any RecentSearchRepository
+
+    init(recentSearchRepository: (any RecentSearchRepository)? = nil) {
+        self.recentSearchRepository = recentSearchRepository ?? UserDefaultsRecentSearchRepository()
+    }
 
     // MARK: - Current User
 

@@ -530,66 +530,35 @@ extension BookMateViewModel {
 
     // MARK: - Recent Searches
 
-    // 현재 사용자별 최근 검색어 저장 키를 만든다.
-    private var recentSearchesKey: String {
-        let ownerKey = recentSearchOwnerId?.uuidString ?? "guest"
-
-            switch searchMode {
-            case .dictionary:
-                return "recentSearches.dictionary.\(ownerKey)"
-            case .book:
-                return "recentSearches.book.\(ownerKey)"
-            case .savedWords:
-                return "recentSearches.savedWords.\(ownerKey)"
-            }
+    // 현재 사용자와 검색 종류로 최근 검색어의 저장 범위를 정한다.
+    private var recentSearchScope: RecentSearchScope {
+        RecentSearchScope(ownerID: recentSearchOwnerId, mode: searchMode)
     }
 
-    // UserDefaults에 저장된 최근 검색어를 불러온다.
+    // 현재 범위에 저장된 최근 검색어를 화면 상태에 반영한다.
     func loadRecentSearches() {
-        guard let data = UserDefaults.standard.data(forKey: recentSearchesKey),
-              let decoded = try? JSONDecoder().decode([String].self, from: data) else {
-            recentSearches = []
-            return
-        }
-
-        recentSearches = decoded
+        recentSearches = recentSearchRepository.load(for: recentSearchScope)
     }
 
     // 최근 검색어를 중복 없이 최신순으로 저장한다.
     func addRecentSearch(_ word: String) {
-        guard savedRecentSearches else { return }
+        guard recentSearchRepository.isSavingEnabled,
+              let updated = RecentSearchHistory.adding(word, to: recentSearches) else { return }
 
-        let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-
-        recentSearches.removeAll { $0 == trimmed }
-        recentSearches.insert(trimmed, at: 0)
-        recentSearches = Array(recentSearches.prefix(10))
-
-        if let data = try? JSONEncoder().encode(recentSearches) {
-            UserDefaults.standard.set(data, forKey: recentSearchesKey)
-        }
+        recentSearches = updated
+        recentSearchRepository.save(updated, for: recentSearchScope)
     }
 
     // 최근 검색어에서 특정 단어를 제거한다.
     func removeRecentSearch(_ word: String) {
-        let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
-        recentSearches.removeAll { $0 == trimmed }
-
-        if let data = try? JSONEncoder().encode(recentSearches) {
-            UserDefaults.standard.set(data, forKey: recentSearchesKey)
-        }
+        recentSearches = RecentSearchHistory.removing(word, from: recentSearches)
+        recentSearchRepository.save(recentSearches, for: recentSearchScope)
     }
 
     // 최근 검색어 저장 범위를 현재 사용자 기준으로 바꾼다.
     func setRecentSearchOwner(userId: UUID?) {
         recentSearchOwnerId = userId
         loadRecentSearches()
-    }
-
-    // 최근 검색어 저장 설정값을 읽는다.
-    private var savedRecentSearches: Bool {
-        UserDefaults.standard.object(forKey: "savesRecentSearches") as? Bool ?? true
     }
 
     // 검색 실패 시 비슷한 단어를 제안할지 설정값을 읽는다.
