@@ -1,0 +1,48 @@
+name: iOS tests
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ios-tests-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 40
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare isolated test configuration
+        run: python3 scripts/ci/prepare-test-config.py
+      - name: Select an available iPhone simulator
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          devices = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))['devices']
+          phones = [device for runtime, values in devices.items() if 'iOS' in runtime for device in values if 'iPhone' in device['name']]
+          assert phones, 'No iPhone simulator is installed'
+          with open(os.environ['GITHUB_ENV'], 'a') as file:
+              file.write(f"TEST_DESTINATION=platform=iOS Simulator,id={phones[0]['udid']}\n")
+          PY
+      - name: Build app and run unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test -project BookMate.xcodeproj -scheme BookMate \
+            -configuration Debug -destination "$TEST_DESTINATION" \
+            -only-testing:BookMateTests -parallel-testing-enabled NO \
+            -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO \
+            BOOKMATE_API_ENVIRONMENT=local 2>&1 | tee xcodebuild.log
+      - name: Save test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: |
+            TestResults.xcresult
+            xcodebuild.log
+          retention-days: 7
