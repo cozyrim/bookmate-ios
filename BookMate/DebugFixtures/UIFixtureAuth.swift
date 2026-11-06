@@ -4,7 +4,7 @@ import Foundation
 @MainActor
 final class UIFixtureAuth: AuthRepository {
     static let userID = UUID(uuidString: "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA")!
-    var profile = ProfileResponse(id: userID, email: "reader@example.invalid", provider: "LOCAL", nickname: "독서가", profileImageUrl: nil, createdAt: nil, togetherDays: 1, savedWordCount: 1, readBookCount: 1, isPublic: true, roomTheme: "room_bg_default")
+    var profile = ProfileResponse(id: UIFixtureAuth.userID, email: "reader@example.invalid", provider: "LOCAL", nickname: "독서가", profileImageUrl: nil, createdAt: nil, togetherDays: 1, savedWordCount: 1, readBookCount: 1, isPublic: true, roomTheme: "room_bg_default")
     private var response: AuthResponse { AuthResponse(accessToken: "fixture-access", refreshToken: "fixture-refresh", tokenType: "Bearer", user: profile.toAuthUser()) }
     func login(email: String, password: String) async throws -> AuthResponse {
         return response

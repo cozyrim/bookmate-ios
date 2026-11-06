@@ -36,7 +36,7 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertTrue(book.waitForExistence(timeout: 10))
         book.tap()
         for label in ["단어", "문장", "다이어리"] {
-            let button = app.buttons[label].firstMatch
+            let button = app.staticTexts[label].firstMatch
             XCTAssertTrue(button.waitForExistence(timeout: 10), label)
             button.tap()
         }

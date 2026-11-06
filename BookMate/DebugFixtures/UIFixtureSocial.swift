@@ -5,7 +5,7 @@ import Foundation
 final class UIFixtureSocial: SocialRepository, ModerationRepository {
     static let messageID = UUID(uuidString: "BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB")!
     let friend = PublicUserResponse(id: UUID(uuidString: "CCCCCCCC-CCCC-CCCC-CCCC-CCCCCCCCCCCC")!, nickname: "서재 친구", profileImageUrl: nil, roomTheme: "room_bg_default")
-    var messages = [GuestbookMessageResponse(id: messageID, writerId: UUID(), writerNickname: "서재 친구", writerProfileImageUrl: nil, content: "좋은 책장을 구경했어요.", createdAt: "2026-01-01T00:00:00.000")]
+    var messages = [GuestbookMessageResponse(id: UIFixtureSocial.messageID, writerId: UUID(), writerNickname: "서재 친구", writerProfileImageUrl: nil, content: "좋은 책장을 구경했어요.", createdAt: "2026-01-01T00:00:00.000")]
     func searchUsers(token: String, nickname: String) async throws -> [PublicUserResponse] {
         return [friend]
     }
