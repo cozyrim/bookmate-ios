@@ -53,3 +53,5 @@ _workspace/
 !/docs/token-refresh.md
 !/docs/word-save-registration-flow.md
 !/docs/miniroom-rendering-performance.md
+
+!/docs/architecture.md
