@@ -1,7 +1,6 @@
 import Foundation
 
 protocol AuthRepository {
-    func encode(to encoder: Encoder) throws
     func login(email: String, password: String) async throws -> AuthResponse
     func loginWithKakao(accessToken: String) async throws -> AuthResponse
     func loginWithApple(credentials: AppleLoginCredentials) async throws -> AuthResponse
