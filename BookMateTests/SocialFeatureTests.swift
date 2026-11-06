@@ -107,6 +107,9 @@ private final class SocialTokens: AuthTokenStore {
     func save(_ token: String) { self.token = token }
     func load() -> String? { token }
     func clear() { token = nil }
+    func save(accessToken: String, refreshToken: String) { token = accessToken }
+    func loadRefreshToken() -> String? { nil }
+    func replace(expectedRefreshToken: String, accessToken: String, refreshToken: String) -> Bool { false }
 }
 
 @MainActor
