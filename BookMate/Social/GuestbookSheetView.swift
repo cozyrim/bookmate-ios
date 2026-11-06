@@ -3,25 +3,19 @@ import SwiftUI
 struct GuestbookSheetView: View {
     @EnvironmentObject var authViewModel: AuthSessionViewModel
 
-    @Binding var messages: [GuestbookMessageResponse]
+    @ObservedObject var model: GuestbookViewModel
 
     let highlightedMessageId: UUID?
     let targetUser: PublicUserResponse
-    let socialService: SocialAPIService
 
-    @State private var isPosting = false
     @State private var selectedReportTarget: ModerationTarget?
     @State private var pendingBlockMessage: GuestbookMessageResponse?
     @State private var activeHighlightedMessageId: UUID?
     @State private var didScrollToHighlightedMessage = false
-    @State private var toast: AppToast?
-    @State private var pendingMessageIDs: Set<UUID> = []
 
-    private let tokenStore = KeychainTokenStore()
-    private let moderationService = ModerationAPIService()
 
     private var messageIDs: [UUID] {
-        messages.map(\.id)
+        model.messages.map(\.id)
     }
 
     var body: some View {
@@ -31,19 +25,19 @@ struct GuestbookSheetView: View {
             VStack(spacing: 0) {
                 header
                 messageList
-                GuestbookComposerView(isPosting: isPosting) { content in
+                GuestbookComposerView(isPosting: model.isPosting) { content in
                     await postMessage(content)
                 }
             }
         }
-        .appToast($toast)
+        .appToast($model.toast)
         .sheet(item: $selectedReportTarget) { target in
             ReportContentSheet(
                 target: target,
-                moderationService: moderationService
+                moderationService: model.moderationService
             ) { result in
                 hideReportedContent(result)
-                toast = AppToast(message: "신고가 접수됐어요.", style: .success)
+                model.toast = AppToast(message: "신고가 접수됐어요.", style: .success)
             }
             .presentationDetents([.large])
         }
@@ -86,7 +80,7 @@ struct GuestbookSheetView: View {
     private var messageList: some View {
         ScrollViewReader { proxy in
             List {
-                if messages.isEmpty {
+                if model.messages.isEmpty {
                     ContentUnavailableView(
                         "아직 방명록이 없어요",
                         systemImage: "heart.text.square",
@@ -96,11 +90,11 @@ struct GuestbookSheetView: View {
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 44, leading: 18, bottom: 44, trailing: 18))
                 } else {
-                    ForEach(messages) { message in
+                    ForEach(model.messages) { message in
                         VStack(spacing: 0) {
                             messageRow(message)
 
-                            if message.id != messages.last?.id {
+                            if message.id != model.messages.last?.id {
                                 Rectangle()
                                     .fill(Color("Border").opacity(0.34))
                                     .frame(height: 0.7)
@@ -128,7 +122,7 @@ struct GuestbookSheetView: View {
 
     private func messageRow(_ message: GuestbookMessageResponse) -> some View {
         let isHighlighted = message.id == activeHighlightedMessageId
-        let isPending = pendingMessageIDs.contains(message.id)
+        let isPending = model.pendingMessageIDs.contains(message.id)
 
         return HStack(alignment: .top, spacing: 10) {
             ProfileImageView(
@@ -177,7 +171,7 @@ struct GuestbookSheetView: View {
     private func scrollToHighlightedMessageIfNeeded(_ proxy: ScrollViewProxy) {
         guard !didScrollToHighlightedMessage,
               let highlightedMessageId,
-              messages.contains(where: { $0.id == highlightedMessageId }) else {
+              model.messages.contains(where: { $0.id == highlightedMessageId }) else {
             return
         }
 
@@ -263,133 +257,16 @@ struct GuestbookSheetView: View {
         )
     }
 
-    @MainActor
     private func postMessage(_ content: String) async -> Bool {
-        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let token = tokenStore.load(), !trimmedContent.isEmpty else { return false }
-
-        let totalSignpostID = PerformanceLogger.makeSignpostID()
-        PerformanceLogger.begin("PostGuestbookTotal", id: totalSignpostID)
-
-        isPosting = true
-
-        let optimisticMessage = makeOptimisticMessage(content: trimmedContent)
-        let optimisticSignpostID = PerformanceLogger.makeSignpostID()
-        PerformanceLogger.begin("PostGuestbookOptimisticUI", id: optimisticSignpostID)
-        pendingMessageIDs.insert(optimisticMessage.id)
-        messages.insert(optimisticMessage, at: 0)
-        PerformanceLogger.end("PostGuestbookOptimisticUI", id: optimisticSignpostID)
-
-        defer {
-            isPosting = false
-            PerformanceLogger.end("PostGuestbookTotal", id: totalSignpostID)
-        }
-
-        do {
-            let apiSignpostID = PerformanceLogger.makeSignpostID()
-            PerformanceLogger.begin("PostGuestbookAPI", id: apiSignpostID)
-            defer {
-                PerformanceLogger.end("PostGuestbookAPI", id: apiSignpostID)
-            }
-
-            let newMessage = try await socialService.writeGuestbook(
-                token: token,
-                userId: targetUser.id,
-                content: trimmedContent
-            )
-
-            replaceOptimisticMessage(id: optimisticMessage.id, with: newMessage)
-            return true
-        } catch {
-            pendingMessageIDs.remove(optimisticMessage.id)
-            messages.removeAll { $0.id == optimisticMessage.id }
-            print("방명록 작성 실패: \(error)")
-            toast = AppToast(message: "방명록 작성에 실패했어요.", style: .error)
-            return false
-        }
+        await model.postMessage(content, targetUser: targetUser, author: authViewModel.currentUser)
     }
-
-    private func makeOptimisticMessage(content: String) -> GuestbookMessageResponse {
-        GuestbookMessageResponse(
-            id: UUID(),
-            writerId: authViewModel.currentUser?.id ?? UUID(),
-            writerNickname: authViewModel.currentUser?.nickname ?? "나",
-            writerProfileImageUrl: authViewModel.currentUser?.profileImageUrl,
-            content: content,
-            createdAt: pendingCreatedAtString()
-        )
-    }
-
-    private func replaceOptimisticMessage(id: UUID, with message: GuestbookMessageResponse) {
-        pendingMessageIDs.remove(id)
-
-        guard let index = messages.firstIndex(where: { $0.id == id }) else {
-            messages.insert(message, at: 0)
-            return
-        }
-
-        messages[index] = message
-    }
-
-    private func pendingCreatedAtString() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        return formatter.string(from: Date())
-    }
-
-    private func deleteMessage(messageId: UUID) {
-        guard let token = tokenStore.load() else { return }
-
-        Task {
-            let signpostID = PerformanceLogger.makeSignpostID()
-            PerformanceLogger.begin("DeleteGuestbookAPI", id: signpostID)
-
-            defer {
-                PerformanceLogger.end("DeleteGuestbookAPI", id: signpostID)
-            }
-
-            do {
-                try await socialService.deleteGuestbook(token: token, messageId: messageId)
-                await MainActor.run {
-                    messages.removeAll { $0.id == messageId }
-                    toast = AppToast(message: "방명록을 삭제했어요.", style: .success)
-                }
-            } catch {
-                print("방명록 삭제 실패: \(error)")
-                await MainActor.run {
-                    toast = AppToast(message: "방명록 삭제에 실패했어요.", style: .error)
-                }
-            }
-        }
-    }
-
+    private func deleteMessage(messageId: UUID) { model.deleteMessage(messageId: messageId) }
     private func blockWriter(of message: GuestbookMessageResponse) {
         pendingBlockMessage = nil
-
-        Task {
-            do {
-                _ = try await moderationService.blockUser(userId: message.writerId)
-
-                await MainActor.run {
-                    messages.removeAll { $0.writerId == message.writerId }
-                    toast = AppToast(message: "\(message.writerNickname)님을 차단했어요.", style: .success)
-                }
-            } catch {
-                await MainActor.run {
-                    toast = AppToast(message: "차단에 실패했어요.", style: .error)
-                }
-            }
-        }
+        model.blockWriter(of: message)
     }
+    private func hideReportedContent(_ result: ModerationReportEnvelope) { model.hideReportedContent(result) }
 
-    private func hideReportedContent(_ result: ModerationReportEnvelope) {
-        if result.report.targetType == .guestbookMessage,
-           let messageId = UUID(uuidString: result.report.targetId) {
-            messages.removeAll { $0.id == messageId }
-        }
-    }
 }
 
 private struct GuestbookComposerView: View {

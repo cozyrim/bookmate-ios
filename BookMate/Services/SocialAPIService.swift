@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SocialAPIService {
+struct SocialAPIService: SocialRepository {
     private let baseURL = APIEnvironment.baseURL
     private let client = APIClient()
     
