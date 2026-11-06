@@ -28,7 +28,7 @@ struct AppNotificationItem: Decodable, Identifiable {
     }
 }
 
-struct NotificationAPIService {
+struct NotificationAPIService: NotificationRepository {
     private let baseURL = APIEnvironment.baseURL
     private let client = APIClient()
 

@@ -33,11 +33,16 @@ struct HomeView: View {
     @State private var isShowingNotificationInbox = false
     @State private var isNotificationInboxPanelPresented = false
     @State private var isPreparingNotificationInbox = false
-    @State private var notificationInboxItems: [AppNotificationItem] = []
-    @State private var isNotificationInboxLoading = false
-    @State private var unreadNotificationCount = 0
 
-    private let notificationService = NotificationAPIService()
+    @StateObject private var notificationModel: NotificationInboxViewModel
+
+    init(viewModel: BookMateViewModel, selectedTab: Binding<Int>) {
+        self.viewModel = viewModel
+        self._selectedTab = selectedTab
+        _notificationModel = StateObject(wrappedValue: NotificationInboxViewModel(
+            repository: viewModel.dependencies.notifications, context: viewModel.context
+        ))
+    }
 
     private enum HomeRoute: Hashable {
         case bookSearch
@@ -739,14 +744,14 @@ struct HomeView: View {
                         .stroke(Color("Border").opacity(0.25), lineWidth: 1)
                 }
 
-                if unreadNotificationCount > 0 {
+                if notificationModel.unreadCount > 0 {
                     Text(unreadNotificationBadgeText)
                         .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(Color("PrimaryButtonText"))
                         .minimumScaleFactor(0.7)
                         .lineLimit(1)
                         .frame(minWidth: 16, minHeight: 16)
-                        .padding(.horizontal, unreadNotificationCount > 9 ? 3 : 0)
+                        .padding(.horizontal, notificationModel.unreadCount > 9 ? 3 : 0)
                         .background(Color("Primary"), in: Capsule())
                         .offset(x: 2, y: -2)
                 }
@@ -754,11 +759,11 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .disabled(isPreparingNotificationInbox)
-        .accessibilityLabel(unreadNotificationCount > 0 ? "새 알림 \(unreadNotificationCount)개" : "알림")
+        .accessibilityLabel(notificationModel.unreadCount > 0 ? "새 알림 \(notificationModel.unreadCount)개" : "알림")
     }
 
     private var unreadNotificationBadgeText: String {
-        unreadNotificationCount > 99 ? "99+" : "\(unreadNotificationCount)"
+        notificationModel.unreadCount > 99 ? "99+" : "\(notificationModel.unreadCount)"
     }
 
     private var notificationInboxOverlay: some View {
@@ -775,8 +780,7 @@ struct HomeView: View {
 
                 NotificationInboxView(
                     viewModel: viewModel,
-                    notifications: $notificationInboxItems,
-                    isLoading: $isNotificationInboxLoading,
+                    model: notificationModel,
                     onClose: closeNotificationInbox
                 ) { notification in
                     PushNotificationRouter.shared.route(userInfo: notification.userInfo)
@@ -813,21 +817,8 @@ struct HomeView: View {
     @MainActor
     private func prepareAndOpenNotificationInbox() async {
         isPreparingNotificationInbox = true
-        isNotificationInboxLoading = true
         isNotificationInboxPanelPresented = false
-
-        do {
-            notificationInboxItems = try await notificationService.fetchNotifications()
-        } catch {
-            DebugLogger.log("알림 목록 사전 로드 실패:", error)
-
-            if let apiError = error as? APIError,
-               case .unauthorized = apiError {
-                viewModel.didReceiveUnauthorized = true
-            }
-        }
-
-        isNotificationInboxLoading = false
+        await notificationModel.loadNotifications()
         isPreparingNotificationInbox = false
         isShowingNotificationInbox = true
 
@@ -859,13 +850,8 @@ struct HomeView: View {
     }
 
     @MainActor
-    private func loadUnreadNotificationCount() async {
-        do {
-            unreadNotificationCount = try await notificationService.fetchUnreadCount()
-        } catch {
-            unreadNotificationCount = 0
-        }
-    }
+    private func loadUnreadNotificationCount() async { await notificationModel.loadUnreadCount() }
+
 }
 
 

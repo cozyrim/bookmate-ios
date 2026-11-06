@@ -14,13 +14,20 @@ struct BookRegistrationPreviewView: View {
     @ObservedObject var viewModel: BookMateViewModel
     
     @Binding var selectedTab: Int
-    @State private var savedBook: Book?
-    @State private var isSaving = false
-    @State private var errorMessage: String?
-    @State private var aladinDescription: String?
     @State private var isDescriptionExpanded = false
     
-    private let aladinBookLookupService = AladinBookLookupService()
+    @StateObject private var model: BookRegistrationViewModel
+
+    init(draft: BookRegistrationDraft, viewModel: BookMateViewModel,
+         selectedTab: Binding<Int>, onFinishRegistration: @escaping (Int) -> Void) {
+        self.draft = draft
+        self.viewModel = viewModel
+        self._selectedTab = selectedTab
+        self.onFinishRegistration = onFinishRegistration
+        _model = StateObject(wrappedValue: BookRegistrationViewModel(
+            library: viewModel.libraryFeature, metadata: viewModel.dependencies.bookMetadata
+        ))
+    }
     
     
     let onFinishRegistration: (Int) -> Void
@@ -66,7 +73,7 @@ struct BookRegistrationPreviewView: View {
     
     private var bestDescriptionText: String {
         let kakaoText = draft.contents.trimmingCharacters(in: .whitespacesAndNewlines)
-        let aladinText = aladinDescription?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let aladinText = model.aladinDescription?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
         let bestText = aladinText.count > kakaoText.count ? aladinText : kakaoText
 
@@ -165,28 +172,12 @@ struct BookRegistrationPreviewView: View {
                     .padding()
 
                     Button {
-                        guard !isSaving else { return }
+                        guard !model.isSaving else { return }
 
                         BMAnalytics.bookCreateEntryTap(entryPoint: "book_registration_preview")
-                        isSaving = true
-                        errorMessage = nil
-
-                        Task { @MainActor in
-                            defer {
-                                isSaving = false
-                            }
-
-                            do {
-                                savedBook = try await viewModel.registerBook(draft: draft)
-                            } catch BookRegistrationError.duplicate {
-                                errorMessage = nil
-                            } catch {
-                                errorMessage = "책 등록에 실패했습니다."
-                                DebugLogger.log("책 등록 실패:", error)
-                            }
-                        }
+                        Task { await model.register(draft: draft) }
                     } label: {
-                        Text(isSaving ? "저장 중..." : "이 책으로 등록하기")
+                        Text(model.isSaving ? "저장 중..." : "이 책으로 등록하기")
                             .font(.title3)
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
@@ -196,10 +187,10 @@ struct BookRegistrationPreviewView: View {
                             .clipShape(Capsule())
                             .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
                     }
-                    .disabled(isSaving)
-                    .opacity(isSaving ? 0.7 : 1)
+                    .disabled(model.isSaving)
+                    .opacity(model.isSaving ? 0.7 : 1)
 
-                    if let errorMessage {
+                    if let errorMessage = model.errorMessage {
                         Text(errorMessage)
                             .font(.caption)
                             .foregroundStyle(Color("Error"))
@@ -210,7 +201,7 @@ struct BookRegistrationPreviewView: View {
                     // book은 서버에 저장이 끝난 진짜 책장 책 정보
                 
                 }
-                .navigationDestination(item: $savedBook) { book in
+                .navigationDestination(item: $model.savedBook) { book in
                     BookRegistrationCompleteView(
                         viewModel: viewModel,
                         draft: draft,
@@ -230,15 +221,7 @@ struct BookRegistrationPreviewView: View {
         }
         .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
-        .task {
-            guard !draft.isbn.isEmpty else { return }
-
-            if let metadata = await aladinBookLookupService.fetchMetadata(isbn: draft.isbn),
-               let description = metadata.description,
-               !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                aladinDescription = description
-            }
-        }
+        .task { await model.loadDescription(isbn: draft.isbn) }
         
     }
 }
