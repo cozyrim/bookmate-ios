@@ -9,19 +9,16 @@ import SwiftUI
 
 struct NotificationInboxView: View {
     @ObservedObject var viewModel: BookMateViewModel
-    @Binding var notifications: [AppNotificationItem]
-    @Binding var isLoading: Bool
+    @ObservedObject var model: NotificationInboxViewModel
     let onClose: (() -> Void)?
     let onSelect: (AppNotificationItem) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var isShowingNotificationSettings = false
-    @State private var toast: AppToast?
 
-    private let notificationService = NotificationAPIService()
 
     private var unreadNotifications: [AppNotificationItem] {
-        notifications.filter { !$0.isRead }
+        model.notifications.filter { !$0.isRead }
     }
 
     var body: some View {
@@ -33,10 +30,10 @@ struct NotificationInboxView: View {
                     header
 
                     Group {
-                        if isLoading && notifications.isEmpty {
+                        if model.isLoading && model.notifications.isEmpty {
                             loadingState
                                 .transition(.opacity)
-                        } else if notifications.isEmpty {
+                        } else if model.notifications.isEmpty {
                             emptyState
                                 .transition(.opacity)
                         } else {
@@ -44,14 +41,14 @@ struct NotificationInboxView: View {
                                 .transition(.opacity)
                         }
                     }
-                    .animation(.easeOut(duration: 0.18), value: isLoading)
-                    .animation(.easeOut(duration: 0.18), value: notifications.count)
+                    .animation(.easeOut(duration: 0.18), value: model.isLoading)
+                    .animation(.easeOut(duration: 0.18), value: model.notifications.count)
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
                 .padding(.bottom, 24)
             }
-            .appToast($toast)
+            .appToast($model.toast)
             .sheet(isPresented: $isShowingNotificationSettings) {
                 NotificationSettingsView(viewModel: viewModel)
             }
@@ -180,7 +177,7 @@ struct NotificationInboxView: View {
                     markAllReadButton
                 }
 
-                ForEach(notifications) { notification in
+                ForEach(model.notifications) { notification in
                     notificationRow(notification)
                 }
             }
@@ -273,82 +270,12 @@ struct NotificationInboxView: View {
         }
     }
 
-    @MainActor
-    private func loadNotifications() async {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            notifications = try await notificationService.fetchNotifications()
-        } catch {
-            DebugLogger.log("알림 목록 로드 실패:", error)
-
-            if let apiError = error as? APIError,
-               case .unauthorized = apiError {
-                viewModel.didReceiveUnauthorized = true
-            }
-        }
-    }
-
-    @MainActor
+    private func loadNotifications() async { await model.loadNotifications() }
+    private func markAllRead() async { await model.markAllRead() }
     private func open(_ notification: AppNotificationItem) async {
-        do {
-            if !notification.isRead {
-                try await notificationService.markNotificationRead(id: notification.id)
-                markReadLocally(notification.id)
-            }
-
+        if await model.markRead(notification) {
             close()
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                onSelect(notification)
-            }
-        } catch {
-            toast = AppToast(
-                message: error.bookMateUserMessage(fallback: "알림을 열지 못했어요."),
-                style: .error
-            )
-        }
-    }
-
-    @MainActor
-    private func markAllRead() async {
-        do {
-            try await notificationService.markAllNotificationsRead()
-            notifications = notifications.map { notification in
-                AppNotificationItem(
-                    id: notification.id,
-                    type: notification.type,
-                    title: notification.title,
-                    body: notification.body,
-                    data: notification.data,
-                    isRead: true,
-                    createdAt: notification.createdAt,
-                    readAt: notification.readAt
-                )
-            }
-        } catch {
-            toast = AppToast(
-                message: error.bookMateUserMessage(fallback: "알림 상태를 바꾸지 못했어요."),
-                style: .error
-            )
-        }
-    }
-
-    private func markReadLocally(_ id: UUID) {
-        notifications = notifications.map { notification in
-            guard notification.id == id else { return notification }
-
-            return AppNotificationItem(
-                id: notification.id,
-                type: notification.type,
-                title: notification.title,
-                body: notification.body,
-                data: notification.data,
-                isRead: true,
-                createdAt: notification.createdAt,
-                readAt: notification.readAt
-            )
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { onSelect(notification) }
         }
     }
 
@@ -364,8 +291,7 @@ struct NotificationInboxView: View {
 #Preview {
     NotificationInboxView(
         viewModel: BookMateViewModel(),
-        notifications: .constant([]),
-        isLoading: .constant(false),
+        model: NotificationInboxViewModel(repository: NotificationAPIService(), context: AppContext()),
         onClose: nil
     ) { _ in }
 }

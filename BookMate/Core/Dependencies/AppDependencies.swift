@@ -3,6 +3,7 @@ import Foundation
 @MainActor
 struct AppDependencies {
     let readingReminders: any ReadingReminderScheduling
+    let notifications: any NotificationRepository
     let social: any SocialRepository
     let moderation: any ModerationRepository
     let auth: any AuthRepository
@@ -26,6 +27,7 @@ struct AppDependencies {
 
     init(
         readingReminders: (any ReadingReminderScheduling)? = nil,
+        notifications: (any NotificationRepository)? = nil,
         social: (any SocialRepository)? = nil,
         moderation: (any ModerationRepository)? = nil,
         auth: (any AuthRepository)? = nil,
@@ -48,6 +50,7 @@ struct AppDependencies {
         shelfOrder: (any ShelfOrderRepository)? = nil
     ) {
         self.readingReminders = readingReminders ?? ReadingNotificationService.shared
+        self.notifications = notifications ?? NotificationAPIService()
         self.social = social ?? SocialAPIService()
         self.moderation = moderation ?? ModerationAPIService()
         self.auth = auth ?? AuthAPIService()
