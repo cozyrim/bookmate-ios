@@ -2,6 +2,8 @@ import Foundation
 
 @MainActor
 struct AppDependencies {
+    let dictionary: any DictionaryRepository
+    let searchPreferences: any SearchPreferencesRepository
     let books: any BookRepository
     let words: any WordRepository
     let quotes: any QuoteRepository
@@ -15,6 +17,8 @@ struct AppDependencies {
     let shelfOrder: any ShelfOrderRepository
 
     init(
+        dictionary: (any DictionaryRepository)? = nil,
+        searchPreferences: (any SearchPreferencesRepository)? = nil,
         books: (any BookRepository)? = nil,
         words: (any WordRepository)? = nil,
         quotes: (any QuoteRepository)? = nil,
@@ -27,6 +31,8 @@ struct AppDependencies {
         recentSearches: (any RecentSearchRepository)? = nil,
         shelfOrder: (any ShelfOrderRepository)? = nil
     ) {
+        self.dictionary = dictionary ?? StandardDictionaryRepository()
+        self.searchPreferences = searchPreferences ?? UserDefaultsSearchPreferencesRepository()
         self.books = books ?? BookAPIService()
         self.words = words ?? WordAPIService()
         self.quotes = quotes ?? QuoteAPIService()
