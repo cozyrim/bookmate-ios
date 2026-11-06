@@ -276,10 +276,10 @@ struct ShelfView: View {
                     }
 
                 case .publicRoom(let user):
-                    PublicBookshelfView(targetUser: user)
+                    PublicBookshelfView(targetUser: user, dependencies: viewModel.dependencies)
 
                 case .searchUsers:
-                    UserSearchView { user in
+                    UserSearchView(dependencies: viewModel.dependencies) { user in
                         path.append(ShelfRoute.publicRoom(user))
                     }
                 }

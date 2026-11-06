@@ -6,20 +6,19 @@ struct PublicBookshelfView: View {
 
     let targetUser: PublicUserResponse
 
-    @State private var books: [Book] = []
-    @State private var guestbookMessages: [GuestbookMessageResponse] = []
     @State private var showingGuestbook = false
-    @State private var isLoading = false
     @State private var selectedBook: Book?
     @State private var selectedReportTarget: ModerationTarget?
     @State private var showingUserActions = false
     @State private var showingBlockConfirmation = false
-    @State private var toast: AppToast?
-    @State private var isBlocking = false
 
-    private let socialService = SocialAPIService()
-    private let moderationService = ModerationAPIService()
-    private let tokenStore = KeychainTokenStore()
+
+    @StateObject private var model: PublicBookshelfViewModel
+
+    init(targetUser: PublicUserResponse, dependencies: AppDependencies? = nil) {
+        self.targetUser = targetUser
+        _model = StateObject(wrappedValue: PublicBookshelfViewModel(targetUser: targetUser, dependencies: dependencies ?? AppDependencies()))
+    }
 
     var body: some View {
         ZStack {
@@ -27,7 +26,7 @@ struct PublicBookshelfView: View {
                 nickname: targetUser.nickname,
                 profileImageUrl: targetUser.profileImageUrl,
                 theme: MiniRoomTheme.from(targetUser.roomTheme),
-                books: books,
+                books: model.books,
                 showsExploreButtons: false,
                 isSurfing: false,
                 onBack: {
@@ -48,14 +47,14 @@ struct PublicBookshelfView: View {
                 }
             )
 
-            if isLoading {
+            if model.isLoading {
                 ProgressView("책장 불러오는 중...")
                     .padding()
                     .background(.regularMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
             }
         }
-        .appToast($toast)
+        .appToast($model.toast)
         .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
         .toolbar(.hidden, for: .navigationBar)
@@ -73,10 +72,9 @@ struct PublicBookshelfView: View {
         }
         .sheet(isPresented: $showingGuestbook) {
             GuestbookSheetView(
-                messages: $guestbookMessages,
+                model: model.guestbook,
                 highlightedMessageId: nil,
-                targetUser: targetUser,
-                socialService: socialService
+                targetUser: targetUser
             )
             .environmentObject(authViewModel)
             .presentationDetents([.medium, .large])
@@ -84,9 +82,9 @@ struct PublicBookshelfView: View {
         .sheet(item: $selectedReportTarget) { target in
             ReportContentSheet(
                 target: target,
-                moderationService: moderationService
+                moderationService: model.dependencies.moderation
             ) { _ in
-                toast = AppToast(message: "신고가 접수됐어요.", style: .success)
+                model.toast = AppToast(message: "신고가 접수됐어요.", style: .success)
             }
             .presentationDetents([.large])
         }
@@ -112,7 +110,7 @@ struct PublicBookshelfView: View {
             Button("차단", role: .destructive) {
                 blockTargetUser()
             }
-            .disabled(isBlocking)
+            .disabled(model.isBlocking)
         } message: {
             Text("차단하면 이 사용자의 공개 책장과 방명록 콘텐츠가 내 화면에서 숨겨져요.")
         }
@@ -128,68 +126,20 @@ struct PublicBookshelfView: View {
             snapshot: [
                 "nickname": targetUser.nickname,
                 "profileImageUrl": targetUser.profileImageUrl ?? "",
-                "bookCount": "\(books.count)"
+                "bookCount": "\(model.books.count)"
             ]
         )
     }
 
-    private func fetchData() {
-        guard let token = tokenStore.load() else { return }
-        isLoading = true
-
-        Task {
-            let signpostID = PerformanceLogger.makeSignpostID()
-            PerformanceLogger.begin("FetchPublicBookshelfAPI", id: signpostID)
-
-            defer {
-                PerformanceLogger.end("FetchPublicBookshelfAPI", id: signpostID)
-            }
-
-            do {
-                async let fetchedBooks = socialService.fetchPublicBooks(token: token, userId: targetUser.id)
-                async let fetchedMessages = socialService.fetchGuestbook(token: token, userId: targetUser.id)
-
-                let (bookResult, messageResult) = try await (fetchedBooks, fetchedMessages)
-
-                await MainActor.run {
-                    books = bookResult
-                    guestbookMessages = messageResult
-                    isLoading = false
-                }
-            } catch {
-                print("로드 실패: \(error)")
-                await MainActor.run {
-                    isLoading = false
-                    toast = AppToast(message: "공개 책장을 불러오지 못했어요.", style: .error)
-                }
-            }
-        }
-    }
-
+    private func fetchData() { model.fetchData() }
     private func blockTargetUser() {
-        guard !isBlocking else { return }
-        isBlocking = true
-
         Task {
-            do {
-                _ = try await moderationService.blockUser(userId: targetUser.id)
-
-                await MainActor.run {
-                    toast = AppToast(message: "\(targetUser.nickname)님을 차단했어요.", style: .success)
-                    isBlocking = false
-
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
-                        dismiss()
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    toast = AppToast(message: "차단에 실패했어요.", style: .error)
-                    isBlocking = false
-                }
+            if await model.blockTargetUser() {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) { dismiss() }
             }
         }
     }
+
 }
 
 #Preview {

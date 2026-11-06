@@ -2,16 +2,12 @@ import SwiftUI
 
 struct MyRoomView: View {
     let books: [Book]
+    @StateObject private var model: MyRoomViewModel
     @EnvironmentObject var authViewModel: AuthSessionViewModel
     @Binding var path: NavigationPath
     @Binding private var notificationRequest: PushNotificationNavigationRequest?
     
-    private let tokenStore = KeychainTokenStore()
-    private let socialService = SocialAPIService()
-    @State private var isSurfing = false
-    @State private var surfError: String? = nil
     
-    @State private var guestbookMessages: [GuestbookMessageResponse] = []
     @State private var showingGuestbook = false
     @State private var highlightedGuestbookMessageId: UUID?
     @State private var showingThemePicker = false
@@ -23,9 +19,11 @@ struct MyRoomView: View {
     init(
         books: [Book],
         path: Binding<NavigationPath>,
-        notificationRequest: Binding<PushNotificationNavigationRequest?> = .constant(nil)
+        notificationRequest: Binding<PushNotificationNavigationRequest?> = .constant(nil),
+        dependencies: AppDependencies? = nil
     ) {
         self.books = books
+        _model = StateObject(wrappedValue: MyRoomViewModel(dependencies: dependencies ?? AppDependencies()))
         self._path = path
         self._notificationRequest = notificationRequest
     }
@@ -39,7 +37,7 @@ struct MyRoomView: View {
                         theme: currentTheme,
                         books: books,
                         showsExploreButtons: true,
-                        isSurfing: isSurfing,
+                        isSurfing: model.isSurfing,
                         onSearchUsers: {
                             PerformanceLogger.event("MiniRoomSearchUsersTapped")
                             path.append(ShelfView.ShelfRoute.searchUsers)
@@ -66,10 +64,10 @@ struct MyRoomView: View {
                     AppBackgroundView()
                 }
             }
-            .alert("파도타기 실패", isPresented: Binding(get: { surfError != nil }, set: { _ in surfError = nil })) {
+            .alert("파도타기 실패", isPresented: Binding(get: { model.surfError != nil }, set: { _ in model.surfError = nil })) {
                 Button("확인", role: .cancel) { }
             } message: {
-                Text(surfError ?? "")
+                Text(model.surfError ?? "")
             }
             .sheet(
                 isPresented: $showingGuestbook,
@@ -79,15 +77,14 @@ struct MyRoomView: View {
             ) {
                 if let user = authViewModel.currentUser {
                     GuestbookSheetView(
-                        messages: $guestbookMessages,
+                        model: model.guestbook,
                         highlightedMessageId: highlightedGuestbookMessageId,
                         targetUser: PublicUserResponse(
                             id: user.id,
                             nickname: user.nickname,
                             profileImageUrl: user.profileImageUrl,
                             roomTheme: currentTheme.rawValue
-                        ),
-                        socialService: socialService
+                        )
                     )
                     .environmentObject(authViewModel)
                     .presentationDetents([.medium, .large])
@@ -123,56 +120,12 @@ struct MyRoomView: View {
     }
     
     private func fetchGuestbook() {
-        guard let token = tokenStore.load(), let user = authViewModel.currentUser else { return }
-        Task {
-            let signpostID = PerformanceLogger.makeSignpostID()
-            PerformanceLogger.begin("FetchMyGuestbookAPI", id: signpostID)
-
-            defer {
-                PerformanceLogger.end("FetchMyGuestbookAPI", id: signpostID)
-            }
-
-            do {
-                let messages = try await socialService.fetchGuestbook(token: token, userId: user.id)
-                await MainActor.run {
-                    self.guestbookMessages = messages
-                }
-            } catch {
-                print("방명록 로드 실패:", error)
-            }
-        }
+        Task { await model.fetchGuestbook(user: authViewModel.currentUser) }
     }
-    
     private func surfRandomUser() {
-        guard !isSurfing else { return }
-
-        guard let token = tokenStore.load() else {
-            surfError = "로그인이 필요해요."
-            return
-        }
-
-        isSurfing = true
-        
         Task {
-            let signpostID = PerformanceLogger.makeSignpostID()
-            PerformanceLogger.begin("SurfRandomUserAPI", id: signpostID)
-
-            defer {
-                PerformanceLogger.end("SurfRandomUserAPI", id: signpostID)
-            }
-
-            do {
-                let randomUser = try await socialService.getRandomUser(token: token)
-                await MainActor.run {
-                    isSurfing = false
-                    // NavigationStack의 path를 이용하여 이동
-                    path.append(ShelfView.ShelfRoute.publicRoom(randomUser))
-                }
-            } catch {
-                await MainActor.run {
-                    isSurfing = false
-                    surfError = error.bookMateUserMessage(fallback: "방문할 다른 유저를 찾지 못했어요.")
-                }
+            if let user = await model.surfRandomUser() {
+                path.append(ShelfView.ShelfRoute.publicRoom(user))
             }
         }
     }

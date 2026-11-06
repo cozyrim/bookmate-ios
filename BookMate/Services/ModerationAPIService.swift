@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ModerationAPIService {
+struct ModerationAPIService: ModerationRepository {
     private let baseURL = APIEnvironment.baseURL
     private let client = APIClient()
 

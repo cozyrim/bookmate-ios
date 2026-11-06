@@ -21,7 +21,8 @@ struct RoomTabView: View {
             MyRoomView(
                 books: booksStore.books,
                 path: $path,
-                notificationRequest: $notificationRequest
+                notificationRequest: $notificationRequest,
+                dependencies: viewModel.dependencies
             )
                 .navigationDestination(for: ShelfView.ShelfRoute.self) { route in
                     switch route {
@@ -48,9 +49,9 @@ struct RoomTabView: View {
                             Text("책 정보를 찾을 수 없습니다.")
                         }
                     case .publicRoom(let user):
-                        PublicBookshelfView(targetUser: user)
+                        PublicBookshelfView(targetUser: user, dependencies: viewModel.dependencies)
                     case .searchUsers:
-                        UserSearchView { user in
+                        UserSearchView(dependencies: viewModel.dependencies) { user in
                             path.append(ShelfView.ShelfRoute.publicRoom(user))
                         }
                     }

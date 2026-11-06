@@ -11,13 +11,18 @@ struct ReportContentSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     let target: ModerationTarget
-    let moderationService: ModerationAPIService
     let onSubmitted: (ModerationReportEnvelope) -> Void
 
     @State private var selectedReason: ModerationReportReason = .inappropriateLanguage
     @State private var detail = ""
-    @State private var isSubmitting = false
-    @State private var errorMessage: String?
+    @StateObject private var model: ReportContentViewModel
+
+    init(target: ModerationTarget, moderationService: any ModerationRepository,
+         onSubmitted: @escaping (ModerationReportEnvelope) -> Void) {
+        self.target = target
+        self.onSubmitted = onSubmitted
+        _model = StateObject(wrappedValue: ReportContentViewModel(repository: moderationService))
+    }
 
     var body: some View {
         NavigationStack {
@@ -30,7 +35,7 @@ struct ReportContentSheet: View {
                         reasonSection
                         detailSection
 
-                        if let errorMessage {
+                        if let errorMessage = model.errorMessage {
                             Text(errorMessage)
                                 .font(.footnote.weight(.semibold))
                                 .foregroundStyle(Color("Error"))
@@ -143,12 +148,12 @@ struct ReportContentSheet: View {
             submit()
         } label: {
             HStack {
-                if isSubmitting {
+                if model.isSubmitting {
                     ProgressView()
                         .tint(Color("PrimaryButtonText"))
                 }
 
-                Text(isSubmitting ? "접수 중" : "신고 접수")
+                Text(model.isSubmitting ? "접수 중" : "신고 접수")
                     .font(.headline.weight(.bold))
             }
             .foregroundStyle(Color("PrimaryButtonText"))
@@ -157,36 +162,19 @@ struct ReportContentSheet: View {
             .background(Color("Primary"), in: Capsule())
         }
         .buttonStyle(.plain)
-        .disabled(isSubmitting)
-        .opacity(isSubmitting ? 0.7 : 1)
+        .disabled(model.isSubmitting)
+        .opacity(model.isSubmitting ? 0.7 : 1)
     }
 
     private func submit() {
-        guard !isSubmitting else { return }
-
-        isSubmitting = true
-        errorMessage = nil
-
         Task {
-            do {
-                let result = try await moderationService.submitReport(
-                    target: target,
-                    reason: selectedReason,
-                    detail: detail
-                )
-
-                await MainActor.run {
-                    onSubmitted(result)
-                    dismiss()
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = "신고 접수에 실패했어요. 잠시 후 다시 시도해주세요."
-                    isSubmitting = false
-                }
+            if let result = await model.submit(target: target, reason: selectedReason, detail: detail) {
+                onSubmitted(result)
+                dismiss()
             }
         }
     }
+
 }
 
 #Preview {
