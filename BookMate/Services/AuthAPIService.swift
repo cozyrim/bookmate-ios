@@ -8,7 +8,7 @@
 import Foundation
 
 
-struct AuthAPIService {
+struct AuthAPIService: AuthRepository {
     private let baseURL = APIEnvironment.baseURL
     private let client = APIClient() // ← 공통 네트워크 헬퍼
     

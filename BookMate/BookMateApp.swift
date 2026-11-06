@@ -12,6 +12,7 @@ import FirebaseCore
 
 @main
 struct BookMateApp: App {
+    private let dependencies = AppDependencies()
     @UIApplicationDelegateAdaptor(BookMateAppDelegate.self) private var appDelegate
     @AppStorage("appColorMode") private var appColorMode = AppColorMode.system.rawValue
 
@@ -34,7 +35,7 @@ struct BookMateApp: App {
     
     var body: some Scene {
         WindowGroup {
-            RootView()
+            RootView(dependencies: dependencies)
                 .preferredColorScheme(preferredScheme)
                 .onOpenURL { url in
                     if AuthApi.isKakaoTalkLoginUrl(url) {

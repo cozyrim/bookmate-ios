@@ -39,7 +39,7 @@ private actor PushTokenSyncState {
     }
 }
 
-final class PushNotificationService: NSObject {
+final class PushNotificationService: NSObject, PushTokenManaging {
     static let shared = PushNotificationService()
 
     private let latestFCMTokenKey = "latestFCMToken"

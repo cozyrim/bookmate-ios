@@ -2,6 +2,11 @@ import Foundation
 
 @MainActor
 struct AppDependencies {
+    let auth: any AuthRepository
+    let tokens: any AuthTokenStore
+    let kakaoLogin: any KakaoLoginProviding
+    let appleAuthorization: any AppleAuthorizationDecoding
+    let pushTokens: any PushTokenManaging
     let dictionary: any DictionaryRepository
     let searchPreferences: any SearchPreferencesRepository
     let books: any BookRepository
@@ -17,6 +22,11 @@ struct AppDependencies {
     let shelfOrder: any ShelfOrderRepository
 
     init(
+        auth: (any AuthRepository)? = nil,
+        tokens: (any AuthTokenStore)? = nil,
+        kakaoLogin: (any KakaoLoginProviding)? = nil,
+        appleAuthorization: (any AppleAuthorizationDecoding)? = nil,
+        pushTokens: (any PushTokenManaging)? = nil,
         dictionary: (any DictionaryRepository)? = nil,
         searchPreferences: (any SearchPreferencesRepository)? = nil,
         books: (any BookRepository)? = nil,
@@ -31,6 +41,11 @@ struct AppDependencies {
         recentSearches: (any RecentSearchRepository)? = nil,
         shelfOrder: (any ShelfOrderRepository)? = nil
     ) {
+        self.auth = auth ?? AuthAPIService()
+        self.tokens = tokens ?? KeychainTokenStore()
+        self.kakaoLogin = kakaoLogin ?? KakaoLoginService()
+        self.appleAuthorization = appleAuthorization ?? AppleLoginService()
+        self.pushTokens = pushTokens ?? PushNotificationService.shared
         self.dictionary = dictionary ?? StandardDictionaryRepository()
         self.searchPreferences = searchPreferences ?? UserDefaultsSearchPreferencesRepository()
         self.books = books ?? BookAPIService()

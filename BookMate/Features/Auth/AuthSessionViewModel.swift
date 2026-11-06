@@ -29,17 +29,18 @@ final class AuthSessionViewModel: ObservableObject {
 
     // MARK: - Services
 
-    private let authAPIService = AuthAPIService()
-    private let tokenStore: AuthTokenStore = KeychainTokenStore()
-    private let kakaoLoginService = KakaoLoginService()
-    private let appleLoginService = AppleLoginService()
+    private let dependencies: AppDependencies
+    private var authRepository: any AuthRepository { dependencies.auth }
+    private var tokenStore: any AuthTokenStore { dependencies.tokens }
+    private var kakaoLoginProvider: any KakaoLoginProviding { dependencies.kakaoLogin }
+    private var appleAuthorizationDecoder: any AppleAuthorizationDecoding { dependencies.appleAuthorization }
 
-    // MARK: - Lifecycle
-
-    // ViewModel이 만들어지면 저장된 토큰으로 로그인 세션을 복구한다.
-    init() {
-        Task {
-            await restoreSession()
+    init(dependencies: AppDependencies? = nil, restoreSessionOnInit: Bool = true) {
+        self.dependencies = dependencies ?? AppDependencies()
+        if restoreSessionOnInit {
+            Task { await restoreSession() }
+        } else {
+            isCheckingSession = false
         }
     }
 
@@ -51,7 +52,7 @@ final class AuthSessionViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let response = try await authAPIService.login(email: email, password: password)
+            let response = try await authRepository.login(email: email, password: password)
 
             saveSessionTokens(from: response)
             currentUser = response.user
@@ -60,7 +61,7 @@ final class AuthSessionViewModel: ObservableObject {
             BMAnalytics.loginCompleted(method: "email")
 
             await loadProfile()
-            await PushNotificationService.shared.syncTokenWithServerIfPossible()
+            await dependencies.pushTokens.syncTokenWithServerIfPossible()
         } catch {
             BMAnalytics.loginFailed(method: "email", error: error)
             errorMessage = "로그인에 실패했습니다."
@@ -76,8 +77,8 @@ final class AuthSessionViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let kakaoAccessToken = try await kakaoLoginService.login()
-            let response = try await authAPIService.loginWithKakao(
+            let kakaoAccessToken = try await kakaoLoginProvider.login()
+            let response = try await authRepository.loginWithKakao(
                 accessToken: kakaoAccessToken
             )
 
@@ -88,7 +89,7 @@ final class AuthSessionViewModel: ObservableObject {
             BMAnalytics.loginCompleted(method: "kakao")
 
             await loadProfile()
-            await PushNotificationService.shared.syncTokenWithServerIfPossible()
+            await dependencies.pushTokens.syncTokenWithServerIfPossible()
         } catch {
             BMAnalytics.loginFailed(method: "kakao", error: error)
             errorMessage = "카카오 로그인에 실패했습니다."
@@ -104,8 +105,8 @@ final class AuthSessionViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let credentials = try appleLoginService.credentials(from: authorization)
-            let response = try await authAPIService.loginWithApple(credentials: credentials)
+            let credentials = try appleAuthorizationDecoder.credentials(from: authorization)
+            let response = try await authRepository.loginWithApple(credentials: credentials)
 
             saveSessionTokens(from: response)
             currentUser = response.user
@@ -114,7 +115,7 @@ final class AuthSessionViewModel: ObservableObject {
             BMAnalytics.loginCompleted(method: "apple")
 
             await loadProfile()
-            await PushNotificationService.shared.syncTokenWithServerIfPossible()
+            await dependencies.pushTokens.syncTokenWithServerIfPossible()
         } catch {
             BMAnalytics.loginFailed(method: "apple", error: error)
             errorMessage = error.bookMateUserMessage(fallback: "로그인에 실패했습니다.")
@@ -141,7 +142,7 @@ final class AuthSessionViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let response = try await authAPIService.signup(
+            let response = try await authRepository.signup(
                 email: email,
                 password: password,
                 nickname: nickname
@@ -155,7 +156,7 @@ final class AuthSessionViewModel: ObservableObject {
             BMAnalytics.signUpCompleted(method: "email")
 
             await loadProfile()
-            await PushNotificationService.shared.syncTokenWithServerIfPossible()
+            await dependencies.pushTokens.syncTokenWithServerIfPossible()
         } catch {
             BMAnalytics.signUpFailed(method: "email", error: error)
             errorMessage = "회원가입에 실패했습니다."
@@ -168,7 +169,7 @@ final class AuthSessionViewModel: ObservableObject {
     // 서버에서 중복되지 않는 랜덤 닉네임을 추천받는다.
     func suggestNickname() async -> String? {
         do {
-            return try await authAPIService.fetchNicknameSuggestion()
+            return try await authRepository.fetchNicknameSuggestion()
         } catch {
             errorMessage = "닉네임 추천에 실패했습니다."
             DebugLogger.log("닉네임 추천 실패:", error)
@@ -178,7 +179,7 @@ final class AuthSessionViewModel: ObservableObject {
 
     func checkEmailAvailability(email: String) async -> EmailAvailabilityResponse? {
         do {
-            return try await authAPIService.checkEmailAvailability(email: email)
+            return try await authRepository.checkEmailAvailability(email: email)
         } catch {
             errorMessage = "이메일 중복 확인에 실패했습니다."
             DebugLogger.log("이메일 중복 확인 실패:", error)
@@ -188,7 +189,7 @@ final class AuthSessionViewModel: ObservableObject {
 
     func checkNicknameAvailability(nickname: String) async -> NicknameAvailabilityResponse? {
         do {
-            return try await authAPIService.checkNicknameAvailability(nickname: nickname)
+            return try await authRepository.checkNicknameAvailability(nickname: nickname)
         } catch {
             errorMessage = "닉네임 중복 확인에 실패했습니다."
             DebugLogger.log("닉네임 중복 확인 실패:", error)
@@ -205,13 +206,13 @@ final class AuthSessionViewModel: ObservableObject {
         }
 
         do {
-            let profile = try await authAPIService.fetchProfile(token: token)
+            let profile = try await authRepository.fetchProfile(token: token)
 
             self.profile = profile
             currentUser = profile.toAuthUser()
             isLoggedIn = true
             BMAnalytics.setUser(currentUser)
-            await PushNotificationService.shared.syncTokenWithServerIfPossible()
+            await dependencies.pushTokens.syncTokenWithServerIfPossible()
         } catch is CancellationError {
             // A logout or newer login superseded this request.
         } catch {
@@ -237,11 +238,11 @@ final class AuthSessionViewModel: ObservableObject {
         let loggedOutGeneration = KeychainTokenStore.sessionGeneration
         Task {
             if let refreshToken {
-                do { try await authAPIService.logout(refreshToken: refreshToken) }
+                do { try await authRepository.logout(refreshToken: refreshToken) }
                 catch { DebugLogger.log("서버 로그아웃 요청 실패. 로컬 세션은 삭제됨.") }
             }
             guard loggedOutGeneration == KeychainTokenStore.sessionGeneration else { return }
-            await PushNotificationService.shared.disableCurrentTokenOnServer(accessToken: accessToken)
+            await dependencies.pushTokens.disableCurrentTokenOnServer(accessToken: accessToken)
         }
 
         currentUser = nil
@@ -265,17 +266,17 @@ final class AuthSessionViewModel: ObservableObject {
             let provider = profile?.provider ?? currentUser?.provider
             let shouldUnlinkKakao = provider?.uppercased() == "KAKAO"
 
-            try await authAPIService.withdraw(token: token)
+            try await authRepository.withdraw(token: token)
 
             if shouldUnlinkKakao {
                 do {
-                    try await kakaoLoginService.unlink()
+                    try await kakaoLoginProvider.unlink()
                 } catch {
                     DebugLogger.log("카카오 연결 해제 실패:", error)
                 }
             }
 
-            await PushNotificationService.shared.disableCurrentTokenOnServer(accessToken: token)
+            await dependencies.pushTokens.disableCurrentTokenOnServer(accessToken: token)
             tokenStore.clear()
             currentUser = nil
             profile = nil
@@ -303,7 +304,7 @@ final class AuthSessionViewModel: ObservableObject {
         guard let token = tokenStore.load() else { return }
 
         do {
-            let profile = try await authAPIService.fetchProfile(token: token)
+            let profile = try await authRepository.fetchProfile(token: token)
 
             self.profile = profile
             currentUser = profile.toAuthUser()
@@ -326,7 +327,7 @@ final class AuthSessionViewModel: ObservableObject {
         let previousUser = currentUser
 
         do {
-            let updatedProfile = try await authAPIService.updateProfile(
+            let updatedProfile = try await authRepository.updateProfile(
                 token: token,
                 nickname: nickname,
                 profileImageUrl: profileImageUrl,
@@ -378,7 +379,7 @@ final class AuthSessionViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let updatedProfile = try await authAPIService.updateProfile(
+            let updatedProfile = try await authRepository.updateProfile(
                 token: token,
                 nickname: profile?.nickname ?? user.nickname,
                 profileImageUrl: profile?.profileImageUrl ?? user.profileImageUrl,
@@ -413,7 +414,7 @@ final class AuthSessionViewModel: ObservableObject {
         }
 
         do {
-            let uploadedURL = try await authAPIService.uploadProfileImage(token: token, imageData: imageData)
+            let uploadedURL = try await authRepository.uploadProfileImage(token: token, imageData: imageData)
             BMAnalytics.profileImageChanged(source: "photo_library")
             return uploadedURL
         } catch {

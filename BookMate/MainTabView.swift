@@ -10,11 +10,16 @@ import SwiftUI
 
 struct MainTabView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
-    @StateObject private var viewModel = BookMateViewModel() // StateObject는 처음 Viewmodel 만들고 소유
+    @StateObject private var viewModel: BookMateViewModel
     @ObservedObject private var pushNotificationRouter = PushNotificationRouter.shared
     @State var tabIndex = 0
     @State private var roomNotificationRequest: PushNotificationNavigationRequest?
     @State private var notificationPermissionDialog: NotificationPermissionDialog?
+
+    init(authViewModel: AuthSessionViewModel, dependencies: AppDependencies? = nil) {
+        self.authViewModel = authViewModel
+        _viewModel = StateObject(wrappedValue: BookMateViewModel(dependencies: dependencies))
+    }
 
     var body: some View {
         TabView(selection: $tabIndex) {
