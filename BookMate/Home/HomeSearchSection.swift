@@ -34,20 +34,7 @@ struct HomeSearchSection: View {
     }
 
     private func clearSearchText() {
-        viewModel.searchText = ""
-
-        viewModel.dictionarySuggestions = []
-        viewModel.dictionarySearchResult = nil
-
-        viewModel.savedWordSearchResults = []
-        viewModel.savedBookSearchResults = []
-
-        viewModel.bookSearchResults = []
-        viewModel.bookSearchErrorMessage = nil
-        viewModel.isBookSearchLoading = false
-
-        viewModel.searchErrorMessage = nil
-        viewModel.isLoading = false
+        viewModel.clearSearch()
 
         bookSearchTask?.cancel()
         bookSearchTask = nil
@@ -202,25 +189,13 @@ struct HomeSearchSection: View {
                     let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
                     if trimmed.isEmpty {
-                            bookSearchTask?.cancel()
-                            bookSearchTask = nil
-                            dictionarySuggestionTask?.cancel()
-                            dictionarySuggestionTask = nil
-
-                            viewModel.dictionarySuggestions = []
-                            viewModel.dictionarySearchResult = nil
-
-                            viewModel.savedWordSearchResults = []
-                            viewModel.savedBookSearchResults = []
-
-                            viewModel.bookSearchResults = []
-                            viewModel.bookSearchErrorMessage = nil
-                            viewModel.isBookSearchLoading = false
-
-                            viewModel.searchErrorMessage = nil
-                            viewModel.isLoading = false
-                            return
-                        }
+                        bookSearchTask?.cancel()
+                        bookSearchTask = nil
+                        dictionarySuggestionTask?.cancel()
+                        dictionarySuggestionTask = nil
+                        viewModel.clearSearchResults()
+                        return
+                    }
 
                     guard !isShowingSearchResult else {
                         dictionarySuggestionTask?.cancel()

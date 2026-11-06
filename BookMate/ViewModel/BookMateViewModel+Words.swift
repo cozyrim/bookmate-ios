@@ -66,13 +66,14 @@ extension BookMateViewModel {
             }
     }
 
-    // 화면 전환 뒤에도 남아 있을 수 있는 임시 검색 결과를 비운다.
-    func clearSearchState(searchMode mode: SearchMode? = nil) {
-        if let mode {
-            searchMode = mode
-        }
-
+    // 입력과 검색 결과를 비우고, 검색 모드와 단어 저장 흐름은 유지한다.
+    func clearSearch() {
         searchText = ""
+        clearSearchResults()
+    }
+
+    // 입력은 유지한 채 검색 결과, 오류, 로딩 상태를 비운다.
+    func clearSearchResults() {
         dictionarySearchResult = nil
         dictionarySuggestions = []
         savedWordSearchResults = []
@@ -82,6 +83,15 @@ extension BookMateViewModel {
         bookSearchErrorMessage = nil
         isLoading = false
         isBookSearchLoading = false
+    }
+
+    // 화면 전환 시 검색 상태와 단어 저장 흐름을 함께 초기화한다.
+    func clearSearchState(searchMode mode: SearchMode? = nil) {
+        if let mode {
+            searchMode = mode
+        }
+
+        clearSearch()
         isWordSaveSheetPresented = false
         shouldResumeWordSaveAfterBookRegistration = false
         isWordSaveResumeSheetPresented = false
