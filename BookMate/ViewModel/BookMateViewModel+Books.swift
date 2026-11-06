@@ -38,35 +38,8 @@ extension BookMateViewModel {
         }
     }
 
-    // 카카오 책 검색 API로 등록할 책 후보를 찾는다.
     func searchBooks(query: String) async {
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard !trimmed.isEmpty else {
-            bookSearchErrorMessage = "책 제목 또는 저자를 입력해 주세요."
-            return
-        }
-
-        let signpostID = PerformanceLogger.makeSignpostID()
-        PerformanceLogger.begin("SearchBooksAPI", id: signpostID)
-
-        defer {
-            PerformanceLogger.end("SearchBooksAPI", id: signpostID)
-        }
-
-        isBookSearchLoading = true
-        bookSearchErrorMessage = nil
-
-        do {
-            bookSearchResults = try await bookSearchRepository.searchBooks(query: trimmed)
-            BMAnalytics.searchCompleted(mode: .book, resultCount: bookSearchResults.count)
-        } catch {
-            bookSearchResults = []
-            bookSearchErrorMessage = "책 검색에 실패했습니다."
-            BMAnalytics.searchFailed(mode: .book, reason: "api_error")
-            DebugLogger.log("책 검색 실패:", error)
-        }
-        isBookSearchLoading = false
+        await searchFeature.searchBooks(query: query)
     }
 
     // 등록 초안으로 서버에 새 책을 저장하고 화면 상태에 즉시 반영한다.
