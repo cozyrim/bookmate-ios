@@ -19,7 +19,14 @@ import SwiftUI
 
 
 struct RootView: View {
-    @StateObject private var authViewModel = AuthSessionViewModel()
+    let dependencies: AppDependencies
+    @StateObject private var authViewModel: AuthSessionViewModel
+
+    init(dependencies: AppDependencies? = nil) {
+        let dependencies = dependencies ?? AppDependencies()
+        self.dependencies = dependencies
+        _authViewModel = StateObject(wrappedValue: AuthSessionViewModel(dependencies: dependencies))
+    }
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var toast: AppToast?
 //    RootView가 AuthSessionViewModel을 처음 만들고 소유한다.
@@ -40,7 +47,7 @@ struct RootView: View {
                     hasSeenOnboarding = true
                 }
             } else if authViewModel.isLoggedIn {
-                MainTabView(authViewModel: authViewModel)
+                MainTabView(authViewModel: authViewModel, dependencies: dependencies)
                     .environmentObject(authViewModel)
             } else {
                 LoginView(authViewModel: authViewModel)

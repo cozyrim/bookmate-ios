@@ -17,7 +17,7 @@ enum KakaoLoginError: Error {
     case missingAccessToken
 }
 
-final class KakaoLoginService {
+final class KakaoLoginService: KakaoLoginProviding {
     func login() async throws -> String {
         try await requestToken { completion in
             if UserApi.isKakaoTalkLoginAvailable() {

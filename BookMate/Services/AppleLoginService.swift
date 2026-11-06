@@ -30,7 +30,7 @@ enum AppleLoginError: LocalizedError {
     }
 }
 
-final class AppleLoginService {
+final class AppleLoginService: AppleAuthorizationDecoding {
     func credentials(from authorization: ASAuthorization) throws -> AppleLoginCredentials {
         guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential else {
             throw AppleLoginError.invalidCredential
