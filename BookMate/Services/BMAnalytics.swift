@@ -6,6 +6,7 @@
 //
 
 import FirebaseAnalytics
+import FirebaseCore
 import Foundation
 
 enum BMAnalytics {
@@ -21,6 +22,7 @@ enum BMAnalytics {
     }
 
     static func setUser(_ user: AuthUser?) {
+        guard FirebaseApp.app() != nil else { return }
         Analytics.setUserID(user?.id.uuidString)
     }
 
@@ -285,6 +287,7 @@ enum BMAnalytics {
     }
 
     private static func log(_ name: String, _ parameters: [String: Any]? = nil) {
+        guard FirebaseApp.app() != nil else { return }
         Analytics.logEvent(name, parameters: parameters)
     }
 

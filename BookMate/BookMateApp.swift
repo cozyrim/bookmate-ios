@@ -12,11 +12,12 @@ import FirebaseCore
 
 @main
 struct BookMateApp: App {
-    private let dependencies = AppDependencies()
+    private let dependencies = AppDependencies.bootstrap()
     @UIApplicationDelegateAdaptor(BookMateAppDelegate.self) private var appDelegate
     @AppStorage("appColorMode") private var appColorMode = AppColorMode.system.rawValue
 
     init() {
+        if AppDependencies.usesUIFixtures { return }
         guard let kakaoNativeAppKey = Bundle.main.object(
             forInfoDictionaryKey: "KAKAO_NATIVE_APP_KEY"
         ) as? String,

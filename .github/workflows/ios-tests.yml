@@ -12,7 +12,7 @@ concurrency:
 jobs:
   test:
     runs-on: macos-26
-    timeout-minutes: 40
+    timeout-minutes: 60
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
@@ -24,19 +24,35 @@ jobs:
           python3 - <<'PY'
           import json, os, subprocess
           devices = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))['devices']
+          tablets = [device for runtime, values in devices.items() if 'iOS' in runtime for device in values if 'iPad' in device['name']]
           phones = [device for runtime, values in devices.items() if 'iOS' in runtime for device in values if 'iPhone' in device['name']]
-          assert phones, 'No iPhone simulator is installed'
+          assert phones and tablets, 'Both iPhone and iPad simulators are required'
           with open(os.environ['GITHUB_ENV'], 'a') as file:
               file.write(f"TEST_DESTINATION=platform=iOS Simulator,id={phones[0]['udid']}\n")
+              file.write(f"IPAD_DESTINATION=platform=iOS Simulator,id={tablets[0]['udid']}\n")
           PY
       - name: Build app and run unit tests
         run: |
           set -o pipefail
           xcodebuild test -project BookMate.xcodeproj -scheme BookMate \
             -configuration Debug -destination "$TEST_DESTINATION" \
-            -only-testing:BookMateTests -parallel-testing-enabled NO \
+            -only-testing:BookMateTests -only-testing:BookMateUITests/ArchitectureSmokeTests -parallel-testing-enabled NO \
             -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO \
             BOOKMATE_API_ENVIRONMENT=local 2>&1 | tee xcodebuild.log
+      - name: Run iPad UI smoke tests
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building -project BookMate.xcodeproj -scheme BookMate \
+            -configuration Debug -destination "$IPAD_DESTINATION" \
+            -only-testing:BookMateUITests/ArchitectureSmokeTests -parallel-testing-enabled NO \
+            -resultBundlePath iPadResults.xcresult CODE_SIGNING_ALLOWED=NO \
+            BOOKMATE_API_ENVIRONMENT=local 2>&1 | tee ipad-tests.log
+      - name: Compile Release app
+        run: |
+          set -o pipefail
+          xcodebuild build -project BookMate.xcodeproj -scheme BookMate \
+            -configuration Release -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO BOOKMATE_API_ENVIRONMENT=local 2>&1 | tee release-build.log
       - name: Save test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -44,5 +60,8 @@ jobs:
           name: ios-test-results
           path: |
             TestResults.xcresult
+            iPadResults.xcresult
             xcodebuild.log
+            ipad-tests.log
+            release-build.log
           retention-days: 7
