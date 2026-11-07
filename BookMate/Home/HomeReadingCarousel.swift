@@ -47,34 +47,9 @@ struct HomeReadingCarousel: View {
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
                     ForEach(Array(books.enumerated()), id: \.element.id) { index, book in
-                        let isSelected = index == selectedIndex
-                        let distance = (CGFloat(index) - position) * direction
-                        let depth = min(abs(distance), 2)
-                        let overlapOffset = usesReducedMotion ? 0 : coverOffset(distance: distance, step: step)
-                        Button {
-                            if isSelected {
-                                onOpen(book)
-                            } else {
-                                select(book.id)
-                            }
-                        } label: {
-                            BookCoverCell(imageName: book.imageName, width: coverSize, trailingPadding: 0, showsBackground: false, coverCornerRadius: 8)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(book.title)
-                        .accessibilityHint(isSelected ? "책 상세 열기" : "이 책 선택")
-                        .accessibilityIdentifier("home.reading.cover.\(book.id)")
-                        .frame(width: step, height: geometry.size.height)
-                        .scaleEffect(usesReducedMotion ? 1 : 1 - depth * 0.12)
-                        .rotation3DEffect(
-                            .degrees(usesReducedMotion ? 0 : max(-28, min(28, -distance * 14))),
-                            axis: (x: 0, y: 1, z: 0), perspective: 0.5
-                        )
-                        .offset(x: overlapOffset)
-                        .opacity(usesReducedMotion ? 1 : 1 - depth * 0.09)
-                        .zIndex(-Double(abs(distance)))
+                        coverButton(book: book, index: index, size: coverSize, step: step,
+                                    height: geometry.size.height, position: position,
+                                    direction: direction, reducedMotion: usesReducedMotion)
                     }
                 }
                 .scrollTargetLayout()
@@ -97,6 +72,37 @@ struct HomeReadingCarousel: View {
             .accessibilityIdentifier("home.reading.shelf")
         }
         .frame(height: 224)
+    }
+
+    private func coverButton(book: Book, index: Int, size: CGFloat, step: CGFloat,
+                             height: CGFloat, position: CGFloat, direction: CGFloat,
+                             reducedMotion: Bool) -> some View {
+        let isSelected = index == selectedIndex
+        let distance: CGFloat = (CGFloat(index) - position) * direction
+        let depth: CGFloat = min(abs(distance), 2)
+        let offset: CGFloat = reducedMotion ? 0 : coverOffset(distance: distance, step: step)
+        let scale: CGFloat = reducedMotion ? 1 : 1 - depth * 0.12
+        let angle: Double = reducedMotion ? 0 : Double(max(-28, min(28, -distance * 14)))
+        let opacity: Double = reducedMotion ? 1 : Double(1 - depth * 0.09)
+
+        return Button {
+            if isSelected { onOpen(book) } else { select(book.id) }
+        } label: {
+            BookCoverCell(imageName: book.imageName, width: size, trailingPadding: 0,
+                          showsBackground: false, coverCornerRadius: 8)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(book.title)
+        .accessibilityHint(isSelected ? "책 상세 열기" : "이 책 선택")
+        .accessibilityIdentifier("home.reading.cover.\(book.id)")
+        .frame(width: step, height: height)
+        .scaleEffect(scale)
+        .rotation3DEffect(.degrees(angle), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
+        .offset(x: offset)
+        .opacity(opacity)
+        .zIndex(-Double(abs(distance)))
     }
 
     private func coverOffset(distance: CGFloat, step: CGFloat) -> CGFloat {
