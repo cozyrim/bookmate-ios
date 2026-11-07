@@ -70,6 +70,7 @@ struct BookDiscoveryDetailView: View {
 
                     if let sourceURL {
                         Link("YES24에서 도서 정보 보기", destination: sourceURL)
+                            .accessibilityIdentifier("bestsellers.providerLink")
                             .font(.callout).frame(minHeight: 44)
                     }
 
