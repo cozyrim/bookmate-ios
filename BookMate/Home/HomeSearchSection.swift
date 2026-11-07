@@ -91,16 +91,7 @@ struct HomeSearchSection: View {
     var body: some View {
 
         VStack(alignment: .leading, spacing: 10) {
-            Picker("검색 범위", selection: Binding(
-                get: { viewModel.searchMode },
-                set: { selectSearchMode($0) }
-            )) {
-                Text("사전").tag(BookMateViewModel.SearchMode.dictionary)
-                Text("도서").tag(BookMateViewModel.SearchMode.book)
-                Text("내 기록").tag(BookMateViewModel.SearchMode.savedWords)
-            }
-            .pickerStyle(.segmented)
-            .disabled(viewModel.isLoading || viewModel.isBookSearchLoading)
+            searchModeSelector
 
             HStack{
                 Button {
@@ -188,13 +179,10 @@ struct HomeSearchSection: View {
             }
             .padding(.horizontal, 16)
             .frame(height: 46)
-            .background(Color("Surface").opacity(0.55))
-            .clipShape(Capsule())
             .overlay {
                 Capsule()
                     .stroke(Color("Border").opacity(0.55), lineWidth: 1)
             }
-            .shadow(color: Color("Shadow").opacity(0.07), radius: 18, x: 0, y: 8)
 
             if viewModel.searchText.isEmpty,
                !viewModel.recentSearches.isEmpty {
@@ -237,6 +225,43 @@ struct HomeSearchSection: View {
             guard !isShowingSearchResult else { return }
             clearSearchText()
         }
+    }
+
+    private var searchModeSelector: some View {
+        HStack(spacing: 6) {
+            searchModeButton("사전", mode: .dictionary)
+            searchModeButton("도서", mode: .book)
+            searchModeButton("내 기록", mode: .savedWords)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("검색 범위")
+        .disabled(viewModel.isLoading || viewModel.isBookSearchLoading)
+    }
+
+    private func searchModeButton(_ title: String, mode: BookMateViewModel.SearchMode) -> some View {
+        let isSelected = viewModel.searchMode == mode
+        return Button {
+            guard !isSelected else { return }
+            selectSearchMode(mode)
+        } label: {
+            Text(title)
+                .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                .foregroundStyle(isSelected ? Color("Primary") : Color("TextPrimary"))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .contentShape(Capsule())
+                .overlay {
+                    Capsule().strokeBorder(
+                        isSelected ? Color("Primary") : Color("Border"),
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityIdentifier("home.search.mode.\(mode.rawValue)")
     }
 
     private func presentPendingDictionarySearchIfNeeded() {
@@ -303,8 +328,6 @@ struct HomeSearchSection: View {
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Color("SurfaceElevated").opacity(0.96))
-                        .clipShape(Capsule())
                         .overlay {
                             Capsule()
                                 .stroke(Color("Border").opacity(0.45), lineWidth: 1)

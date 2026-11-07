@@ -93,7 +93,18 @@ final class ArchitectureSmokeTests: XCTestCase {
     }
 
     func testDictionarySearchShowsRepositoryResultAndSaveAction() {
-        let app = launch()
+        let app = launch(extraArguments: ["--recent-search-fixture"])
+        for (mode, placeholder) in [
+            ("book", "책 제목 또는 저자 검색..."),
+            ("savedWords", "저장한 책 또는 단어 검색..."),
+            ("dictionary", "사전에서 단어 검색...")
+        ] {
+            let selector = app.buttons["home.search.mode.\(mode)"]
+            selector.tap()
+            XCTAssertTrue(selector.isSelected)
+            XCTAssertTrue(app.textFields[placeholder].exists)
+        }
+        capture("home-outline-search-with-recents", app: app)
         let input = app.textFields.firstMatch
         XCTAssertTrue(input.waitForExistence(timeout: 10))
         input.tap()
@@ -233,13 +244,14 @@ final class ArchitectureSmokeTests: XCTestCase {
         let app = launch(extraArguments: ["--home-reading-carousel"])
         let shelf = app.scrollViews["home.reading.shelf"]
         let position = app.staticTexts["home.reading.position"]
-        let detail = app.buttons["home.reading.detail"]
+        let firstCover = app.buttons["home.reading.cover.11111111-1111-1111-1111-111111111111"]
 
         XCTAssertTrue(shelf.waitForExistence(timeout: 10))
         XCTAssertFalse(app.staticTexts["Bookmate 오늘 만난 문장"].exists)
         XCTAssertFalse(app.staticTexts["읽다가 만난 단어들"].exists)
         XCTAssertEqual(position.label, "5권 중 1번째")
-        XCTAssertTrue(detail.label.contains("싯타르타"))
+        XCTAssertTrue(firstCover.label.contains("싯타르타"))
+        XCTAssertFalse(app.buttons["home.reading.detail"].exists)
         capture("home-reading-initial", app: app)
 
         let start = shelf.coordinate(withNormalizedOffset: CGVector(dx: 0.69, dy: 0.49))
@@ -248,7 +260,7 @@ final class ArchitectureSmokeTests: XCTestCase {
         let second = NSPredicate(format: "label == %@", "5권 중 2번째")
         expectation(for: second, evaluatedWith: position)
         waitForExpectations(timeout: 5)
-        XCTAssertTrue(detail.label.contains("참을 수 없는 존재의 가벼움"))
+        XCTAssertTrue(app.buttons["home.reading.menu"].label.contains("참을 수 없는 존재의 가벼움"))
         capture("home-reading-swiped", app: app)
 
         app.buttons["다음 책"].tap()
@@ -268,8 +280,8 @@ final class ArchitectureSmokeTests: XCTestCase {
             XCTAssertGreaterThan(progress.frame.minY, homeTab.frame.maxY)
             XCTAssertLessThan(progress.frame.maxY, app.frame.maxY)
         }
-        XCTAssertLessThan(progress.frame.maxY, app.buttons["home.reading.detail"].frame.minY,
-                          "Reading progress belongs between the cover and book metadata")
+        XCTAssertGreaterThanOrEqual(progress.frame.minY, app.scrollViews["home.reading.shelf"].frame.maxY,
+                                   "Reading progress belongs directly below the cover shelf")
         capture("compact-home-with-recents", app: app)
         tab("서재", in: app).tap()
         let lamp = app.buttons["miniRoom.wood3D.lamp"]
