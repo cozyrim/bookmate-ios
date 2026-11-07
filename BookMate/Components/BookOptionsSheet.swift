@@ -54,7 +54,7 @@ struct BookOptionsSheet: View {
                     Divider()
                 }
                 MoreOptionsSheet(editTitle: editTitle, deleteTitle: deleteTitle,
-                                 moveTitle: moveTitle, memoTitle: memoTitle,
+                                 moveTitle: moveTitle, memoTitle: memoTitle, horizontalInset: 0,
                                  onEdit: onEdit, onDelete: onDelete, onMove: onMove, onMemo: onMemo)
             }
             .padding(.horizontal, 24)
