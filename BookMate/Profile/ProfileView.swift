@@ -75,7 +75,7 @@ struct ProfileView: View {
                         
                         profileStatsView
                         
-                        VStack(spacing: 12){
+                        VStack(spacing: 16){
                             ProfileMenuCardView(rows: accountRows) { item in
                                     handleMenuTap(item)
                             }
@@ -88,7 +88,7 @@ struct ProfileView: View {
                         }
                         .padding(.horizontal, 24)
                     }
-                    .padding(.top, 18)
+                    .padding(.top, 16)
                     .padding(.bottom, tabBarHeight + 24)
                 }
             }
@@ -134,7 +134,7 @@ struct ProfileView: View {
     }
         
         private var profileHeader: some View {
-            VStack(spacing: 14) {
+            VStack(spacing: 8) {
                 ProfileImageView( // 실제 프로필 이미지 보여주기
                     imageName: "profileImage",
                         imageURLString: authViewModel.profile?.profileImageUrl,
@@ -196,7 +196,7 @@ struct ProfileView: View {
                 .fill(Color("TextSecondary").opacity(0.08))
                 .frame(height: 1)
         }
-        .padding(.horizontal, 36)
+        .padding(.horizontal, 24)
     }
 }
 #Preview {

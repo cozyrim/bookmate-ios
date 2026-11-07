@@ -13,10 +13,11 @@ struct ProfileStatItemView: View {
     
     var body: some View {
         
-        VStack(spacing: 6) {
+        VStack(spacing: 4) {
             Text(value)
                 .font(.headline)
                 .fontWeight(.bold)
+                .monospacedDigit()
                 .foregroundStyle(Color("TextPrimary"))
             
             Text(label)

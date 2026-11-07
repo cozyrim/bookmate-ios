@@ -28,6 +28,9 @@ final class UIFixtureAuth: AuthRepository {
         return NicknameAvailabilityResponse(nickname: nickname, available: true, message: "사용할 수 있어요.")
     }
     func fetchProfile(token: String) async throws -> ProfileResponse {
+        if ProcessInfo.processInfo.arguments.contains("--slow-session-restore") {
+            try await Task.sleep(for: .seconds(2))
+        }
         return profile
     }
     func updateProfile(

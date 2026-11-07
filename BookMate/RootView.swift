@@ -19,6 +19,7 @@ import SwiftUI
 
 
 struct RootView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let dependencies: AppDependencies
     @StateObject private var authViewModel: AuthSessionViewModel
 
@@ -34,24 +35,18 @@ struct RootView: View {
 
     
     var body: some View {
-        Group {
+        ZStack {
+            if !authViewModel.isCheckingSession {
+                destination
+                    .transition(.identity)
+            }
             if authViewModel.isCheckingSession {
                 SessionLoadingView()
-            } else if let message = authViewModel.sessionRestoreError {
-                ContentStateView(type: .error, iconName: "wifi.exclamationmark", title: "연결을 확인해 주세요", message: message, buttonTitle: "다시 시도", buttonIconName: "arrow.clockwise") {
-                    Task { await authViewModel.restoreSession() }
-                }
-            } else if !hasSeenOnboarding {
-                OnboardingView {
-                    hasSeenOnboarding = true
-                }
-            } else if authViewModel.isLoggedIn {
-                MainTabView(authViewModel: authViewModel, dependencies: dependencies)
-                    .environmentObject(authViewModel)
-            } else {
-                LoginView(authViewModel: authViewModel)
+                    .transition(.opacity)
+                    .zIndex(1)
             }
         }
+        .animation(.easeOut(duration: reduceMotion ? 0.15 : 0.24), value: authViewModel.isCheckingSession)
         .phoneWidthOnWideScreens()
         .dismissKeyboardOnTap()
         .appToast($toast)
@@ -59,6 +54,21 @@ struct RootView: View {
             guard let message else { return }
             toast = AppToast(message: message, style: .success)
             authViewModel.accountDeletionSuccessMessage = nil
+        }
+    }
+    @ViewBuilder
+    private var destination: some View {
+        if let message = authViewModel.sessionRestoreError {
+            ContentStateView(type: .error, iconName: "wifi.exclamationmark", title: "연결을 확인해 주세요", message: message, buttonTitle: "다시 시도", buttonIconName: "arrow.clockwise") {
+                Task { await authViewModel.restoreSession() }
+            }
+        } else if !hasSeenOnboarding {
+            OnboardingView { hasSeenOnboarding = true }
+        } else if authViewModel.isLoggedIn {
+            MainTabView(authViewModel: authViewModel, dependencies: dependencies)
+                .environmentObject(authViewModel)
+        } else {
+            LoginView(authViewModel: authViewModel)
         }
     }
 }
