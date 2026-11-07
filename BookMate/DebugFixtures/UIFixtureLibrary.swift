@@ -6,6 +6,7 @@ final class UIFixtureLibrary: BookRepository, WordRepository, QuoteRepository, R
     var books = [Book.dummyBooks[0]]
     var words = [Word(text: "찰나", meaning: "아주 짧은 동안", partOfSpeech: "명사", exampleSentence: nil, targetCode: "1", bookId: Book.dummyBooks[0].id)]
     var quotes: [Quote] = []
+    private var failsNextQuoteSave = ProcessInfo.processInfo.arguments.contains("--quote-save-error-once")
     var memos: [ReadingMemo] = []
     var reviews: [Review] = []
 
@@ -82,6 +83,10 @@ final class UIFixtureLibrary: BookRepository, WordRepository, QuoteRepository, R
         page: Int?,
         memo: String?
         ) async throws -> Quote {
+        if failsNextQuoteSave {
+            failsNextQuoteSave = false
+            throw URLError(.notConnectedToInternet)
+        }
         let quote = Quote(text: text, page: page, memo: memo, bookId: bookId); quotes.insert(quote, at: 0); return quote
     }
     func updateQuote(_ quote: Quote) async throws -> Quote {

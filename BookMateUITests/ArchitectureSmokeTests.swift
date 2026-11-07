@@ -503,6 +503,68 @@ final class ArchitectureSmokeTests: XCTestCase {
         capture("personal-reading-history", app: app)
     }
 
+    func testWordDetailKeepsEditActionClearOfTabNavigation() {
+        for appearance in ["light", "dark"] {
+            let app = launch(appearance: appearance)
+            tab("단어장", in: app).tap()
+            app.staticTexts["찰나"].firstMatch.tap()
+            let edit = app.buttons["word.detail.edit"]
+            XCTAssertTrue(edit.waitForExistence(timeout: 5))
+            XCTAssertTrue(edit.isHittable)
+            XCTAssertLessThan(edit.frame.maxY, app.frame.maxY - 20)
+            XCTAssertFalse(app.buttons["홈"].exists)
+            capture("\(appearance)-word-detail", app: app)
+            edit.tap()
+            XCTAssertTrue(app.staticTexts["기록 수정하기"].waitForExistence(timeout: 5))
+            app.terminate()
+        }
+    }
+
+    func testQuoteComposerPreservesDraftOnFailureAndSupportsEditing() {
+        for appearance in ["light", "dark"] {
+            let app = launch(appearance: appearance, extraArguments: ["--quote-save-error-once"])
+            tab("책", in: app).tap()
+            app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "싯타르타,")).firstMatch.tap()
+            app.staticTexts["문장"].firstMatch.tap()
+            let add = app.buttons["새 문장 추가하기"]
+            if !add.isHittable { app.swipeUp() }
+            add.tap()
+            let text = app.textViews["quote.text"]
+            let save = app.buttons["quote.save"]
+            XCTAssertTrue(text.waitForExistence(timeout: 5))
+            XCTAssertFalse(save.isEnabled)
+            capture("\(appearance)-quote-empty", app: app)
+            text.tap()
+            text.typeText("A sentence worth keeping.")
+            let page = app.textFields["quote.page"]
+            page.tap()
+            page.typeText("42")
+            XCTAssertTrue(save.isHittable, "Save stays above the keyboard")
+            capture("\(appearance)-quote-keyboard", app: app)
+            save.tap()
+            let failure = app.staticTexts["quote.error"]
+            XCTAssertTrue(failure.waitForExistence(timeout: 5))
+            XCTAssertEqual(text.value as? String, "A sentence worth keeping.")
+            XCTAssertEqual(page.value as? String, "42")
+            save.tap()
+            XCTAssertTrue(app.staticTexts["A sentence worth keeping."].waitForExistence(timeout: 5))
+            let edit = app.buttons["문장 수정"]
+            if !edit.isHittable { app.swipeUp() }
+            edit.tap()
+            XCTAssertTrue(text.waitForExistence(timeout: 5))
+            XCTAssertEqual(text.value as? String, "A sentence worth keeping.")
+            text.tap()
+            text.typeText(" Again.")
+            let editedText = (text.value as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            XCTAssertTrue(editedText.contains("Again."))
+            XCTAssertNotEqual(editedText, "A sentence worth keeping.")
+            save.tap()
+            XCTAssertTrue(app.staticTexts[editedText].waitForExistence(timeout: 5))
+            XCTAssertEqual(app.buttons.matching(identifier: "문장 수정").count, 1, "Retry and edit must not duplicate the quote")
+            app.terminate()
+        }
+    }
+
     private func selectRoomView(_ value: String, in app: XCUIApplication) {
         app.buttons["room.viewpoint.menu"].tap()
         app.buttons["room.viewpoint.\(value)"].tap()
