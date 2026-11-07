@@ -18,6 +18,7 @@ struct AppDependencies {
     let quotes: any QuoteRepository
     let memos: any ReadingMemoRepository
     let reviews: any ReviewRepository
+    let bestsellers: any BestsellerRepository
     let bookSearch: any BookSearchRepository
     let bookPages: any BookPageRepository
     let bookMetadata: any BookMetadataRepository
@@ -42,6 +43,7 @@ struct AppDependencies {
         quotes: (any QuoteRepository)? = nil,
         memos: (any ReadingMemoRepository)? = nil,
         reviews: (any ReviewRepository)? = nil,
+        bestsellers: (any BestsellerRepository)? = nil,
         bookSearch: (any BookSearchRepository)? = nil,
         bookPages: (any BookPageRepository)? = nil,
         bookMetadata: (any BookMetadataRepository)? = nil,
@@ -65,6 +67,7 @@ struct AppDependencies {
         self.quotes = quotes ?? QuoteAPIService()
         self.memos = memos ?? ReadingMemoAPIService()
         self.reviews = reviews ?? ReviewAPIService()
+        self.bestsellers = bestsellers ?? BestsellerAPIService()
         self.bookSearch = bookSearch ?? KakaoBookSearchService()
         self.bookPages = bookPages ?? BookPageLookupService()
         self.bookMetadata = bookMetadata ?? AladinBookLookupService()

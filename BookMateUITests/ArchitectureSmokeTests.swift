@@ -33,6 +33,35 @@ final class ArchitectureSmokeTests: XCTestCase {
         capture("dictionary-result", app: app)
     }
 
+    func testBestsellerUsesExistingRegistrationFlow() {
+        let app = launch()
+        app.buttons["책 추가"].tap()
+        let item = app.buttons["bestsellers.item.123"]
+        for _ in 0..<3 {
+            if item.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(item.waitForExistence(timeout: 10))
+        capture("realtime-bestsellers", app: app)
+        item.tap()
+        let providerLink = app.descendants(matching: .any)["bestsellers.providerLink"].firstMatch
+        XCTAssertTrue(providerLink.waitForExistence(timeout: 10))
+        XCTAssertEqual(providerLink.label, "YES24에서 도서 정보 보기")
+        app.buttons["book.registration.save"].tap()
+        let saved = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "베스트셀러 테스트 도서,")).firstMatch
+        XCTAssertTrue(saved.waitForExistence(timeout: 15))
+    }
+
+    func testBestsellerFailureKeepsManualRegistrationAvailable() {
+        let app = launch(extraArguments: ["--bestseller-error"])
+        app.buttons["책 추가"].tap()
+        XCTAssertTrue(app.staticTexts["bestsellers.error"].waitForExistence(timeout: 10))
+        let manual = app.buttons["직접 등록"].firstMatch
+        if !manual.isHittable { app.swipeDown() }
+        manual.tap()
+        XCTAssertTrue(app.buttons["book.registration.manualSave"].waitForExistence(timeout: 10))
+    }
+
     func testSearchBookRegistersWithoutManualOrCompletionScreen() {
         let app = launch()
         app.buttons["책 추가"].tap()

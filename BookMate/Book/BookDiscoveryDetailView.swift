@@ -16,6 +16,7 @@ struct BookDiscoveryDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: BookMateViewModel
 
+    let sourceURL: URL?
     let draft: BookRegistrationDraft
     @Binding var selectedTab: Int
     let onFinishRegistration: (Int) -> Void
@@ -24,9 +25,10 @@ struct BookDiscoveryDetailView: View {
     @State private var presentationID = UUID()
 
     init(viewModel: BookMateViewModel, draft: BookRegistrationDraft,
-         selectedTab: Binding<Int>, onFinishRegistration: @escaping (Int) -> Void) {
+         selectedTab: Binding<Int>, onFinishRegistration: @escaping (Int) -> Void, sourceURL: URL? = nil) {
         self.viewModel = viewModel
         self.draft = draft
+        self.sourceURL = sourceURL
         self._selectedTab = selectedTab
         self.onFinishRegistration = onFinishRegistration
         _registration = StateObject(wrappedValue: BookRegistrationViewModel(
@@ -65,6 +67,12 @@ struct BookDiscoveryDetailView: View {
                             .foregroundStyle(Color("TextSecondary"))
                     }
                     .padding(.horizontal, 24)
+
+                    if let sourceURL {
+                        Link("YES24에서 도서 정보 보기", destination: sourceURL)
+                            .accessibilityIdentifier("bestsellers.providerLink")
+                            .font(.callout).frame(minHeight: 44)
+                    }
 
                     Picker("상세 탭", selection: $selectedTabItem) {
                         ForEach(Tab.allCases, id: \.self) { tab in
