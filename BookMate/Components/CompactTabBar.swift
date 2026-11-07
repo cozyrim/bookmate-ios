@@ -5,7 +5,19 @@ struct CompactTabBarHiddenKey: PreferenceKey {
     static func reduce(value: inout Bool, nextValue: () -> Bool) { value = value || nextValue() }
 }
 
+private struct CompactTabBarHeightKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 0
+}
+
+extension EnvironmentValues {
+    var compactTabBarHeight: CGFloat {
+        get { self[CompactTabBarHeightKey.self] }
+        set { self[CompactTabBarHeightKey.self] = newValue }
+    }
+}
+
 struct CompactTabBar: View {
+    static let height: CGFloat = 58
     @Binding var selection: Int
     private let labels = ["홈", "책", "단어장", "서재", "프로필"]
     private let symbols = ["house", "book", "character.book.closed", "books.vertical", "person.crop.circle"]

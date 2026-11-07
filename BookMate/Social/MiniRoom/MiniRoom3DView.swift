@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MiniRoom3DView: View {
+    @Environment(\.compactTabBarHeight) private var compactTabBarHeight
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -48,7 +49,7 @@ struct MiniRoom3DView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
-                .padding(.bottom, 12)
+                .padding(.bottom, 12 + compactTabBarHeight)
                 .frame(maxWidth: 620)
                 .frame(maxWidth: .infinity)
             }
