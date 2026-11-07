@@ -47,6 +47,7 @@ struct KeyboardDismissTapInstaller: UIViewRepresentable {
                 action: #selector(dismissKeyboard)
             )
             gesture.cancelsTouchesInView = false
+            gesture.delaysTouchesEnded = false
             gesture.delegate = self
             hostView.addGestureRecognizer(gesture)
 
@@ -70,6 +71,15 @@ struct KeyboardDismissTapInstaller: UIViewRepresentable {
                 from: nil,
                 for: nil
             )
+        }
+
+        // Observing a tap to dismiss the keyboard must not win against navigation
+        // or RealityKit's own gestures. This does not change arbitration between others.
+        func gestureRecognizer(
+            _ gestureRecognizer: UIGestureRecognizer,
+            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+        ) -> Bool {
+            gestureRecognizer === tapGesture || otherGestureRecognizer === tapGesture
         }
 
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
