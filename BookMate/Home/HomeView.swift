@@ -491,7 +491,7 @@ struct HomeView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(18)
-                .background(Color("Surface"), in: RoundedRectangle(cornerRadius: 22))
+                .background(Color("Surface"), in: RoundedRectangle(cornerRadius: ReadingStyle.cardRadius))
             }
         }
         .padding(.horizontal, 24)
@@ -620,7 +620,7 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 96)
             .background(Color("Surface").opacity(0.92))
-            .clipShape(RoundedRectangle(cornerRadius: 34))
+            .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius))
             .shadow(color: Color("Shadow").opacity(0.045), radius: 9, x: 0, y: 3)
     }
 
@@ -665,9 +665,9 @@ struct HomeView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color("Surface").opacity(0.9), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(Color("Surface").opacity(0.9), in: RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
+            RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous)
                 .stroke(Color("Border").opacity(0.28), lineWidth: 1)
         }
         .shadow(color: Color("Shadow").opacity(0.04), radius: 12, x: 0, y: 6)
@@ -776,7 +776,7 @@ struct HomeView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: panelHeight)
-                .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous))
                 .shadow(color: Color("Shadow").opacity(0.18), radius: 24, x: 0, y: 14)
                 .padding(.horizontal, 18)
                 .padding(.top, panelTopPadding)
