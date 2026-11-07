@@ -107,7 +107,7 @@ struct BookCardView: View {
         .frame(maxWidth: .infinity)
         .frame(height: 124)
         .background(Color("Surface"))
-        .clipShape(RoundedRectangle(cornerRadius: 36))
+        .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius))
         .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
         .padding(.top, 8)
         .padding(.horizontal,  24)

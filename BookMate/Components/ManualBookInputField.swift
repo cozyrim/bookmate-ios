@@ -15,6 +15,6 @@ struct ManualBookInputField: View {
         }
         .padding(.horizontal, 14)
         .frame(minHeight: 50)
-        .modifier(ReadingSurface(radius: 12))
+        .modifier(ReadingSurface(radius: ReadingStyle.fieldRadius))
     }
 }

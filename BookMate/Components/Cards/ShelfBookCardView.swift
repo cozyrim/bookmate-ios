@@ -119,9 +119,9 @@ struct ShelfBookCardView: View {
         }
         .frame(maxWidth: .infinity)
         .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous)
                 .stroke(cardBorder, lineWidth: 1)
         }
         .shadow(
@@ -297,9 +297,9 @@ struct ShelfBookListCardView: View {
         .frame(maxWidth: .infinity)
         .frame(height: 160)
         .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
+            RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous)
                 .stroke(cardBorder, lineWidth: 1)
         }
         .shadow(

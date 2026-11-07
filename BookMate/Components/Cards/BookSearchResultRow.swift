@@ -40,7 +40,7 @@ struct BookSearchResultRow: View {
         .frame(maxWidth: .infinity)
         .frame(height: 86)
         .background(Color("Surface"))
-        .clipShape(RoundedRectangle(cornerRadius: 30))
+        .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius))
         .shadow(color: Color("Shadow").opacity(0.06), radius: 8, x: 0, y: 3)
     }
 }
