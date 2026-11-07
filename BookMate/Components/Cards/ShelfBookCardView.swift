@@ -1,15 +1,6 @@
-//
-//  ShelfBookCardView.swift
-//  BookMate
-//
-//  Created by 한채림 on 5/12/26.
-//
-
 import SwiftUI
 
 struct ShelfBookCardView: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     let imageName: String
     let author: String
     let title: String
@@ -17,18 +8,17 @@ struct ShelfBookCardView: View {
     let progress: Double
     let wordCount: Int
     let readingStatus: ReadingStatus
-
     let onTap: () -> Void
     let onMoreTap: () -> Void
 
+    private let coverWidth: CGFloat = 140
+    private let menuSize: CGFloat = 44
+    private var coverHeight: CGFloat { coverWidth * 1.56 * 0.84 }
+
     private var authorLine: String {
         let trimmedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if trimmedCategory.isEmpty || trimmedCategory == "카테고리 선택" {
-            return author
-        }
-
-        return "\(author) · \(trimmedCategory)"
+        return trimmedCategory.isEmpty || trimmedCategory == "카테고리 선택"
+            ? author : "\(author) · \(trimmedCategory)"
     }
 
     private var progressPercent: Int {
@@ -40,113 +30,71 @@ struct ShelfBookCardView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(alignment: .leading, spacing: 9) {
-                coverStack
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 12) {
+                BookCoverCell(imageName: imageName, width: coverWidth, trailingPadding: 0, coverAlignment: .bottomLeading)
+                    .frame(height: coverHeight, alignment: .bottomLeading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color("TextPrimary"))
-                        .lineLimit(2)
+                        .lineLimit(2, reservesSpace: true)
                         .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
-
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.trailing, menuSize + 4)
                     Text(authorLine)
                         .font(.caption2)
                         .foregroundStyle(Color("TextSecondary"))
                         .lineLimit(1)
-                        .minimumScaleFactor(0.82)
                 }
 
-                HStack(spacing: 6) {
+                HStack(spacing: 4) {
                     ReadingStatusBadge(status: readingStatus)
-
                     Spacer(minLength: 0)
+                    Text("\(wordCount) 단어")
+                        .font(.caption2)
+                        .foregroundStyle(Color("TextSecondary"))
+                        .lineLimit(1)
                 }
 
                 if readingStatus.showsReadingProgress {
-                    VStack(spacing: 4) {
-                        ProgressView(value: min(max(progress, 0), 1))
-                            .tint(Color("Primary"))
-
-                        HStack {
-                            Spacer(minLength: 0)
-
-                            Text("\(progressPercent)% 읽음")
-                                .font(.caption2)
-                                .foregroundStyle(Color("TextPrimary").opacity(0.68))
-                        }
-                    }
+                    readingProgress
+                } else {
+                    // Keep the next row aligned even when a book has no progress bar.
+                    readingProgress.hidden()
                 }
             }
-            .padding(.horizontal, 4)
-            .padding(.top, 14)
-            .padding(.bottom, 12)
-
-            Button {
-                onMoreTap()
-            } label: {
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title), \(author), \(wordCount) 단어, \(readingStatus.displayName)\(accessibilityProgressText)")
+        .accessibilityHint("책 상세 화면으로 이동합니다.")
+        .accessibilityAction(named: Text("책 메뉴")) { onMoreTap() }
+        .overlay(alignment: .topTrailing) {
+            Button(action: onMoreTap) {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color("TextPrimary").opacity(0.64))
-                    .frame(width: 44, height: 44)
-                    .contentShape(Circle())
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color("TextSecondary"))
+                    .frame(width: menuSize, height: menuSize)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .padding(10)
+            .accessibilityLabel("\(title) 책 메뉴")
+            .padding(.top, coverHeight + 12)
         }
-        .frame(maxWidth: .infinity)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            onTap()
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title), \(author), \(wordCount) 단어, \(readingStatus.displayName)\(accessibilityProgressText)")
-        .accessibilityAddTraits(.isButton)
-        .accessibilityHint("책 상세 화면으로 이동합니다.")
-        .accessibilityAction(named: Text("책 메뉴")) {
-            onMoreTap()
-        }
-
     }
 
-    private var coverStack: some View {
-        HStack {
-            Spacer(minLength: 0)
-
-            ZStack {
-                BookCoverCell(
-                    imageName: imageName,
-                    width: 112,
-                    trailingPadding: 0,
-                    showsBackground: false
-                )
-            }
-            .overlay(alignment: .bottomTrailing) {
-                wordCountBadge
-                    .offset(x: 4, y: -5)
-            }
-
-            Spacer(minLength: 0)
+    private var readingProgress: some View {
+        VStack(spacing: 4) {
+            ProgressView(value: min(max(progress, 0), 1)).tint(Color("Primary"))
+            Text("\(progressPercent)% 읽음")
+                .font(.caption2)
+                .foregroundStyle(Color("TextSecondary"))
+                .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.top, 2)
-        .padding(.bottom, 7)
-    }
-
-    private var wordCountBadge: some View {
-        Text("\(wordCount) 단어")
-            .font(.caption2)
-            .fontWeight(.medium)
-            .foregroundStyle(Color("Success").opacity(0.9))
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .background(Color("SuccessSoft").opacity(0.98), in: Capsule())
-            .shadow(color: Color("Shadow").opacity(0.08), radius: 6, x: 0, y: 2)
     }
 }
 

@@ -9,6 +9,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ShelfView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ObservedObject var viewModel: BookMateViewModel
     @Binding var selectedTab: Int
 
@@ -347,26 +348,19 @@ struct ShelfView: View {
     private var shelfContent: some View {
         switch shelfLayoutStyle {
         case .grid:
-            HStack(alignment: .top, spacing: 16) {
-                LazyVStack(spacing: 18) {
-                    ForEach(shelfBooksForColumn(isLeftColumn: true)) { shelfBook in
-                        shelfBookCard(for: shelfBook, style: .grid)
-                            .id(shelfBook.bookId)
-                    }
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 24, alignment: .topLeading),
+                               count: dynamicTypeSize.isAccessibilitySize ? 1 : 2),
+                alignment: .leading,
+                spacing: 28
+            ) {
+                ForEach(viewModel.shelfBooks) { shelfBook in
+                    shelfBookCard(for: shelfBook, style: .grid)
+                        .id(shelfBook.bookId)
                 }
-                .frame(maxWidth: .infinity)
-
-                LazyVStack(spacing: 18) {
-                    ForEach(shelfBooksForColumn(isLeftColumn: false)) { shelfBook in
-                        shelfBookCard(for: shelfBook, style: .grid)
-                            .id(shelfBook.bookId)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 42)
             }
             .padding(.horizontal, 24)
-            .padding(.top, 2)
+            .padding(.top, 16)
             .padding(.bottom, 110)
 
         case .list:
@@ -444,12 +438,6 @@ struct ShelfView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(shelfLayoutStyle.toggleAccessibilityLabel)
-    }
-
-    private func shelfBooksForColumn(isLeftColumn: Bool) -> [ShelfBook] {
-        viewModel.shelfBooks.enumerated().compactMap { index, shelfBook in
-            index.isMultiple(of: 2) == isLeftColumn ? shelfBook : nil
-        }
     }
 
     @ViewBuilder

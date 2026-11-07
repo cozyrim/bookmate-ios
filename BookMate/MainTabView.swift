@@ -57,7 +57,7 @@ struct MainTabView: View {
                 RoomTabView(viewModel: viewModel, notificationRequest: $roomNotificationRequest)
                     .modifier(ScrollingTabBarModifier())
             } label: {
-                tabLabel("서재", icon: Image(systemName: "lamp.desk"))
+                tabLabel("서재", icon: ReadingRoomTabIcon())
             }
             .accessibilityLabel("서재")
 
