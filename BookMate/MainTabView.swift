@@ -86,7 +86,7 @@ struct MainTabView: View {
             keyboardIsPresented = false
         }
         .onPreferenceChange(CompactTabBarHiddenKey.self) { hidesCompactBar = $0 }
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: hidesCompactBar)
+        .animation(reduceMotion || !hidesCompactBar ? nil : .easeOut(duration: 0.12), value: hidesCompactBar)
         .tint(Color("Primary"))
         .appToast($viewModel.toast) // MainTabView가 가진 viewModel.toast 값을 AppToastModifier에게 연결해서 넘긴다.원본 값을 읽고 바꿀 수 있는 연결 통로 전달
         .onAppear {

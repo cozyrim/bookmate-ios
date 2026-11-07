@@ -367,11 +367,10 @@ final class ArchitectureSmokeTests: XCTestCase {
         let scroll = app.scrollViews.firstMatch
         scroll.swipeUp(velocity: .fast)
         let home = tab("홈", in: app)
-        let visible = NSPredicate(format: "hittable == true")
-        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: visible, object: home)], timeout: 5), .completed)
+        XCTAssertTrue(home.isHittable, "The tab bar must be back when scrolling becomes idle")
         capture("tab-bar-after-scroll", app: app)
         scroll.swipeDown(velocity: .fast)
-        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: visible, object: home)], timeout: 5), .completed)
+        XCTAssertTrue(home.isHittable, "No delayed restoration after scrolling stops")
         tab("서재", in: app).tap()
         assertDestination("서재", in: app)
     }
