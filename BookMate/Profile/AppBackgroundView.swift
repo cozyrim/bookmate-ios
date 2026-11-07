@@ -21,9 +21,9 @@ struct AppBackgroundView: View {
         case .skyblue:
             LinearGradient(
                 colors: [
-                    Color("Primary").opacity(0.28),
+                    Color("AppBackgroundSoft"),
                     Color("AppBackground"),
-                    Color("Surface").opacity(0.75)
+                    Color("Surface")
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -83,9 +83,9 @@ struct AppBackgroundView: View {
             } else {
                 LinearGradient(
                     colors: [
-                        Color("Primary").opacity(0.28),
+                        Color("AppBackgroundSoft"),
                         Color("AppBackground"),
-                        Color("Surface").opacity(0.75)
+                        Color("Surface")
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing

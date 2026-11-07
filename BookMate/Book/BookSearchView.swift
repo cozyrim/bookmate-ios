@@ -326,9 +326,9 @@ struct BookSearchView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity)
-        .background(Color("Surface").opacity(0.88), in: RoundedRectangle(cornerRadius: 28))
+        .background(Color("Surface").opacity(0.88), in: RoundedRectangle(cornerRadius: ReadingStyle.cardRadius))
         .overlay {
-            RoundedRectangle(cornerRadius: 28)
+            RoundedRectangle(cornerRadius: ReadingStyle.cardRadius)
                 .stroke(Color("Border").opacity(0.14), lineWidth: 1)
         }
     }

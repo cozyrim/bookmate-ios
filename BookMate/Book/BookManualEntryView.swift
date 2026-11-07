@@ -72,7 +72,7 @@ struct BookManualEntryView: View {
                                 }
                                 .foregroundStyle(Color("TextPrimary"))
                                 .padding(.horizontal, 14).frame(minHeight: 50)
-                                .modifier(ReadingSurface(radius: 12))
+                                .modifier(ReadingSurface(radius: ReadingStyle.fieldRadius))
                             }
                             .accessibilityLabel("카테고리, \(category)")
                         }
@@ -92,7 +92,7 @@ struct BookManualEntryView: View {
                     Text(registration.isSaving ? "등록 중..." : "등록하기")
                         .font(.headline).frame(maxWidth: .infinity).frame(minHeight: 50)
                         .foregroundStyle(Color("PrimaryButtonText"))
-                        .background(Color("Primary"), in: RoundedRectangle(cornerRadius: 12))
+                        .background(Color("Primary"), in: RoundedRectangle(cornerRadius: ReadingStyle.fieldRadius))
                 }
                 .buttonStyle(.plain).disabled(!canSave).opacity(canSave ? 1 : 0.5)
                 .accessibilityIdentifier("book.registration.manualSave")
@@ -120,7 +120,7 @@ struct BookManualEntryView: View {
         if let selectedCoverImage {
             Image(uiImage: selectedCoverImage).resizable().scaledToFit()
                 .frame(width: 90, height: 126)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.coverRadius))
         } else if let initialDraft {
             BookCoverCell(imageName: initialDraft.imageName, width: 108)
         } else {
@@ -130,7 +130,7 @@ struct BookManualEntryView: View {
             }
             .foregroundStyle(Color("TextSecondary"))
             .frame(width: 90, height: 126)
-            .modifier(ReadingSurface(radius: 4))
+            .modifier(ReadingSurface(radius: ReadingStyle.coverRadius))
         }
     }
 

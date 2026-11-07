@@ -72,7 +72,7 @@ struct DictionaryResultCard: View {
         .padding(28)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 28)
+            RoundedRectangle(cornerRadius: ReadingStyle.cardRadius)
                 .fill(Color("Surface"))
         )
         .padding(.horizontal, 28)

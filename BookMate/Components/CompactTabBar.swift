@@ -28,12 +28,12 @@ struct CompactTabBar: View {
                 Button { selection = index } label: {
                     Group {
                         if index == 2 {
-                            Image("TabWordIcon").renderingMode(.template).resizable().scaledToFit().frame(width: 22, height: 22)
+                            Image("TabWordIcon").renderingMode(.template).resizable().scaledToFit().frame(width: 20, height: 20)
                         } else {
-                            Image(systemName: symbols[index]).font(.system(size: 22, weight: selection == index ? .semibold : .regular))
+                            Image(systemName: symbols[index]).font(.system(size: 20, weight: selection == index ? .semibold : .regular))
                         }
                     }
-                    .foregroundStyle(selection == index ? Color("PrimaryDeep") : Color("TextSecondary"))
+                    .foregroundStyle(selection == index ? Color("Primary") : Color("TextSecondary"))
                     .frame(maxWidth: .infinity).frame(height: 44)
                     .background(selection == index ? Color("Primary").opacity(0.12) : .clear, in: Capsule())
                     .contentShape(Rectangle())

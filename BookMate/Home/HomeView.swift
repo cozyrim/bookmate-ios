@@ -591,9 +591,7 @@ struct HomeView: View {
         .padding(.horizontal, 18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: 90)
-        .background(Color("Surface").opacity(0.92))
-        .clipShape(RoundedRectangle(cornerRadius: 34))
-        .shadow(color: Color("Shadow").opacity(0.045), radius: 9, x: 0, y: 3)
+
     }
 
     private var emptyBooksPlaceholderCard: some View {

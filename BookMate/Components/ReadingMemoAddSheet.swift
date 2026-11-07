@@ -36,7 +36,7 @@ struct ReadingMemoAddSheet: View {
                                             }
                                             .padding(16)
                                             .background(Color("Surface"))
-                                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                                            .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.fieldRadius))
                                         }
                                         .buttonStyle(.plain)
                                         .sheet(isPresented: $isShowingDatePicker) {
@@ -46,12 +46,12 @@ struct ReadingMemoAddSheet: View {
                                     }
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("페이지 (선택)").font(.subheadline).foregroundStyle(Color("TextMuted"))
-                                        TextField("예) 42", text: $page).keyboardType(.numberPad).padding(16).background(Color("Surface")).clipShape(RoundedRectangle(cornerRadius: 12))
+                                        TextField("예) 42", text: $page).keyboardType(.numberPad).padding(16).background(Color("Surface")).clipShape(RoundedRectangle(cornerRadius: ReadingStyle.fieldRadius))
                                     }
                                 }
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("메모 내용").font(.subheadline).foregroundStyle(Color("TextMuted"))
-                                    TextEditor(text: $text).scrollContentBackground(.hidden).padding(16).frame(minHeight: 140).background(Color("Surface")).clipShape(RoundedRectangle(cornerRadius: 12))
+                                    TextEditor(text: $text).scrollContentBackground(.hidden).padding(16).frame(minHeight: 140).background(Color("Surface")).clipShape(RoundedRectangle(cornerRadius: ReadingStyle.fieldRadius))
                                 }
                                 Button {
                                     Task {
@@ -68,7 +68,7 @@ struct ReadingMemoAddSheet: View {
                                 } label: {
                                     Text("저장하기").font(.headline).foregroundStyle(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color("TextSecondary") : Color("PrimaryButtonText")).frame(maxWidth: .infinity).padding(.vertical, 16)
                                         .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color("TextMuted").opacity(0.4) : Color("Primary"))
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.fieldRadius))
                                 }.disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                             }
                             .padding(24)

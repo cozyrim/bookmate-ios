@@ -16,8 +16,8 @@ struct WordCardView: View {
                 .lineLimit(isFeatured ? 3 : 2)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(14)
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity, minHeight: isFeatured ? 88 : 72, alignment: .leading)
-        .modifier(ReadingSurface())
+        .contentShape(Rectangle())
     }
 }

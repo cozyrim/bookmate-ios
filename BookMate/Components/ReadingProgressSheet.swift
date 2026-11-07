@@ -165,7 +165,7 @@ struct ReadingProgressSheet: View {
                 .padding(.horizontal, 18)
                 .frame(height: 54)
                 .background(Color("Surface").opacity(0.82))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.fieldRadius))
         }
     }
 }

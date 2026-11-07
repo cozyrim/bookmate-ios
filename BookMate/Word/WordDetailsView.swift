@@ -179,7 +179,7 @@ struct WordDetailsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(22)
                 .background(Color("Surface").opacity(0.18))
-                .clipShape(RoundedRectangle(cornerRadius: 22))
+                .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius))
                 .shadow(color: Color("Shadow").opacity(0.05), radius: 12, x: 0, y: 6)
         }
     }
@@ -218,7 +218,7 @@ struct WordDetailsView: View {
                     }
                     .padding(16)
                     .background(Color("Surface").opacity(0.18))
-                    .clipShape(RoundedRectangle(cornerRadius: 22))
+                    .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius))
                 }
                 .buttonStyle(.plain)
             }else {

@@ -7,7 +7,7 @@ struct BookCoverCell: View {
     var width: CGFloat = 82
     var trailingPadding: CGFloat = 12
     var showsBackground: Bool = false
-    var coverCornerRadius: CGFloat = 4
+    var coverCornerRadius: CGFloat = ReadingStyle.coverRadius
     
     private var height: CGFloat {
             width * 1.56

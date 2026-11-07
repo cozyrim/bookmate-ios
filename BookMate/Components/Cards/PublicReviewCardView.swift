@@ -60,7 +60,7 @@ struct PublicReviewCardView: View {
         }
         .padding(18)
         .background(Color("Surface"))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius))
         .shadow(color: Color("Shadow").opacity(0.04), radius: 8, x: 0, y: 3)
     }
 }

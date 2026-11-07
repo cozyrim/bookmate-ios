@@ -163,9 +163,9 @@ struct NotificationInboxView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 15)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color("Surface").opacity(0.9), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background(Color("Surface").opacity(0.9), in: RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous)
                 .stroke(Color("Border").opacity(0.18), lineWidth: 1)
         }
     }
@@ -252,9 +252,9 @@ struct NotificationInboxView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 15)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color("Surface").opacity(notification.isRead ? 0.82 : 0.96), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .background(Color("Surface").opacity(notification.isRead ? 0.82 : 0.96), in: RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous)
                     .stroke(Color("Border").opacity(notification.isRead ? 0.18 : 0.32), lineWidth: 1)
             }
         }
