@@ -8,6 +8,22 @@ final class UIFixtureLibrary: BookRepository, WordRepository, QuoteRepository, R
     var quotes: [Quote] = []
     var memos: [ReadingMemo] = []
     var reviews: [Review] = []
+
+    init() {
+        if ProcessInfo.processInfo.arguments.contains("--room-books") {
+            books = Book.dummyBooks + (4...11).map { number in
+                Book(title: "서재의 책 \(number)", author: "예시 저자", imageName: number == 11 ? "" : "싯타르타", progress: 0.2, readingStatus: .reading)
+            }
+            return
+        }
+        guard ProcessInfo.processInfo.arguments.contains("--home-reading-carousel") else { return }
+        books = [Book(title: "완독한 책", author: "예시 저자", imageName: "싯타르타", progress: 1, readingStatus: .completed)]
+            + Book.dummyBooks
+            + (4...6).map { number in
+                Book(title: "읽는 책 \(number)", author: "예시 저자", imageName: "싯타르타", progress: 0.2, readingStatus: .reading)
+            }
+    }
+
     func fetchBooks() async throws -> [Book] {
         return books
     }

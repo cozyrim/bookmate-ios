@@ -64,6 +64,12 @@ struct HomeView: View {
         viewModel.savedWords.isEmpty && viewModel.shelfBooks.isEmpty
     }
 
+    private var readingBooks: [Book] {
+        Array(viewModel.booksOnShelf.lazy
+            .filter { ($0.readingStatus ?? .reading) == .reading }
+            .prefix(5))
+    }
+
 
     private var wordsToReview: [Word] {
         viewModel.savedWords
@@ -117,48 +123,8 @@ struct HomeView: View {
                                     .padding(.bottom, 8)
                             }
 
+                            readingShelfSection
                             reviewWordsSection
-
-                            HStack(spacing: 10) {
-                                Text("내 책장")
-                                    .font(.title3)
-                                    .fontWeight(.medium)
-
-                                Spacer()
-
-                                shelfHeaderActions
-                            }
-                            .padding(.horizontal, 24)
-                            .padding(.top, 24)
-
-                            if viewModel.shelfBooks.isEmpty {
-                                emptyBooksPlaceholderCard
-                                    .padding(.horizontal, 24)
-                                    .padding(.top, 14)
-                            } else {
-                                ForEach(viewModel.shelfBooks) { shelfBook in
-                                    if let book = viewModel.book(for: shelfBook) {
-                                        BookCardView(
-                                            imageName: book.imageName,
-                                            title: book.title,
-                                            author: book.author,
-                                            progress: shelfBook.progress,
-                                            category: book.category,
-                                            readingStatus: shelfBook.status,
-                                            onTap: {
-                                                BMAnalytics.bookCardTap(
-                                                    entryPoint: "home",
-                                                    readingStatus: shelfBook.status
-                                                )
-                                                path.append(HomeRoute.bookDetail(book.id))
-                                            }, // 카드 눌렀을 때 상세 이동.
-                                            onMoreTap: {
-                                                activeBookSheet = .options(book)
-                                            } // 점 버튼 눌렀을 때 메뉴 시트 열기.
-                                        )
-                                    }
-                                }
-                            }
                         }
 
                     }
@@ -496,13 +462,54 @@ struct HomeView: View {
         .padding(.top, 22)
     }
 
+    private var readingShelfSection: some View {
+        let books = readingBooks
+
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
+                Text(viewModel.books.isEmpty ? "내 책장" : "이어서 읽어요")
+                    .font(.title2.weight(.medium))
+                    .accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 0)
+                shelfHeaderActions
+            }
+
+            if !books.isEmpty {
+                HomeReadingCarousel(books: books, onOpen: openReadingBook) { book in
+                    activeBookSheet = .options(book)
+                }
+            } else if viewModel.books.isEmpty {
+                emptyBooksPlaceholderCard
+            } else {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("읽는 중인 책이 없어요")
+                        .font(.headline)
+                        .foregroundStyle(Color("TextPrimary"))
+                    Text("책장에서 다음에 읽을 책을 골라보세요.")
+                        .font(.subheadline)
+                        .foregroundStyle(Color("TextSecondary"))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(18)
+                .background(Color("Surface"), in: RoundedRectangle(cornerRadius: 22))
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 8)
+    }
+
+    private func openReadingBook(_ book: Book) {
+        BMAnalytics.bookCardTap(entryPoint: "home", readingStatus: .reading)
+        path.append(HomeRoute.bookDetail(book.id))
+    }
+
     private var shelfHeaderActions: some View {
         HStack(spacing: 10) {
             NavigationLink(value: HomeRoute.bookSearch) {
                 Image(systemName: "plus")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color("TextSecondary"))
-                    .frame(width: 30, height: 30)
+                    .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
             .accessibilityLabel("책 추가")
@@ -512,7 +519,7 @@ struct HomeView: View {
                 }
             )
 
-            if !viewModel.shelfBooks.isEmpty {
+            if !viewModel.books.isEmpty {
                 Rectangle()
                     .fill(Color("TextSecondary").opacity(0.28))
                     .frame(width: 1, height: 13)
@@ -530,7 +537,7 @@ struct HomeView: View {
                             .fontWeight(.semibold)
                     }
                     .foregroundStyle(Color("TextSecondary"))
-                    .padding(.vertical, 8)
+                    .frame(minHeight: 44)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -689,35 +696,19 @@ struct HomeView: View {
 
 
     private var homeIntroHeader: some View {
-        HStack(alignment: .top, spacing: 14) {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 7) {
-                    Text("Bookmate 오늘 만난 문장")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color("TextSecondary"))
-
-                    Image("BookMateSymbolIcon")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 28, height: 28)
-                        .offset(y: -2)
-                        .accessibilityHidden(true)
-                }
-
-                Text("읽다가 만난 단어들")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color("TextPrimary"))
-            }
+        HStack(spacing: 14) {
+            Image("BookMateSymbolIcon")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 28, height: 28)
+                .accessibilityHidden(true)
 
             Spacer(minLength: 8)
 
             notificationBellButton
-                .padding(.top, 2)
         }
-        .padding(.horizontal, 24) 
-        .padding(.top, 18)
+        .padding(.horizontal, 24)
+        .padding(.top, 8)
         .padding(.bottom, 2)
     }
 

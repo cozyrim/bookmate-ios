@@ -7,6 +7,7 @@ struct BookCoverCell: View {
     var width: CGFloat = 82
     var trailingPadding: CGFloat = 12
     var showsBackground: Bool = true
+    var coverCornerRadius: CGFloat = 0
     
     private var height: CGFloat {
             width * 1.56
@@ -30,6 +31,7 @@ struct BookCoverCell: View {
             }
 
                 coverImage
+                    .clipShape(.rect(cornerRadius: coverCornerRadius))
                     .frame(width:imageWidth, height: imageHeight)
                     .shadow(color: Color("Shadow").opacity(0.2), radius: 4, x: 0, y: 2)
             }
@@ -68,7 +70,8 @@ private struct RemoteBookCoverImage: View {
     let targetSize: CGSize
 
     var body: some View {
-        KFImage(url)
+        KFImage(BookCoverSource.preferredURL(for: url))
+            .alternativeSources(BookCoverSource.preferredURL(for: url) == url ? [] : [.network(ImageResource(downloadURL: url))])
             .setProcessor(
                 DownsamplingImageProcessor(size: targetSize)
             )
