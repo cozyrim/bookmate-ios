@@ -11,16 +11,14 @@ struct SessionLoadingView: View {
                 .frame(width: 112, height: 112)
                 .accessibilityLabel("앱을 여는 중")
                 .accessibilityIdentifier("launch.brand")
-                .overlay(alignment: .bottom) {
+                .overlay(alignment: .top) {
                     if showsConnectionState {
                         Text("로그인 상태를 확인하고 있어요.")
                             .font(.callout)
                             .foregroundStyle(Color("TextSecondary"))
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(width: 260)
-                            .alignmentGuide(.bottom) { dimensions in
-                                dimensions[.top] - 16
-                            }
+                            .offset(y: 128) // 112pt artwork + 16pt gap; text grows downward.
                             .accessibilityIdentifier("launch.connectionState")
                     }
                 }
