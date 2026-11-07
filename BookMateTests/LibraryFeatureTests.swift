@@ -73,6 +73,47 @@ final class LibraryFeatureTests: XCTestCase {
         withExtendedLifetime(subscription) {}
     }
 
+    func testQuickRegistrationRejectsBlankFieldsWithoutWriting() async {
+        let repository = LibraryBookStub()
+        let app = makeModel(repository: repository)
+        let model = BookRegistrationViewModel(library: app.libraryFeature, metadata: app.dependencies.bookMetadata)
+        await model.register(draft: BookRegistrationDraft(title: "  ", author: "저자", totalPages: 100))
+        XCTAssertEqual(repository.createCount, 0)
+        XCTAssertNil(model.savedBook)
+        XCTAssertNotNil(model.errorMessage)
+        XCTAssertFalse(model.isSaving)
+    }
+
+    func testQuickRegistrationNormalizesDefaultCategoryAndPublishesSavedBook() async {
+        let repository = LibraryBookStub()
+        let app = makeModel(repository: repository)
+        let model = BookRegistrationViewModel(library: app.libraryFeature, metadata: app.dependencies.bookMetadata)
+        let task = Task { await model.register(draft: BookRegistrationDraft(title: " 새 책 ", author: " 저자 ", totalPages: 100)) }
+        await repository.waitForCreate()
+        XCTAssertEqual(repository.lastTitle, "새 책")
+        XCTAssertEqual(repository.lastAuthor, "저자")
+        XCTAssertEqual(repository.lastCategory, "기타")
+        let saved = Book(title: "새 책", author: "저자", imageName: "", progress: 0)
+        repository.finishCreate(with: saved)
+        await task.value
+        XCTAssertEqual(model.savedBook?.id, saved.id)
+        XCTAssertFalse(model.isSaving)
+        XCTAssertNil(model.errorMessage)
+        await model.register(draft: BookRegistrationDraft(title: "새 책", author: "저자", totalPages: 100))
+        XCTAssertNil(model.savedBook, "A duplicate retry must not retain the previous successful navigation result")
+        XCTAssertEqual(repository.createCount, 1)
+    }
+
+    func testRegistrationCompletionPreservesBookSelectionForPendingWordSave() {
+        let app = makeModel(repository: LibraryBookStub())
+        let book = Book(title: "새 책", author: "저자", imageName: "", progress: 0)
+        XCTAssertEqual(app.completeBookRegistration(book), 1)
+        app.shouldResumeWordSaveAfterBookRegistration = true
+        app.wordSaveBookIdToSelectAfterRegistration = UUID()
+        XCTAssertEqual(app.completeBookRegistration(book), 0)
+        XCTAssertEqual(app.wordSaveBookIdToSelectAfterRegistration, book.id)
+    }
+
     private func makeModel(repository: LibraryBookStub) -> BookMateViewModel {
         BookMateViewModel(dependencies: AppDependencies(readingReminders: ReminderStub(), books: repository, shelfOrder: LibraryShelfOrderStub()))
     }
@@ -82,6 +123,9 @@ final class LibraryFeatureTests: XCTestCase {
 private final class LibraryBookStub: BookRepository {
     var records: [Book] = []
     var createCount = 0
+    var lastTitle: String?
+    var lastAuthor: String?
+    var lastCategory: String?
     var deletedIDs: [UUID] = []
     private var createContinuation: CheckedContinuation<Book, Error>?
     private var arrival: CheckedContinuation<Void, Never>?
@@ -89,6 +133,9 @@ private final class LibraryBookStub: BookRepository {
     func fetchBook(id: UUID) async throws -> Book { throw URLError(.resourceUnavailable) }
     func createBook(title: String, author: String, imageName: String, category: String, progress: Double, totalPages: Int?, currentPage: Int?, isbn: String?) async throws -> Book {
         createCount += 1
+        lastTitle = title
+        lastAuthor = author
+        lastCategory = category
         return try await withCheckedThrowingContinuation {
             createContinuation = $0
             arrival?.resume()

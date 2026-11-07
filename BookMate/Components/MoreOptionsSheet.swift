@@ -10,12 +10,12 @@ import SwiftUI
 struct MoreOptionsSheet: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) private var colorScheme
-    
+
     let editTitle: String
     let deleteTitle: String
     let moveTitle: String?
     let memoTitle: String?
-    
+
     let onEdit: () -> Void
     let onDelete: () -> Void
     let onMove: () -> Void
@@ -32,7 +32,7 @@ struct MoreOptionsSheet: View {
     private var sheetCornerRadius: CGFloat {
         14
     }
-    
+
     init(
             editTitle: String = "단어 수정하기",
             deleteTitle: String = "단어 삭제하기",
@@ -52,8 +52,8 @@ struct MoreOptionsSheet: View {
             self.onMove = onMove
             self.onMemo = onMemo
         }
-    
-    
+
+
     private func optionRow( // optionRow 함수는 실행되자마자 Button이라는 View를 만들어서 반환 하지만 action()은 그 순간 바로 실행되는 게 아님, 사용자가 나중에 버튼을 눌렀을 때 실행
         title: String,
         systemImage: String,
@@ -67,12 +67,12 @@ struct MoreOptionsSheet: View {
                 Image(systemName: systemImage)
                     .font(.system(size: 14, weight: .semibold))
                     .frame(width: 30, height: 30)
-                    
+
 
                 Text(title)
                     .font(.callout)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
             }
             .foregroundStyle(color)
@@ -96,7 +96,7 @@ struct MoreOptionsSheet: View {
                     color: normalOptionColor,
                     action: onEdit
                 )
-            
+
                 if let moveTitle {
                     Divider()
                         .padding(.leading, 56)
@@ -120,7 +120,7 @@ struct MoreOptionsSheet: View {
                         action: onMemo
                     )
                 }
-                
+
 //                optionRow(title: "목록에서 숨기기", systemImage: "eye.slash", color: .black, action: {
 //                        DebugLogger.log("숨기기")
 //                    }
@@ -128,7 +128,7 @@ struct MoreOptionsSheet: View {
             }
              .background(Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: sheetCornerRadius, style: .continuous))
-            
+
             Button { // 여기서 onDelete()는 “삭제 버튼이 눌렸다”는 사실을 바깥에 알려주는 역할
                 onDelete() // 부모가 넘겨준 행동 실행
             } label: {
@@ -136,12 +136,12 @@ struct MoreOptionsSheet: View {
                     Image(systemName: "trash")
                         .font(.system(size: 14, weight: .semibold))
                         .frame(width: 30, height: 30)
-                        
+
 
                     Text(deleteTitle)
                         .font(.callout)
                         .fontWeight(.semibold)
-                    
+
                     Spacer()
                 }
                 .foregroundStyle(Color("Error"))
@@ -153,7 +153,7 @@ struct MoreOptionsSheet: View {
             }
             .buttonStyle(.plain)
             .padding(.top, moveTitle == nil ? 18 : 0)
-            
+
             Button{
                 // sheet 닫기는 부모에서 처리하거나 dismiss 사용 가능
                 dismiss()
@@ -179,7 +179,7 @@ struct MoreOptionsSheet: View {
     }
 
 }
-    
+
 
 #Preview {
     MoreOptionsSheet(

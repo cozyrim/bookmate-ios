@@ -40,6 +40,9 @@ final class UIFixtureLibrary: BookRepository, WordRepository, QuoteRepository, R
         currentPage: Int?,
         isbn: String?
     ) async throws -> Book {
+        if ProcessInfo.processInfo.arguments.contains("--slow-book-registration") {
+            try await Task.sleep(for: .seconds(8))
+        }
         let book = Book(title: title, author: author, imageName: imageName, category: category, progress: progress, totalPages: totalPages, currentPage: currentPage); books.insert(book, at: 0); return book
     }
     func updateBook(_ book: Book) async throws -> Book {

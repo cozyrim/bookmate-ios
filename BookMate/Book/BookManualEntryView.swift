@@ -1,368 +1,176 @@
-//
-//  BookManualEntryView.swift
-//  BookMate
-//
-//  Created by 한채림 on 5/22/26.
-//
-
 import SwiftUI
 import PhotosUI
 import UIKit
 
 struct BookManualEntryView: View {
-    @Environment(\.dismiss) var dismiss
-    @State private var imageName = "책기본이미지"
-    @State private var title = ""
-    @State private var author = ""
-    @State private var selectedCategory = "카테고리 선택"
-    @State private var totalPagesText = ""
+    @ObservedObject var viewModel: BookMateViewModel
+    @StateObject private var registration: BookRegistrationViewModel
+    @State private var presentationID = UUID()
+    @State private var title: String
+    @State private var author: String
+    @State private var category: String
+    @State private var totalPagesText: String
+    @State private var showOptionalFields = false
+    @State private var isLoadingTotalPages = false
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedCoverImage: UIImage?
-    @State private var registrationResult: RegistrationResult?
-    @State private var isSaving = false
-    @State private var errorMessage: String?
-    @State private var isLoadingTotalPages = false
-
-    @ObservedObject var viewModel: BookMateViewModel
     private let initialDraft: BookRegistrationDraft?
     @Binding var selectedTab: Int
-
-    private let categories = ["소설", "에세이", "인문", "자기계발", "과학", "기타"]
-    private let coverWidth: CGFloat = 170
-    private let coverHeight: CGFloat = 232
-    private let coverCornerRadius: CGFloat = 26
-    private let contentHorizontalPadding: CGFloat = 28
-    private let headerTopPadding: CGFloat = 12
-    private let bottomFormPadding: CGFloat = 36
-
     let onFinishRegistration: (Int) -> Void
 
-    private struct RegistrationResult: Identifiable, Hashable {
-        let draft: BookRegistrationDraft
-        let book: Book
-
-        var id: UUID {
-            book.id
-        }
-    }
-
-    private var coverPlaceholder: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: coverCornerRadius)
-                .fill(.white)
-                .overlay {
-                    RoundedRectangle(cornerRadius: coverCornerRadius)
-                        .strokeBorder(
-                            Color.gray.opacity(0.45),
-                            style: StrokeStyle(lineWidth: 2, dash: [8])
-                        )
-                }
-
-            VStack(spacing: 12) {
-                Image(systemName: "camera")
-                    .font(.largeTitle)
-
-                Text("커버 이미지 업로드")
-                    .fontWeight(.semibold)
-            }
-            .foregroundStyle(Color("TextMuted"))
-        }
-        .frame(width: coverWidth, height: coverHeight)
-    }
-
-    @ViewBuilder
-    private var coverPickerContent: some View {
-        if let selectedCoverImage {
-            Image(uiImage: selectedCoverImage)
-                .resizable()
-                .scaledToFill()
-                .frame(width: coverWidth, height: coverHeight)
-                .clipShape(RoundedRectangle(cornerRadius: coverCornerRadius))
-        } else if let url = URL(string: imageName),
-                  imageName.hasPrefix("http") {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .empty:
-                    ZStack {
-                        RoundedRectangle(cornerRadius: coverCornerRadius)
-                            .fill(.white)
-
-                        ProgressView()
-                    }
-
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-
-                case .failure:
-                    coverPlaceholder
-
-                @unknown default:
-                    coverPlaceholder
-                }
-            }
-            .frame(width: coverWidth, height: coverHeight)
-            .clipShape(RoundedRectangle(cornerRadius: coverCornerRadius))
-        } else {
-            coverPlaceholder
-        }
-    }
-
-    init(viewModel: BookMateViewModel, initialDraft: BookRegistrationDraft? = nil, selectedTab: Binding<Int>, onFinishRegistration: @escaping (Int) -> Void) {
+    init(viewModel: BookMateViewModel, initialDraft: BookRegistrationDraft? = nil,
+         selectedTab: Binding<Int>, onFinishRegistration: @escaping (Int) -> Void) {
         self.viewModel = viewModel
         self.initialDraft = initialDraft
         self._selectedTab = selectedTab
-        // 검색 결과로 받은 책 정보를 새 책 등록 화면의 입력칸 초기값으로 넣어주는 코드
         self.onFinishRegistration = onFinishRegistration
-
-        // swiftui가 상태 관리, 처음 값을 정할 때 상자 직접 만듦
-        // 값을 보관하고 바뀐 값을 감시하고 화면을 다시 그림
+        _registration = StateObject(wrappedValue: BookRegistrationViewModel(
+            library: viewModel.libraryFeature, metadata: viewModel.dependencies.bookMetadata
+        ))
         _title = State(initialValue: initialDraft?.title ?? "")
         _author = State(initialValue: initialDraft?.author ?? "")
-        _imageName = State(initialValue: initialDraft?.imageName ?? "책기본이미지")
-        _selectedCategory = State(initialValue: initialDraft?.category ?? "카테고리 선택")
+        let initialCategory = initialDraft?.category ?? "기타"
+        _category = State(initialValue: initialCategory == "카테고리 선택" ? "기타" : initialCategory)
         _totalPagesText = State(initialValue: initialDraft?.totalPages.map(String.init) ?? "")
     }
 
+    private var canSave: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !author.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !registration.isSaving
+    }
+
     var body: some View {
-        ZStack {
-            Color("AppBackground")
-                .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                HStack {
-                    CircleIconButton(systemName: "xmark") {
-                        dismiss()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                HStack(spacing: 20) {
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                        cover
                     }
-
-                    Spacer()
-
-                    Text("새 책 등록")
-                        .font(.title2)
-                        .fontWeight(.bold)
-
-                    Spacer()
-
-                    Color.clear
-                        .frame(width: 44, height: 44)
+                    .accessibilityLabel("책 표지 선택")
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("새 책 등록").font(.title2.bold())
+                        Text("제목과 저자만 입력해도 등록할 수 있어요.")
+                            .font(.callout).foregroundStyle(Color("TextSecondary"))
+                    }
                 }
-                .frame(height: 44)
-                .padding(.horizontal, contentHorizontalPadding)
-                .padding(.top, headerTopPadding)
-
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 16) {
-                        PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                            coverPickerContent
-                                .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
-                        }
-                        .padding(.top, 12)
-                        .onChange(of: selectedPhotoItem) { _, newItem in
-                            Task {
-                                guard let data = try? await newItem?.loadTransferable(type: Data.self),
-                                      let image = UIImage(data: data) else {
-                                    return
-                                }
-
-                                selectedCoverImage = image
-                            }
-                        }
-
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("책 제목")
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Color("TextSecondary"))
-                                .padding(.horizontal, 4)
-
-                            ManualBookInputField(text: $title, placeholder: "제목을 입력하세요", iconName: "book.closed")
-                        }
-
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("저자")
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Color("TextSecondary"))
-                                .padding(.horizontal, 4)
-
-                            ManualBookInputField(text: $author, placeholder: "저자를 입력하세요", iconName: "book.closed")
-                        }
-
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("카테고리")
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Color("TextSecondary"))
-                                .padding(.horizontal, 4)
-
+                field("책 제목", text: $title, placeholder: "제목을 입력하세요", icon: "book.closed")
+                field("저자", text: $author, placeholder: "저자를 입력하세요", icon: "person")
+                DisclosureGroup("선택 정보", isExpanded: $showOptionalFields) {
+                    VStack(alignment: .leading, spacing: 18) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("카테고리").font(.subheadline.weight(.medium))
                             Menu {
-                                ForEach(categories, id: \.self) { category in
-                                    Button {
-                                        selectedCategory = category
-                                    } label: {
-                                        Text(category)
-                                    }
+                                ForEach(["소설", "에세이", "인문", "자기계발", "과학", "기타"], id: \.self) { value in
+                                    Button(value) { category = value }
                                 }
                             } label: {
                                 HStack {
-                                    Image(systemName: "square.grid.2x2")
-                                        .foregroundStyle(Color("TextMuted"))
-
-                                    Text(selectedCategory)
-                                        .foregroundStyle(
-                                            selectedCategory == "카테고리 선택"
-                                            ? Color("LightButtonText").opacity(0.42)
-                                            : Color("LightButtonText")
-                                        )
-
+                                    Text(category)
                                     Spacer()
-
-                                    Image(systemName: "chevron.down")
-                                        .foregroundStyle(Color("TextMuted"))
+                                    Image(systemName: "chevron.up.chevron.down").font(.caption)
                                 }
-                                .padding(.horizontal, 20)
-                                .frame(height: 58)
-                                .background {
-                                    Capsule()
-                                        .fill(Color(.skyblue3))
-                                        .overlay{
-                                            Capsule()
-                                                .stroke(Color("Border").opacity(0.15), lineWidth: 1)
-                                                .blur(radius: 2)
-                                                .offset(y: 2)
-                                                .mask(Capsule().fill(Color("TextPrimary")))
-                                        }
-                                    }
+                                .foregroundStyle(Color("TextPrimary"))
+                                .padding(.horizontal, 14).frame(minHeight: 50)
+                                .modifier(ReadingSurface(radius: 12))
                             }
+                            .accessibilityLabel("카테고리, \(category)")
                         }
-
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("전체 쪽수")
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Color("TextSecondary"))
-                                .padding(.horizontal, 4)
-
-                            ManualBookInputField(
-                                text: $totalPagesText,
-                                placeholder: isLoadingTotalPages ? "쪽수 불러오는 중..." : "예: 320",
-                                iconName: "123.rectangle"
-                            )
+                        field("전체 쪽수", text: $totalPagesText,
+                              placeholder: isLoadingTotalPages ? "쪽수 불러오는 중..." : "예: 320", icon: "123.rectangle")
                             .keyboardType(.numberPad)
-                        }
+                    }
+                    .padding(.top, 16)
+                }
+                .font(.subheadline).tint(Color("TextSecondary"))
 
-                        registrationButton
-                            .padding(.top, 8)
-                    }
-                    .padding(.horizontal, contentHorizontalPadding)
-                    .padding(.top, 18)
-                    .padding(.bottom, bottomFormPadding)
+                if let message = registration.errorMessage {
+                    Text(message).font(.callout).foregroundStyle(Color("TextSecondary"))
+                        .accessibilityIdentifier("book.registration.error")
                 }
-                .scrollDismissesKeyboard(.interactively)
+                Button(action: save) {
+                    Text(registration.isSaving ? "등록 중..." : "등록하기")
+                        .font(.headline).frame(maxWidth: .infinity).frame(minHeight: 50)
+                        .foregroundStyle(Color("PrimaryButtonText"))
+                        .background(Color("Primary"), in: RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain).disabled(!canSave).opacity(canSave ? 1 : 0.5)
+                .accessibilityIdentifier("book.registration.manualSave")
             }
+            .padding(24)
         }
-        .navigationDestination(item: $registrationResult) { result in
-            BookRegistrationCompleteView(
-                viewModel: viewModel,
-                draft: result.draft,
-                book: result.book,
-                selectedTab: $selectedTab,
-                onFinishRegistration: { tab in
-                    dismiss()
-                    DispatchQueue.main.async {
-                        onFinishRegistration(tab)
-                    }
-                }
-            )
-        }
-        .task {
-            await fillTotalPagesIfNeeded()
-        }
-        .navigationBarBackButtonHidden(true)
-        .enableSwipeBackGesture()
+        .background(Color("AppBackground").ignoresSafeArea())
+        .scrollDismissesKeyboard(.interactively)
+        .navigationTitle("책 등록")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .preference(key: CompactTabBarHiddenKey.self, value: true)
-    }
-
-    private var registrationButton: some View {
-        Button {
-            guard !isSaving else { return }
-
-            dismissKeyboard()
-            BMAnalytics.bookCreateEntryTap(entryPoint: "book_manual_entry")
-
-            let trimmedTotalPages = totalPagesText.trimmingCharacters(in: .whitespacesAndNewlines)
-            let manualTotalPages = Int(trimmedTotalPages)
-
-            let draft = BookRegistrationDraft(
-                title: title,
-                author: author,
-                publisher: initialDraft?.publisher ?? "",
-                contents: initialDraft?.contents ?? "",
-                imageName: imageName,
-                category: selectedCategory,
-                isbn: initialDraft?.isbn ?? "",
-                totalPages: manualTotalPages ?? initialDraft?.totalPages
-            )
-
-            isSaving = true
-            errorMessage = nil
-
-            Task { @MainActor in
-                defer {
-                    isSaving = false
-                }
-
-                do {
-                    let savedBook = try await viewModel.registerBook(draft: draft)
-                    registrationResult = RegistrationResult(draft: draft, book: savedBook)
-                } catch BookRegistrationError.duplicate {
-                    errorMessage = nil
-                } catch {
-                    errorMessage = "책 등록에 실패했습니다."
-                    DebugLogger.log("책 등록 실패:", error)
-                }
+        .onDisappear { presentationID = UUID() }
+        .task { await fillTotalPagesIfNeeded() }
+        .onChange(of: selectedPhotoItem) { _, item in
+            Task {
+                guard let data = try? await item?.loadTransferable(type: Data.self),
+                      let image = UIImage(data: data) else { return }
+                selectedCoverImage = image
             }
-
-        } label: {
-            Label(isSaving ? "등록 중..." : "등록하기", systemImage: "checkmark.circle")
-                .font(.title3)
-                .fontWeight(.bold)
-                .frame(maxWidth: .infinity)
-                .frame(height: 64)
-                .background(Color("Primary"))
-                .foregroundStyle(Color("PrimaryButtonText"))
-                .clipShape(Capsule())
-                .shadow(color: Color("Shadow").opacity(0.06), radius: 7, x: 0, y: 2)
         }
-        .disabled(isSaving)
-        .opacity(isSaving ? 0.7 : 1)
     }
 
-    private func dismissKeyboard() {
-        UIApplication.shared.sendAction(
-            #selector(UIResponder.resignFirstResponder),
-            to: nil,
-            from: nil,
-            for: nil
+    @ViewBuilder private var cover: some View {
+        if let selectedCoverImage {
+            Image(uiImage: selectedCoverImage).resizable().scaledToFit()
+                .frame(width: 90, height: 126)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+        } else if let initialDraft {
+            BookCoverCell(imageName: initialDraft.imageName, width: 108)
+        } else {
+            VStack(spacing: 8) {
+                Image(systemName: "camera").font(.title3)
+                Text("표지 선택").font(.caption)
+            }
+            .foregroundStyle(Color("TextSecondary"))
+            .frame(width: 90, height: 126)
+            .modifier(ReadingSurface(radius: 4))
+        }
+    }
+
+    private func field(_ label: String, text: Binding<String>, placeholder: String, icon: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label).font(.subheadline.weight(.medium)).foregroundStyle(Color("TextSecondary"))
+            ManualBookInputField(text: text, placeholder: placeholder, iconName: icon)
+        }
+    }
+
+    private func save() {
+        guard canSave else { return }
+        let pages = totalPagesText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !pages.isEmpty && (Int(pages) == nil || (Int(pages) ?? 0) <= 0) {
+            showOptionalFields = true
+            registration.errorMessage = "전체 쪽수는 1 이상의 숫자로 입력해주세요."
+            return
+        }
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        BMAnalytics.bookCreateEntryTap(entryPoint: "book_manual_entry")
+        let draft = BookRegistrationDraft(
+            title: title, author: author, publisher: initialDraft?.publisher ?? "",
+            contents: initialDraft?.contents ?? "", imageName: initialDraft?.imageName ?? "책기본이미지",
+            category: category, isbn: initialDraft?.isbn ?? "", totalPages: Int(pages)
         )
+        let activePresentation = presentationID
+        Task {
+            await registration.register(draft: draft)
+            guard presentationID == activePresentation, let savedBook = registration.savedBook else { return }
+            onFinishRegistration(viewModel.completeBookRegistration(savedBook))
+        }
     }
 
     private func fillTotalPagesIfNeeded() async {
-        guard totalPagesText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        guard let isbn = initialDraft?.isbn, !isbn.isEmpty else { return }
-
+        guard totalPagesText.isEmpty, let isbn = initialDraft?.isbn, !isbn.isEmpty else { return }
         isLoadingTotalPages = true
-
-        if let pages = await viewModel.lookupBookPageCount(isbn: isbn) {
+        defer { isLoadingTotalPages = false }
+        if let pages = await registration.lookupPageCount(isbn: isbn),
+           totalPagesText.isEmpty, !Task.isCancelled {
             totalPagesText = String(pages)
         }
-
-        isLoadingTotalPages = false
     }
-}
-
-
-
-
-#Preview {
-    BookManualEntryView(viewModel: BookMateViewModel(), selectedTab: .constant(0), onFinishRegistration: { _ in }
-    )
 }

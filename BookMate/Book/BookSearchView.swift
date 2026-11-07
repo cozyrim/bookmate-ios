@@ -181,12 +181,7 @@ struct BookSearchView: View {
         }
         .padding(22)
         .frame(maxWidth: .infinity)
-        .background(Color("Surface").opacity(0.88), in: RoundedRectangle(cornerRadius: 28))
-        .overlay {
-            RoundedRectangle(cornerRadius: 28)
-                .stroke(Color("Border").opacity(0.18), lineWidth: 1)
-        }
-        .shadow(color: Color("Shadow").opacity(0.05), radius: 14, x: 0, y: 8)
+        .modifier(ReadingSurface())
     }
 
     private var quickSearchExamples: some View {

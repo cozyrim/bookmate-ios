@@ -33,6 +33,69 @@ final class ArchitectureSmokeTests: XCTestCase {
         capture("dictionary-result", app: app)
     }
 
+    func testSearchBookRegistersWithoutManualOrCompletionScreen() {
+        let app = launch()
+        app.buttons["책 추가"].tap()
+        let input = app.textFields["책 제목 또는 저자를 입력하세요."]
+        XCTAssertTrue(input.waitForExistence(timeout: 10))
+        input.tap()
+        input.typeText("새로운책")
+        let result = app.staticTexts["새로운책"].firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: 10))
+        result.tap()
+        let save = app.buttons["book.registration.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 10))
+        capture("quick-registration-detail", app: app)
+        save.tap()
+        let saved = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "새로운책,")).firstMatch
+        XCTAssertTrue(saved.waitForExistence(timeout: 15))
+        XCTAssertFalse(app.staticTexts["새 책 등록"].exists)
+        capture("registered-book-on-shelf", app: app)
+    }
+
+    func testLeavingSlowRegistrationDoesNotDismissTheSearchScreen() {
+        let app = launch(extraArguments: ["--slow-book-registration"])
+        app.buttons["책 추가"].tap()
+        let input = app.textFields["책 제목 또는 저자를 입력하세요."]
+        XCTAssertTrue(input.waitForExistence(timeout: 10))
+        input.tap()
+        input.typeText("느린 책")
+        let result = app.staticTexts["느린 책"].firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: 10))
+        result.tap()
+        let save = app.buttons["book.registration.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 10))
+        save.tap()
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(input.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["책을 등록했어요."].waitForExistence(timeout: 15))
+        XCTAssertTrue(input.exists, "A completed background save must not pop the search screen")
+    }
+
+    func testManualRegistrationRequiresTitleAndAuthorAndReturnsToShelf() {
+        let app = launch()
+        app.buttons["책 추가"].tap()
+        let manual = app.buttons["직접 등록"].firstMatch
+        XCTAssertTrue(manual.waitForExistence(timeout: 10))
+        manual.tap()
+        let save = app.buttons["book.registration.manualSave"]
+        XCTAssertTrue(save.waitForExistence(timeout: 10))
+        XCTAssertFalse(save.isEnabled)
+        XCTAssertFalse(app.buttons["홈"].exists, "Registration must not show the compact tab bar")
+        let title = app.textFields["제목을 입력하세요"]
+        title.tap()
+        title.typeText("직접 쓴 책")
+        let author = app.textFields["저자를 입력하세요"]
+        author.tap()
+        author.typeText("새 저자")
+        app.swipeUp()
+        XCTAssertTrue(save.isEnabled)
+        capture("manual-registration-form", app: app)
+        save.tap()
+        let saved = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "직접 쓴 책,")).firstMatch
+        XCTAssertTrue(saved.waitForExistence(timeout: 15))
+    }
+
     func testLibraryDetailKeepsWordQuoteAndDiaryTabs() {
         let app = launch()
         tab("책", in: app).tap()
@@ -44,6 +107,7 @@ final class ArchitectureSmokeTests: XCTestCase {
             XCTAssertTrue(button.waitForExistence(timeout: 10), label)
             button.tap()
         }
+        XCTAssertTrue(app.staticTexts["독서 기록"].waitForExistence(timeout: 5))
         capture("book-detail-diary", app: app)
     }
 
