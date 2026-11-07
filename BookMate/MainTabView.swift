@@ -17,6 +17,7 @@ struct MainTabView: View {
     @ObservedObject private var pushNotificationRouter = PushNotificationRouter.shared
     @State var tabIndex = 0
     @State private var hidesCompactBar = false
+    @State private var keyboardIsPresented = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var roomNotificationRequest: PushNotificationNavigationRequest?
     @State private var notificationPermissionDialog: NotificationPermissionDialog?
@@ -70,10 +71,16 @@ struct MainTabView: View {
         }
         .toolbar(UIDevice.current.userInterfaceIdiom == .phone ? .hidden : .automatic, for: .tabBar)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            if UIDevice.current.userInterfaceIdiom == .phone && !hidesCompactBar {
+            if UIDevice.current.userInterfaceIdiom == .phone && !hidesCompactBar && !keyboardIsPresented {
                 CompactTabBar(selection: $tabIndex)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            keyboardIsPresented = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardIsPresented = false
         }
         .onPreferenceChange(CompactTabBarHiddenKey.self) { hidesCompactBar = $0 }
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: hidesCompactBar)

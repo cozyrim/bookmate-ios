@@ -11,6 +11,15 @@ extension BookMateViewModel {
         try await libraryFeature.registerBook(draft: draft)
     }
 
+    /// Preserve the pending word-save selection when registration finishes without a completion screen.
+    func completeBookRegistration(_ book: Book) -> Int {
+        if shouldResumeWordSaveAfterBookRegistration {
+            wordSaveBookIdToSelectAfterRegistration = book.id
+            return 0
+        }
+        return 1
+    }
+
     func registeredBook(for draft: BookRegistrationDraft) -> Book? {
         libraryFeature.registeredBook(for: draft)
     }

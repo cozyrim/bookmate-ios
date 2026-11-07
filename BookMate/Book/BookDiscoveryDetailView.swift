@@ -20,6 +20,20 @@ struct BookDiscoveryDetailView: View {
     @Binding var selectedTab: Int
     let onFinishRegistration: (Int) -> Void
 
+    @StateObject private var registration: BookRegistrationViewModel
+    @State private var presentationID = UUID()
+
+    init(viewModel: BookMateViewModel, draft: BookRegistrationDraft,
+         selectedTab: Binding<Int>, onFinishRegistration: @escaping (Int) -> Void) {
+        self.viewModel = viewModel
+        self.draft = draft
+        self._selectedTab = selectedTab
+        self.onFinishRegistration = onFinishRegistration
+        _registration = StateObject(wrappedValue: BookRegistrationViewModel(
+            library: viewModel.libraryFeature, metadata: viewModel.dependencies.bookMetadata
+        ))
+    }
+
     @State private var selectedTabItem: Tab = .intro
     @State private var isDescriptionExpanded = false
 
@@ -68,7 +82,7 @@ struct BookDiscoveryDetailView: View {
                     }
                 }
                 .padding(.top, 24)
-                .padding(.bottom, 120)
+                .padding(.bottom, 24)
             }
         }
         .task(id: selectedTabItem) {
@@ -81,6 +95,7 @@ struct BookDiscoveryDetailView: View {
                 author: draft.author
             )
         }
+        .onDisappear { presentationID = UUID() }
         .navigationTitle("북메이트")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
@@ -102,17 +117,35 @@ struct BookDiscoveryDetailView: View {
             }
             .buttonStyle(.plain)
         } else {
-            NavigationLink {
-                BookManualEntryView(
-                    viewModel: viewModel,
-                    initialDraft: draft,
-                    selectedTab: $selectedTab,
-                    onFinishRegistration: onFinishRegistration
-                )
-            } label: {
-                bottomActionLabel("내 책장에 등록하기")
+            VStack(spacing: 8) {
+                if let message = registration.errorMessage {
+                    Text(message).font(.callout).foregroundStyle(Color("TextSecondary"))
+                }
+                Button {
+                    BMAnalytics.bookCreateEntryTap(entryPoint: "book_discovery_detail")
+                    let activePresentation = presentationID
+                    Task {
+                        await registration.register(draft: draft)
+                        if presentationID == activePresentation, let savedBook = registration.savedBook {
+                            onFinishRegistration(viewModel.completeBookRegistration(savedBook))
+                        }
+                    }
+                } label: {
+                    bottomActionLabel(registration.isSaving ? "등록 중..." : "내 책장에 등록하기")
+                }
+                .buttonStyle(.plain)
+                .disabled(registration.isSaving)
+                .accessibilityIdentifier("book.registration.save")
+
+                NavigationLink {
+                    BookManualEntryView(viewModel: viewModel, initialDraft: draft,
+                        selectedTab: $selectedTab, onFinishRegistration: onFinishRegistration)
+                } label: {
+                    Text("정보 수정 후 등록").font(.callout)
+                        .frame(minHeight: 44)
+                }
+                .disabled(registration.isSaving)
             }
-            .buttonStyle(.plain)
         }
     }
 
@@ -121,9 +154,9 @@ struct BookDiscoveryDetailView: View {
             .font(.headline)
             .foregroundStyle(Color("PrimaryButtonText"))
             .frame(maxWidth: .infinity)
-            .frame(height: 56)
+            .frame(minHeight: 50)
             .background(Color("Primary"))
-            .clipShape(Capsule())
+            .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private var coverImage: some View {

@@ -12,7 +12,7 @@ struct ContentStateView: View {
             case empty
             case error
         }
-    
+
     let type: StateType
         let iconName: String
         let title: String
@@ -20,7 +20,7 @@ struct ContentStateView: View {
         let buttonTitle: String?
         let buttonIconName: String?
         let buttonAction: (() -> Void)?
-    
+
     var body: some View {
         VStack(spacing: 18) {
             Image(systemName: iconName)
@@ -42,7 +42,7 @@ struct ContentStateView: View {
                                 .lineSpacing(4)
                         }
             .padding(.horizontal, 34)
-            
+
             if let buttonTitle, let buttonAction {
                             Button {
                                 buttonAction()
@@ -60,11 +60,11 @@ struct ContentStateView: View {
                                 .background(Color("Primary"))
 //                                .foregroundStyle(Color("TextPrimary"))
                                 .foregroundStyle(Color("PrimaryButtonText"))
-                                
-                                
-                                
+
+
+
                                 .clipShape(Capsule())
-                                
+
                             }
                         }
                     }
