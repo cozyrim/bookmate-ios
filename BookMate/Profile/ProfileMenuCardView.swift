@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ProfileMenuCardView: View {
+    @ScaledMetric(relativeTo: .body) private var iconColumnWidth: CGFloat = 24
     let rows: [ProfileMenuItem]
     var onTap: (ProfileMenuItem) -> Void = { _ in }
 
@@ -13,7 +14,7 @@ struct ProfileMenuCardView: View {
                 }
                 .buttonStyle(.plain)
                 if row.id != rows.last?.id {
-                    Divider().padding(.leading, 36)
+                    Divider().padding(.leading, iconColumnWidth + 12)
                 }
             }
         }
