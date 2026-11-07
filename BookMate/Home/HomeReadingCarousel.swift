@@ -20,7 +20,7 @@ struct HomeReadingCarousel: View {
     }
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: ReadingStyle.coverProgressSpacing) {
             if let selectedBook = books.first(where: { $0.id == selectedID }) ?? books.first {
                 coverShelf
                 GeometryReader { geometry in
@@ -30,21 +30,7 @@ struct HomeReadingCarousel: View {
                         .offset(x: reduceMotion ? 0 : -geometry.size.width * 0.09)
                         .accessibilityIdentifier("home.reading.progress")
                 }
-                .frame(height: max(progressHeight, 44))
-                .overlay(alignment: .trailing) {
-                    Button {
-                        onMore(selectedBook)
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.headline)
-                            .foregroundStyle(Color("TextSecondary"))
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(selectedBook.title) 메뉴")
-                    .accessibilityIdentifier("home.reading.menu")
-                }
+                .frame(height: progressHeight)
                 if books.count > 1 {
                     pageControls
                 }
@@ -112,15 +98,17 @@ struct HomeReadingCarousel: View {
             if isSelected { onOpen(book) } else { select(book.id) }
         } label: {
             BookCoverCell(imageName: book.imageName, width: size, trailingPadding: 0,
-                          showsBackground: false, coverCornerRadius: 8)
+                          showsBackground: false, coverCornerRadius: 8, coverAlignment: .bottom)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(book.title), \(book.author)")
         .accessibilityHint(isSelected ? "책 상세 열기" : "이 책 선택")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityAction(named: Text("책 메뉴")) { onMore(book) }
         .accessibilityIdentifier("home.reading.cover.\(book.id)")
-        .frame(width: step, height: height)
+        .frame(width: step, height: height, alignment: .bottom)
         .scaleEffect(scale)
         .rotation3DEffect(.degrees(angle), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
         .offset(x: offset)

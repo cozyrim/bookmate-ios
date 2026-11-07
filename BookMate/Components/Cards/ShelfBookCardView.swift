@@ -22,7 +22,7 @@ struct ShelfBookCardView: View {
         VStack(alignment: .leading, spacing: 0) {
             Button(action: onTap) {
                 VStack(alignment: .leading, spacing: 8) {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: ReadingStyle.coverProgressSpacing) {
                         BookCoverCell(imageName: imageName, width: coverWidth, trailingPadding: 0, coverAlignment: .bottomLeading)
                             .frame(height: coverHeight, alignment: .bottomLeading)
                         BookReadingProgress(progress: progress, status: readingStatus)
@@ -79,7 +79,7 @@ struct ShelfBookListCardView: View {
         VStack(alignment: .leading, spacing: 0) {
             Button(action: onTap) {
                 HStack(alignment: .top, spacing: 20) {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: ReadingStyle.coverProgressSpacing) {
                         BookCoverCell(imageName: imageName, width: 100, trailingPadding: 0)
                         BookReadingProgress(progress: progress, status: readingStatus)
                     }

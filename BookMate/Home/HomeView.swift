@@ -383,7 +383,7 @@ struct HomeView: View {
     }
 
     private var reviewWordsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("최근 저장 단어")
                     .font(.title2)
@@ -461,7 +461,7 @@ struct HomeView: View {
             }
         }
         .padding(.horizontal, 24)
-        .padding(.top, 22)
+        .padding(.top, 12)
     }
 
     private var readingShelfSection: some View {

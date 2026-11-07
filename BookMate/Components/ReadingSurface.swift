@@ -1,6 +1,7 @@
 import SwiftUI
 
 enum ReadingStyle {
+    static let coverProgressSpacing: CGFloat = 4
     static let cardRadius: CGFloat = 24
     static let fieldRadius: CGFloat = 18
     static let coverRadius: CGFloat = 8
