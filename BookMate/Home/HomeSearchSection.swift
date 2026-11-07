@@ -245,19 +245,20 @@ struct HomeSearchSection: View {
             selectSearchMode(mode)
         } label: {
             Text(title)
-                .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                .font(.footnote.weight(isSelected ? .semibold : .regular))
                 .foregroundStyle(isSelected ? Color("Primary") : Color("TextPrimary"))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 8)
-                .padding(.vertical, 8)
-                .frame(maxWidth: .infinity, minHeight: 44)
-                .contentShape(Capsule())
+                .padding(.vertical, 4)
+                .frame(maxWidth: .infinity, minHeight: 32)
                 .overlay {
                     Capsule().strokeBorder(
                         isSelected ? Color("Primary") : Color("Border"),
-                        lineWidth: isSelected ? 1.5 : 1
+                        lineWidth: isSelected ? 1 : 0.75
                     )
                 }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
