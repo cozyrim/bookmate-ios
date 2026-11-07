@@ -61,6 +61,7 @@ struct FeedbackView: View {
         .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
         .toolbar(.hidden, for: .tabBar)
+        .preference(key: CompactTabBarHiddenKey.self, value: true)
         .sheet(isPresented: $isShowingMailComposer) {
             MailComposerView(
                 recipient: Self.recipientEmail,

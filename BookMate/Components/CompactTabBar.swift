@@ -1,0 +1,41 @@
+import SwiftUI
+
+struct CompactTabBarHiddenKey: PreferenceKey {
+    static let defaultValue = false
+    static func reduce(value: inout Bool, nextValue: () -> Bool) { value = value || nextValue() }
+}
+
+struct CompactTabBar: View {
+    @Binding var selection: Int
+    private let labels = ["홈", "책", "단어장", "서재", "프로필"]
+    private let symbols = ["house", "book", "character.book.closed", "books.vertical", "person.crop.circle"]
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(labels.indices, id: \.self) { index in
+                Button { selection = index } label: {
+                    Group {
+                        if index == 2 {
+                            Image("TabWordIcon").renderingMode(.template).resizable().scaledToFit().frame(width: 22, height: 22)
+                        } else {
+                            Image(systemName: symbols[index]).font(.system(size: 22, weight: selection == index ? .semibold : .regular))
+                        }
+                    }
+                    .foregroundStyle(selection == index ? Color("PrimaryDeep") : Color("TextSecondary"))
+                    .frame(maxWidth: .infinity).frame(height: 44)
+                    .background(selection == index ? Color("Primary").opacity(0.12) : .clear, in: Capsule())
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(labels[index])
+                .accessibilityAddTraits(selection == index ? [.isSelected] : [])
+            }
+        }
+        .padding(4)
+        .modifier(BookMateGlassSurface(radius: 28))
+        .frame(maxWidth: 460)
+        .padding(.horizontal, 28)
+        .padding(.bottom, 6)
+        .accessibilityIdentifier("navigation.compactTabs")
+    }
+}

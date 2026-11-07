@@ -11,7 +11,8 @@ struct ScrollingTabBarModifier: ViewModifier {
             .onScrollPhaseChange { _, phase in
                 scrolling = phase == .interacting || phase == .decelerating
             }
-            .toolbar(scrolling ? .hidden : .visible, for: .tabBar)
+            .preference(key: CompactTabBarHiddenKey.self, value: scrolling)
+            .toolbar(UIDevice.current.userInterfaceIdiom == .phone || scrolling ? .hidden : .visible, for: .tabBar)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: scrolling)
             .onChange(of: scenePhase) { _, _ in scrolling = false }
             .onDisappear { scrolling = false }

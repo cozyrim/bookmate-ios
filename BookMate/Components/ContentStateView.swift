@@ -23,26 +23,12 @@ struct ContentStateView: View {
     
     var body: some View {
         VStack(spacing: 18) {
-            ZStack {
-                Circle()
-                    .fill(Color("Primary").opacity(0.16))
-                    .frame(width: 178, height: 178)
-                    .blur(radius: 18)
-                
-                RoundedRectangle(cornerRadius: 42)
-                                    .fill(Color("Surface").opacity(0.78))
-                                    .frame(width: 104, height: 104)
-                                    .shadow(color: Color("Shadow").opacity(0.05), radius: 14, x: 0, y: 8)
+            Image(systemName: iconName)
+                .font(.system(size: 28, weight: .regular))
+                .foregroundStyle(type == .empty ? Color("TextSecondary") : Color("Error"))
+                .accessibilityHidden(true)
+                .padding(.bottom, 4)
 
-                                RoundedRectangle(cornerRadius: 28)
-                                    .fill(type == .empty ? Color("Primary").opacity(0.12) : Color.red.opacity(0.08))
-                                    .frame(width: 64, height: 64)
-
-                                Image(systemName: iconName)
-                                    .font(.system(size: 32, weight: .semibold))
-                                    .foregroundStyle(type == .empty ? Color("TextSecondary") : .red.opacity(0.8))
-            }
-            
             VStack(spacing: 8) {
                             Text(title)
                                 .font(.title3)
@@ -50,7 +36,7 @@ struct ContentStateView: View {
                                 .foregroundStyle(Color("TextPrimary"))
 
                             Text(message)
-                                .font(.body)
+                                .font(.callout)
                                 .multilineTextAlignment(.center)
                                 .foregroundStyle(Color("TextSecondary"))
                                 .lineSpacing(4)
@@ -70,7 +56,7 @@ struct ContentStateView: View {
                                 }
                                 .font(.title3)
                                 .fontWeight(.bold)
-                                .frame(width: 245, height: 64)
+                                .frame(maxWidth: 280, minHeight: 48)
                                 .background(Color("Primary"))
 //                                .foregroundStyle(Color("TextPrimary"))
                                 .foregroundStyle(Color("PrimaryButtonText"))
@@ -78,11 +64,12 @@ struct ContentStateView: View {
                                 
                                 
                                 .clipShape(Capsule())
-                                .shadow(color: Color("Primary").opacity(0.25), radius: 14, x: 0, y: 8)
+                                
                             }
                         }
                     }
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 28)
     }
 }
 

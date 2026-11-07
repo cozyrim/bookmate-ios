@@ -16,6 +16,8 @@ struct MainTabView: View {
     @StateObject private var viewModel: BookMateViewModel
     @ObservedObject private var pushNotificationRouter = PushNotificationRouter.shared
     @State var tabIndex = 0
+    @State private var hidesCompactBar = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var roomNotificationRequest: PushNotificationNavigationRequest?
     @State private var notificationPermissionDialog: NotificationPermissionDialog?
 
@@ -66,6 +68,15 @@ struct MainTabView: View {
             }
             .accessibilityLabel("프로필")
         }
+        .toolbar(UIDevice.current.userInterfaceIdiom == .phone ? .hidden : .automatic, for: .tabBar)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if UIDevice.current.userInterfaceIdiom == .phone && !hidesCompactBar {
+                CompactTabBar(selection: $tabIndex)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .onPreferenceChange(CompactTabBarHiddenKey.self) { hidesCompactBar = $0 }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: hidesCompactBar)
         .tint(Color("Primary"))
         .appToast($viewModel.toast) // MainTabView가 가진 viewModel.toast 값을 AppToastModifier에게 연결해서 넘긴다.원본 값을 읽고 바꿀 수 있는 연결 통로 전달
         .onAppear {

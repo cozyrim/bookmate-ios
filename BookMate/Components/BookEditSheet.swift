@@ -129,7 +129,7 @@ struct BookEditSheet: View {
                 .padding(.horizontal, 18)
                 .frame(height: 54)
                 .background(Color("Surface").opacity(0.78))
-                .clipShape(RoundedRectangle(cornerRadius: 18))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
     }
@@ -217,9 +217,9 @@ struct BookEditSheet: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
                 .background(Color("Surface"))
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: 12)
                         .stroke(Color("TextMuted").opacity(0.15), lineWidth: 1)
                 )
             }
@@ -247,9 +247,9 @@ struct BookEditSheet: View {
                     .frame(minHeight: 132)
             }
             .background(Color("Surface"))
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 12)
                     .stroke(Color("TextMuted").opacity(0.15), lineWidth: 1)
             )
         }
@@ -270,7 +270,7 @@ struct BookEditSheet: View {
         .toggleStyle(SwitchToggleStyle(tint: Color("Primary")))
         .padding(16)
         .background(Color("Surface"))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private var saveButton: some View {

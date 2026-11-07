@@ -33,9 +33,9 @@ struct QuoteEditSheet: View {
                                                                         .padding(16)
                                                                         .frame(minHeight: 140)
                                                                         .background(Color("Surface"))
-                                                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                                                        .clipShape(RoundedRectangle(cornerRadius: 12))
                                                                         .overlay(
-                                                                            RoundedRectangle(cornerRadius: 16)
+                                                                            RoundedRectangle(cornerRadius: 12)
                                                                                 .stroke(Color("TextMuted").opacity(0.2), lineWidth: 1)
                                                                         )
                                                                 }
@@ -50,9 +50,9 @@ struct QuoteEditSheet: View {
                                                                         .keyboardType(.numberPad)
                                                                         .padding(16)
                                                                         .background(Color("Surface"))
-                                                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                                                        .clipShape(RoundedRectangle(cornerRadius: 12))
                                                                         .overlay(
-                                                                            RoundedRectangle(cornerRadius: 16)
+                                                                            RoundedRectangle(cornerRadius: 12)
                                                                                 .stroke(Color("TextMuted").opacity(0.2), lineWidth: 1)
                                                                         )
                                                                 }
@@ -68,9 +68,9 @@ struct QuoteEditSheet: View {
                                                                         .padding(16)
                                                                         .frame(minHeight: 100)
                                                                         .background(Color("Surface"))
-                                                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                                                        .clipShape(RoundedRectangle(cornerRadius: 12))
                                                                         .overlay(
-                                                                            RoundedRectangle(cornerRadius: 16)
+                                                                            RoundedRectangle(cornerRadius: 12)
                                                                                 .stroke(Color("TextMuted").opacity(0.2), lineWidth: 1)
                                                                         )
                                                                 }
@@ -87,7 +87,7 @@ struct QuoteEditSheet: View {
                                                                         .background(editedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                                                                                     ? Color("TextMuted").opacity(0.4)
                                                                                     : Color("Primary"))
-                                                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                                                        .clipShape(RoundedRectangle(cornerRadius: 12))
                                                                 }
                                                                 .disabled(editedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                                                             }

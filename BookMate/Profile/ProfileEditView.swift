@@ -195,6 +195,7 @@ struct ProfileEditView: View {
         .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
         .toolbar(.hidden, for: .tabBar)
+        .preference(key: CompactTabBarHiddenKey.self, value: true)
         .onAppear {
             nickname = currentNickname
             profileImageUrlToSave = currentProfileImageUrl
