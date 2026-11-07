@@ -20,6 +20,7 @@ final class AuthSessionViewModel: ObservableObject {
     // 인증 요청 중 화면 상태를 제어한다.
     @Published var isLoading = false
     @Published var isCheckingSession = true
+    @Published var sessionRestoreError: String?
     @Published var errorMessage: String?
     @Published var accountDeletionSuccessMessage: String?
     @Published var shouldRequestNotificationPermissionAfterSignup = false
@@ -199,6 +200,9 @@ final class AuthSessionViewModel: ObservableObject {
 
     // Keychain에 저장된 토큰으로 앱 재실행 후 로그인 상태를 복구한다.
     func restoreSession() async {
+        isCheckingSession = true
+        sessionRestoreError = nil
+        defer { isCheckingSession = false }
         guard let token = tokenStore.load() else {
             isCheckingSession = false
             isLoggedIn = false
@@ -212,6 +216,8 @@ final class AuthSessionViewModel: ObservableObject {
             currentUser = profile.toAuthUser()
             isLoggedIn = true
             BMAnalytics.setUser(currentUser)
+            // The authenticated home can render while nonessential push sync finishes.
+            isCheckingSession = false
             await dependencies.pushTokens.syncTokenWithServerIfPossible()
         } catch is CancellationError {
             // A logout or newer login superseded this request.
@@ -222,7 +228,7 @@ final class AuthSessionViewModel: ObservableObject {
                 isLoggedIn = false
                 BMAnalytics.setUser(nil)
             } else {
-                errorMessage = "로그인 상태를 확인하지 못했어요. 잠시 후 다시 시도해 주세요."
+                sessionRestoreError = "로그인 상태를 확인하지 못했어요. 연결을 확인하고 다시 시도해 주세요."
             }
             DebugLogger.log("로그인 세션 복구 실패:", error)
         }
