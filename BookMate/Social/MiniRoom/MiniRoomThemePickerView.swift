@@ -4,7 +4,9 @@ struct MiniRoomThemePickerView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var authViewModel: AuthSessionViewModel
 
-    @State private var selectedTheme: MiniRoomTheme
+    private let currentTheme: MiniRoomTheme
+    private let onApplyWoodRoom: (Bool) -> Void
+    @State private var selection: RoomThemeChoice
     @State private var isSaving = false
     @State private var errorMessage: String?
 
@@ -13,8 +15,10 @@ struct MiniRoomThemePickerView: View {
         GridItem(.flexible(), spacing: 14)
     ]
 
-    init(selectedTheme: MiniRoomTheme) {
-        _selectedTheme = State(initialValue: selectedTheme)
+    init(currentTheme: MiniRoomTheme, usesWoodRoom: Bool, onApplyWoodRoom: @escaping (Bool) -> Void) {
+        self.currentTheme = currentTheme
+        self.onApplyWoodRoom = onApplyWoodRoom
+        _selection = State(initialValue: usesWoodRoom ? .wood3D : .illustration(currentTheme))
     }
 
     var body: some View {
@@ -33,15 +37,21 @@ struct MiniRoomThemePickerView: View {
                             .padding(.horizontal, 4)
 
                         LazyVGrid(columns: columns, spacing: 14) {
+                            MiniRoomThemeOptionCard(theme: .wood3D, isSelected: selection == .wood3D) {
+                                selection = .wood3D
+                            }
+                            .accessibilityIdentifier("miniRoom.theme.wood3D")
+
                             ForEach(MiniRoomTheme.allCases) { theme in
                                 MiniRoomThemeOptionCard(
-                                    theme: theme,
-                                    isSelected: selectedTheme == theme
+                                    theme: .illustration(theme),
+                                    isSelected: selection == .illustration(theme)
                                 ) {
-                                    selectedTheme = theme
+                                    selection = .illustration(theme)
                                 }
                             }
                         }
+                        .disabled(isSaving)
 
                         if let errorMessage {
                             Text(errorMessage)
@@ -70,6 +80,18 @@ struct MiniRoomThemePickerView: View {
     private func saveTheme() {
         guard !isSaving else { return }
 
+        guard case .illustration(let selectedTheme) = selection else {
+            onApplyWoodRoom(true)
+            dismiss()
+            return
+        }
+
+        if selectedTheme == currentTheme {
+            onApplyWoodRoom(false)
+            dismiss()
+            return
+        }
+
         Task {
             isSaving = true
             errorMessage = nil
@@ -79,6 +101,7 @@ struct MiniRoomThemePickerView: View {
             isSaving = false
 
             if success {
+                onApplyWoodRoom(false)
                 dismiss()
             } else {
                 errorMessage = authViewModel.errorMessage ?? "배경을 저장하지 못했어요."
@@ -87,8 +110,27 @@ struct MiniRoomThemePickerView: View {
     }
 }
 
+private enum RoomThemeChoice: Equatable {
+    case wood3D
+    case illustration(MiniRoomTheme)
+
+    var title: String {
+        switch self {
+        case .wood3D: "원목 서재 3D"
+        case .illustration(let theme): theme.title
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .wood3D: "이 기기에서 보는 입체 서재"
+        case .illustration(let theme): theme.subtitle
+        }
+    }
+}
+
 private struct MiniRoomThemeOptionCard: View {
-    let theme: MiniRoomTheme
+    let theme: RoomThemeChoice
     let isSelected: Bool
     let action: () -> Void
 
@@ -137,20 +179,29 @@ private struct MiniRoomThemeOptionCard: View {
             .shadow(color: Color("Shadow").opacity(0.05), radius: 14, x: 0, y: 6)
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     @ViewBuilder
     private var themePreview: some View {
         switch theme {
-        case .dark:
+        case .wood3D:
+            ZStack {
+                Color(red: 0.27, green: 0.17, blue: 0.12)
+                Image(systemName: "cube.transparent")
+                    .font(.system(size: 45, weight: .light))
+                    .foregroundStyle(Color(red: 0.96, green: 0.77, blue: 0.55))
+            }
+            .accessibilityHidden(true)
+        case .illustration(.dark):
             Image("MiniRoomLayeredRoomBackgroundDark")
                 .resizable()
                 .scaledToFill()
-        case .basic:
+        case .illustration(.basic):
             Image("MiniRoomLayeredRoomBackground")
                 .resizable()
                 .scaledToFill()
-        case .pink, .mint:
+        case .illustration(let theme):
             ZStack {
                 Image("MiniRoomLayeredRoomBackground")
                     .resizable()
@@ -170,6 +221,6 @@ private struct MiniRoomThemeOptionCard: View {
 }
 
 #Preview {
-    MiniRoomThemePickerView(selectedTheme: .dark)
+    MiniRoomThemePickerView(currentTheme: .dark, usesWoodRoom: false, onApplyWoodRoom: { _ in })
         .environmentObject(AuthSessionViewModel())
 }

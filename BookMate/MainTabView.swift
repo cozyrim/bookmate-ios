@@ -7,8 +7,11 @@
 
 import Combine
 import SwiftUI
+import UIKit
 
 struct MainTabView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     @ObservedObject var authViewModel: AuthSessionViewModel
     @StateObject private var viewModel: BookMateViewModel
     @ObservedObject private var pushNotificationRouter = PushNotificationRouter.shared
@@ -23,44 +26,45 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $tabIndex) {
-            HomeView(viewModel: viewModel, selectedTab: $tabIndex)
-                .tabItem {
-                    Image(systemName: "house")
-                    Text("홈")
-                }
-                .tag(0)
+            Tab(value: 0) {
+                HomeView(viewModel: viewModel, selectedTab: $tabIndex)
+                    .modifier(ScrollingTabBarModifier())
+            } label: {
+                tabLabel("홈", icon: Image(systemName: "house"))
+            }
+            .accessibilityLabel("홈")
 
-            ShelfView(viewModel: viewModel, selectedTab: $tabIndex)
-                .tabItem {
-                    Image(systemName: "book")
-                    Text("책")
-                }
-                .tag(1)
+            Tab(value: 1) {
+                ShelfView(viewModel: viewModel, selectedTab: $tabIndex)
+                    .modifier(ScrollingTabBarModifier())
+            } label: {
+                tabLabel("책", icon: Image(systemName: "book"))
+            }
+            .accessibilityLabel("책")
 
+            Tab(value: 2) {
+                WordArchiveView(viewModel: viewModel, selectedTab: $tabIndex)
+                    .modifier(ScrollingTabBarModifier())
+            } label: {
+                tabLabel("단어장", icon: Image("TabWordIcon").renderingMode(.template))
+            }
+            .accessibilityLabel("단어장")
 
-            WordArchiveView(viewModel: viewModel, selectedTab: $tabIndex)
-                .tabItem {
-                    Image("TabWordIcon")
-                        .renderingMode(.template)
-                    Text("단어장")
-                }
-                .tag(2)
+            Tab(value: 3) {
+                RoomTabView(viewModel: viewModel, notificationRequest: $roomNotificationRequest)
+                    .modifier(ScrollingTabBarModifier())
+            } label: {
+                tabLabel("서재", icon: Image(systemName: "books.vertical"))
+            }
+            .accessibilityLabel("서재")
 
-            RoomTabView(viewModel: viewModel, notificationRequest: $roomNotificationRequest)
-                .tabItem {
-                    Image(systemName: "books.vertical")
-                    Text("서재")
-                }
-                .tag(3)
-
-
-            ProfileView(authViewModel: authViewModel, viewModel: viewModel)
-                .tabItem{
-                    Image(systemName: "person.crop.circle")
-                    Text("프로필")
-                }
-                .tag(4)
-
+            Tab(value: 4) {
+                ProfileView(authViewModel: authViewModel, viewModel: viewModel)
+                    .modifier(ScrollingTabBarModifier())
+            } label: {
+                tabLabel("프로필", icon: Image(systemName: "person.crop.circle"))
+            }
+            .accessibilityLabel("프로필")
         }
         .tint(Color("Primary"))
         .appToast($viewModel.toast) // MainTabView가 가진 viewModel.toast 값을 AppToastModifier에게 연결해서 넘긴다.원본 값을 읽고 바꿀 수 있는 연결 통로 전달
@@ -109,6 +113,19 @@ struct MainTabView: View {
         } // 401이 오면 자동으로 로그아웃되고 로그인 화면으로 돌아감
 
 
+    }
+
+    @ViewBuilder
+    private func tabLabel(_ title: LocalizedStringKey, icon: Image) -> some View {
+        if UIDevice.current.userInterfaceIdiom != .phone && horizontalSizeClass == .regular {
+            Label {
+                Text(title)
+            } icon: {
+                icon
+            }
+        } else {
+            icon
+        }
     }
 
     private func tabName(for index: Int) -> String {

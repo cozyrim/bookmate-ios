@@ -11,9 +11,20 @@ struct MyRoomView: View {
     @State private var showingGuestbook = false
     @State private var highlightedGuestbookMessageId: UUID?
     @State private var showingThemePicker = false
+    @State private var roomWith3DEnabled: String?
 
     private var currentTheme: MiniRoomTheme {
         MiniRoomTheme.from(authViewModel.profile?.roomTheme ?? authViewModel.currentUser?.roomTheme)
+    }
+
+    private var roomPreferenceKey: String? {
+        authViewModel.currentUser.map { user in
+            "bookmate.miniRoom.wood3D.\(APIEnvironment.currentEnvironment.rawValue).\(user.id)"
+        }
+    }
+
+    private var usesWoodRoom: Bool {
+        roomPreferenceKey != nil && roomPreferenceKey == roomWith3DEnabled
     }
 
     init(
@@ -30,7 +41,20 @@ struct MyRoomView: View {
     
     var body: some View {
         Group {
-                if let user = authViewModel.currentUser {
+            if let user = authViewModel.currentUser {
+                if usesWoodRoom {
+                    MiniRoom3DView(
+                        nickname: user.nickname,
+                        profileImageUrl: user.profileImageUrl,
+                        books: books,
+                        isSurfing: model.isSurfing,
+                        onSearchUsers: searchUsers,
+                        onSurfRandomUser: surfRandomUser,
+                        onChangeTheme: changeTheme,
+                        onOpenGuestbook: openGuestbook,
+                        onBookTap: openBook
+                    )
+                } else {
                     MiniRoomSceneView(
                         nickname: user.nickname,
                         profileImageUrl: user.profileImageUrl,
@@ -38,31 +62,19 @@ struct MyRoomView: View {
                         books: books,
                         showsExploreButtons: true,
                         isSurfing: model.isSurfing,
-                        onSearchUsers: {
-                            PerformanceLogger.event("MiniRoomSearchUsersTapped")
-                            path.append(ShelfView.ShelfRoute.searchUsers)
-                        },
-                        onSurfRandomUser: {
-                            surfRandomUser()
-                        },
-                        onChangeTheme: {
-                            PerformanceLogger.event("MiniRoomThemePickerTapped")
-                            showingThemePicker = true
-                        },
-                        onOpenGuestbook: {
-                            PerformanceLogger.event("MiniRoomGuestbookTapped")
-                            highlightedGuestbookMessageId = nil
-                            fetchGuestbook()
-                            showingGuestbook = true
-                        },
-                        onBookTap: { book in
-                            PerformanceLogger.event("MiniRoomOwnBookTapped")
-                            path.append(ShelfView.ShelfRoute.bookDetail(book.id))
-                        }
+                        onSearchUsers: searchUsers,
+                        onSurfRandomUser: surfRandomUser,
+                        onChangeTheme: changeTheme,
+                        onOpenGuestbook: openGuestbook,
+                        onBookTap: openBook
                     )
-                } else {
-                    AppBackgroundView()
                 }
+            } else {
+                AppBackgroundView()
+            }
+        }
+            .onChange(of: roomPreferenceKey, initial: true) { _, key in
+                roomWith3DEnabled = key.flatMap { UserDefaults.standard.bool(forKey: $0) ? $0 : nil }
             }
             .alert("파도타기 실패", isPresented: Binding(get: { model.surfError != nil }, set: { _ in model.surfError = nil })) {
                 Button("확인", role: .cancel) { }
@@ -91,7 +103,11 @@ struct MyRoomView: View {
                 }
             }
             .sheet(isPresented: $showingThemePicker) {
-                MiniRoomThemePickerView(selectedTheme: currentTheme)
+                MiniRoomThemePickerView(
+                    currentTheme: currentTheme,
+                    usesWoodRoom: usesWoodRoom,
+                    onApplyWoodRoom: setWoodRoom
+                )
                     .environmentObject(authViewModel)
                     .presentationDetents([.large])
             }
@@ -101,7 +117,35 @@ struct MyRoomView: View {
             .onChange(of: notificationRequest?.id) { _, _ in
                 handleNotificationRequestIfNeeded()
             }
-        }
+    }
+
+    private func setWoodRoom(_ enabled: Bool) {
+        guard let key = roomPreferenceKey else { return }
+        UserDefaults.standard.set(enabled, forKey: key)
+        roomWith3DEnabled = enabled ? key : nil
+    }
+
+    private func searchUsers() {
+        PerformanceLogger.event("MiniRoomSearchUsersTapped")
+        path.append(ShelfView.ShelfRoute.searchUsers)
+    }
+
+    private func changeTheme() {
+        PerformanceLogger.event("MiniRoomThemePickerTapped")
+        showingThemePicker = true
+    }
+
+    private func openGuestbook() {
+        PerformanceLogger.event("MiniRoomGuestbookTapped")
+        highlightedGuestbookMessageId = nil
+        fetchGuestbook()
+        showingGuestbook = true
+    }
+
+    private func openBook(_ book: Book) {
+        PerformanceLogger.event("MiniRoomOwnBookTapped")
+        path.append(ShelfView.ShelfRoute.bookDetail(book.id))
+    }
 
     private func handleNotificationRequestIfNeeded() {
         guard let notificationRequest else {

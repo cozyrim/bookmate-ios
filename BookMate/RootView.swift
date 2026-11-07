@@ -40,7 +40,12 @@ struct RootView: View {
                     Color("AppBackground")
                         .ignoresSafeArea()
 
-                    ProgressView()
+                    Image("LaunchBrand")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 112, height: 112)
+                        .clipShape(.rect(cornerRadius: 25))
+                        .accessibilityLabel("앱을 여는 중")
                 }
             } else if !hasSeenOnboarding {
                 OnboardingView {

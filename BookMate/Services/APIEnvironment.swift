@@ -9,7 +9,7 @@ import Foundation
 
 /// 앱이 백엔드 서버에 접속할 때 사용하는 공통 API 환경 설정이다.
 enum APIEnvironment {
-    private enum Environment: String {
+    enum Environment: String {
         case local
         case staging
         case production
@@ -19,7 +19,7 @@ enum APIEnvironment {
     private static let physicalDeviceHost = "192.168.0.45"
     private static let port = 8080
 
-    private static var currentEnvironment: Environment {
+    static var currentEnvironment: Environment {
         guard let value = Bundle.main.object(forInfoDictionaryKey: "BOOKMATE_API_ENVIRONMENT") as? String,
               let environment = Environment(rawValue: value.lowercased()) else {
             return defaultEnvironment
