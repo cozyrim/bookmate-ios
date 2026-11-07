@@ -16,7 +16,7 @@ struct SavedWordListCell: View {
                 Text(text)
                     .font(.headline)
                     .fontWeight(.bold)
-                    .foregroundStyle(Color("TextPrimary").opacity(0.86))
+                    .foregroundStyle(Color("TextPrimary"))
 
                 PartOfSpeechBadge(text: partOfSpeech)
 
@@ -31,7 +31,7 @@ struct SavedWordListCell: View {
 
             Text(meaning)
                 .font(.callout)
-                .foregroundStyle(Color("TextPrimary").opacity(0.72))
+                .foregroundStyle(Color("TextSecondary"))
                 .lineSpacing(4)
                 .lineLimit(2)
 
@@ -45,16 +45,11 @@ struct SavedWordListCell: View {
                     .lineLimit(1)
             }
             .foregroundStyle(Color("TextSecondary"))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-
-
             .padding(.top, 2)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 17)
+        .padding(.vertical, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(ReadingSurface())
+        .contentShape(Rectangle())
         .padding(.horizontal, 24)
     }
 }
