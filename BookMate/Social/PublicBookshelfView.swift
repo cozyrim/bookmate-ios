@@ -59,6 +59,7 @@ struct PublicBookshelfView: View {
         .enableSwipeBackGesture()
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
+        .preference(key: CompactTabBarHiddenKey.self, value: true)
         .navigationBarHidden(true)
         .navigationDestination(item: $selectedBook) { book in
             PublicBookDetailView(

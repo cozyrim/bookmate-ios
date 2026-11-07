@@ -6,8 +6,8 @@ struct BookCoverCell: View {
     var imageName: String
     var width: CGFloat = 82
     var trailingPadding: CGFloat = 12
-    var showsBackground: Bool = true
-    var coverCornerRadius: CGFloat = 0
+    var showsBackground: Bool = false
+    var coverCornerRadius: CGFloat = 4
     
     private var height: CGFloat {
             width * 1.56
@@ -33,7 +33,7 @@ struct BookCoverCell: View {
                 coverImage
                     .clipShape(.rect(cornerRadius: coverCornerRadius))
                     .frame(width:imageWidth, height: imageHeight)
-                    .shadow(color: Color("Shadow").opacity(0.2), radius: 4, x: 0, y: 2)
+                    .shadow(color: Color("Shadow").opacity(0.10), radius: 3, x: 0, y: 2)
             }
         .frame(
             width: showsBackground ? width : imageWidth,

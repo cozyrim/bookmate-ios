@@ -30,7 +30,7 @@ struct MoreOptionsSheet: View {
     }
 
     private var sheetCornerRadius: CGFloat {
-        24
+        14
     }
     
     init(
@@ -67,7 +67,7 @@ struct MoreOptionsSheet: View {
                 Image(systemName: systemImage)
                     .font(.system(size: 14, weight: .semibold))
                     .frame(width: 30, height: 30)
-                    .background(color.opacity(colorScheme == .dark ? 0.16 : 0.08), in: Circle())
+                    
 
                 Text(title)
                     .font(.callout)
@@ -126,7 +126,7 @@ struct MoreOptionsSheet: View {
 //                    }
 //                )
             }
-            .background(sheetRowBackground)
+             .background(Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: sheetCornerRadius, style: .continuous))
             
             Button { // 여기서 onDelete()는 “삭제 버튼이 눌렸다”는 사실을 바깥에 알려주는 역할
@@ -136,7 +136,7 @@ struct MoreOptionsSheet: View {
                     Image(systemName: "trash")
                         .font(.system(size: 14, weight: .semibold))
                         .frame(width: 30, height: 30)
-                        .background(Color("Error").opacity(colorScheme == .dark ? 0.16 : 0.08), in: Circle())
+                        
 
                     Text(deleteTitle)
                         .font(.callout)
@@ -147,7 +147,7 @@ struct MoreOptionsSheet: View {
                 .foregroundStyle(Color("Error"))
                 .padding(.horizontal, 14)
                 .frame(height: 56)
-                .background(sheetRowBackground)
+                 .background(Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: sheetCornerRadius, style: .continuous))
                 .contentShape(Rectangle())
             }
@@ -164,16 +164,18 @@ struct MoreOptionsSheet: View {
                     .foregroundStyle(normalOptionColor)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(sheetRowBackground)
+                     .background(Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: sheetCornerRadius, style: .continuous))
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 18)
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
         .padding(.bottom, 10)
         .foregroundStyle(Color("TextPrimary"))
-
+        .presentationBackground(.regularMaterial)
+        .presentationCornerRadius(24)
+        .presentationDragIndicator(.visible)
     }
 
 }

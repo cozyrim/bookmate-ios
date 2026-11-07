@@ -138,6 +138,7 @@ struct AccountManagementView: View {
                 .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
                 .toolbar(.hidden, for: .tabBar)
+        .preference(key: CompactTabBarHiddenKey.self, value: true)
                 .alert("탈퇴하지 못했어요", isPresented: $isShowingWithdrawError) {
                     Button("확인", role: .cancel) { }
                 } message: {

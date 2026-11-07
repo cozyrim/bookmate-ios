@@ -1,50 +1,20 @@
-//
-//  ManualBookInputField.swift
-//  BookMate
-//
-//  Created by 한채림 on 5/22/26.
-//
-
 import SwiftUI
 
 struct ManualBookInputField: View {
     @Binding var text: String
-    
     let placeholder: String
     let iconName: String
+
     var body: some View {
-        
-        HStack{
-            Image(systemName: iconName)
-                .foregroundStyle(Color("LightButtonText").opacity(0.45))
-                .fontWeight(.bold)
-            
-            TextField(
-                "",
-                text: $text,
-                prompt: Text(placeholder)
-                    .foregroundStyle(Color("LightButtonText").opacity(0.42))
-            )
-            .foregroundStyle(Color("LightButtonText"))
-            .tint(Color("PrimaryDeep"))
+        HStack(spacing: 10) {
+            Image(systemName: iconName).foregroundStyle(Color("TextSecondary")).frame(width: 20)
+            TextField(placeholder, text: $text)
+                .foregroundStyle(Color("TextPrimary"))
+                .tint(Color("Primary"))
+                .accessibilityLabel(placeholder)
         }
-        .padding(.horizontal, 20)
-        .frame(height: 58)
-        //        .background(Color("SurfaceSoft").opacity(0.6))
-        //        .clipShape(Capsule())
-        .background {
-            Capsule()
-                .fill(Color(.skyblue3))
-                .overlay{
-                    Capsule()
-                        .stroke(Color("Border").opacity(0.15), lineWidth: 1)
-                        .blur(radius: 2)
-                        .offset(y: 2)
-                        .mask(Capsule().fill(Color("TextPrimary")))
-                }
-        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 50)
+        .modifier(ReadingSurface(radius: 12))
     }
-}
-#Preview {
-    ManualBookInputField(text: .constant(""), placeholder: "제목을 입력하세요", iconName: "text.book.closed")
 }

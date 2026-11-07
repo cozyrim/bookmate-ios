@@ -49,7 +49,7 @@ struct ReadingMemoEditSheet: View {
                                             }
                                             .padding(16)
                                             .background(Color("Surface"))
-                                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                                            .clipShape(RoundedRectangle(cornerRadius: 12))
                                         }
                                         .buttonStyle(.plain)
                                         .sheet(isPresented: $isShowingDatePicker) {
@@ -62,7 +62,7 @@ struct ReadingMemoEditSheet: View {
                                             .font(.subheadline)
                                             .foregroundStyle(Color("TextMuted"))
                                         TextField("예) 42", text: $page)
-                                            .keyboardType(.numberPad).padding(16).background(Color("Surface")).clipShape(RoundedRectangle(cornerRadius: 16))
+                                            .keyboardType(.numberPad).padding(16).background(Color("Surface")).clipShape(RoundedRectangle(cornerRadius: 12))
                                     }
                                 }
                                 VStack(alignment: .leading, spacing: 8) {
@@ -72,7 +72,7 @@ struct ReadingMemoEditSheet: View {
                                     TextEditor(text: $text)
                                         .scrollContentBackground(.hidden).padding(16).frame(minHeight: 140)
                                         .background(Color("Surface"))
-                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }
                                 Button {
                                     Task {
@@ -95,7 +95,7 @@ struct ReadingMemoEditSheet: View {
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 16)
                                         .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color("TextMuted").opacity(0.4) : Color("Primary"))
-                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }.disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                             }
                             .padding(24)

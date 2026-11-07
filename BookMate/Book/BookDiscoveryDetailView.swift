@@ -154,8 +154,7 @@ struct BookDiscoveryDetailView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color("Surface"))
-        .clipShape(RoundedRectangle(cornerRadius: 28))
+        .modifier(ReadingSurface())
         .padding(.horizontal, 24)
     }
 

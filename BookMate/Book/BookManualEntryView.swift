@@ -278,6 +278,7 @@ struct BookManualEntryView: View {
         .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
         .toolbar(.hidden, for: .tabBar)
+        .preference(key: CompactTabBarHiddenKey.self, value: true)
     }
 
     private var registrationButton: some View {

@@ -278,8 +278,7 @@ struct BookDetailView: View {
             .padding(.vertical, 16)
             .padding(.trailing, 16)
         }
-        .background(Color("Surface"))
-        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .padding(.vertical, 8)
         .padding(.horizontal, 24)
     }
 
@@ -414,18 +413,14 @@ struct BookDetailView: View {
                 Image(systemName: "plus")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(Color("PrimaryButtonText"))
-                    .frame(width: 38, height: 38)
+                    .frame(width: 44, height: 44)
                     .background(Color("Primary"), in: Circle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("새 문장 추가하기")
         }
         .padding(16)
-        .background(Color("Surface").opacity(0.94), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(Color("Border").opacity(0.28), lineWidth: 1)
-        }
+        .modifier(ReadingSurface())
         .padding(.horizontal, 24)
     }
 
@@ -462,11 +457,7 @@ struct BookDetailView: View {
         }
         .padding(22)
         .frame(maxWidth: .infinity)
-        .background(Color("Surface").opacity(0.86), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .stroke(Color("Border").opacity(0.26), lineWidth: 1)
-        }
+        .modifier(ReadingSurface())
         .padding(.horizontal, 24)
     }
 
@@ -515,7 +506,7 @@ struct BookDetailView: View {
                     Image(systemName: "pencil")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Color("TextSecondary"))
-                        .frame(width: 34, height: 34)
+                        .frame(width: 44, height: 44)
                         .background(Color("SurfaceElevated").opacity(0.92), in: Circle())
                 }
                 .buttonStyle(.plain)
@@ -528,7 +519,7 @@ struct BookDetailView: View {
                     Image(systemName: "trash")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Color("Error").opacity(0.78))
-                        .frame(width: 34, height: 34)
+                        .frame(width: 44, height: 44)
                         .background(Color("SurfaceElevated").opacity(0.92), in: Circle())
                 }
                 .buttonStyle(.plain)
@@ -536,12 +527,7 @@ struct BookDetailView: View {
             }
         }
         .padding(18)
-        .background(Color("Surface").opacity(0.94), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(Color("Border").opacity(0.22), lineWidth: 1)
-        }
-        .shadow(color: Color("Shadow").opacity(0.035), radius: 10, x: 0, y: 4)
+        .modifier(ReadingSurface())
     }
     // 다이어리 탭
     private var diaryTabContent: some View {
@@ -631,11 +617,7 @@ struct BookDetailView: View {
             }
         }
         .padding(18)
-        .background(Color("Surface").opacity(0.94), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(Color("Border").opacity(0.26), lineWidth: 1)
-        }
+        .modifier(ReadingSurface())
     }
 
     private var diaryEntryCard: some View {
@@ -658,13 +640,8 @@ struct BookDetailView: View {
             diaryPublicToggle
             diarySaveButton
         }
-        .padding(18)
-        .background(Color("Surface").opacity(0.9), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .stroke(Color("Border").opacity(0.22), lineWidth: 1)
-        }
-        .shadow(color: Color("Shadow").opacity(0.035), radius: 10, x: 0, y: 4)
+        .padding(.vertical, 18)
+        .overlay(alignment: .top) { Divider() }
     }
 
     private var diaryReadingStatusPicker: some View {
@@ -888,11 +865,7 @@ struct BookDetailView: View {
         }
         .padding(22)
         .frame(maxWidth: .infinity)
-        .background(Color("Surface").opacity(0.86), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(Color("Border").opacity(0.24), lineWidth: 1)
-        }
+        .modifier(ReadingSurface())
     }
 
     private func readingMemoCard(_ memo: ReadingMemo) -> some View {
@@ -950,11 +923,7 @@ struct BookDetailView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(16)
-            .background(Color("Surface").opacity(0.92), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(Color("Border").opacity(0.2), lineWidth: 1)
-            }
+            .modifier(ReadingSurface())
         }
     }
 

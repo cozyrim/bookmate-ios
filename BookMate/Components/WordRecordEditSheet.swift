@@ -61,9 +61,9 @@ struct WordRecordEditSheet: View {
                     .frame(height: 150)
                     .scrollContentBackground(.hidden)
                     .background(Color("Surface").opacity(0.78))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 20)
+                        RoundedRectangle(cornerRadius: 12)
                             .stroke(Color("Border").opacity(0.12), lineWidth: 1)
                     }
                     .overlay(alignment: .topLeading) {
@@ -123,7 +123,6 @@ struct WordRecordEditSheet: View {
                         .frame(height: 64)
                         .background(Color("Primary"))
                         .clipShape(Capsule())
-                        .shadow(color: Color("Primary").opacity(0.28), radius: 14, x: 0, y: 8)
                 }
                 .padding(.bottom, 10)
             }
