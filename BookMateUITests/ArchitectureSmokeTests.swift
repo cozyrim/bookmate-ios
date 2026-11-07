@@ -44,7 +44,7 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertTrue(item.waitForExistence(timeout: 10))
         capture("realtime-bestsellers", app: app)
         item.tap()
-        XCTAssertTrue(app.links["YES24에서 도서 정보 보기"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["YES24에서 도서 정보 보기"].waitForExistence(timeout: 10))
         app.buttons["book.registration.save"].tap()
         let saved = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "베스트셀러 테스트 도서,")).firstMatch
         XCTAssertTrue(saved.waitForExistence(timeout: 15))
