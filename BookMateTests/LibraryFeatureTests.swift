@@ -104,7 +104,8 @@ final class LibraryFeatureTests: XCTestCase {
         XCTAssertEqual(repository.createCount, 1)
     }
 
-    func testRegistrationCompletionPreservesBookSelectionForPendingWordSave() {
+    // Keep MainActor teardown in a task on iOS 26.2 (swiftlang/swift#87316).
+    func testRegistrationCompletionPreservesBookSelectionForPendingWordSave() async {
         let app = makeModel(repository: LibraryBookStub())
         let book = Book(title: "새 책", author: "저자", imageName: "", progress: 0)
         XCTAssertEqual(app.completeBookRegistration(book), 1)
