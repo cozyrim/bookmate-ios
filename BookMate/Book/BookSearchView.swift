@@ -375,7 +375,7 @@ struct BookSearchView: View {
         searchTask?.cancel()
         BMAnalytics.searchSubmit(mode: .book, entryPoint: "book_search", queryLength: normalized.count)
 
-        Task {
+        searchTask = Task {
             await viewModel.searchBooks(query: normalized)
         }
     }

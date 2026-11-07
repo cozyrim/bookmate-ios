@@ -90,72 +90,17 @@ struct HomeSearchSection: View {
 
     var body: some View {
 
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 8){
-
-                HStack(spacing: 8){
-                    Button {
-                        selectSearchMode(.dictionary)
-                    } label: {
-                        Text("사전 검색")
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(viewModel.searchMode == .dictionary ? .white : Color("TextPrimary"))
-                            .padding(.vertical, 9)
-                            .padding(.horizontal, 14)
-                            .background(
-                                Capsule().fill(viewModel.searchMode == .dictionary ? Color("Primary") : Color("SurfaceElevated").opacity(0.96))
-                            )
-                            .overlay(
-                                Capsule()
-                                    .stroke(Color("Border").opacity(0.55), lineWidth: viewModel.searchMode == .dictionary ? 0 : 1)
-                            )
-                    }
-                    .disabled(viewModel.isLoading)
-
-                    Button {
-                        selectSearchMode(.book)
-                    } label: {
-                        Text("도서 검색")
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(viewModel.searchMode == .book ? .white : Color("TextPrimary"))
-                            .padding(.vertical, 9)
-                            .padding(.horizontal, 14)
-                            .background(
-                                Capsule().fill(viewModel.searchMode == .book ? Color("Primary") : Color("SurfaceElevated").opacity(0.96))
-                            )
-                            .overlay(
-                                Capsule()
-                                    .stroke(Color("Border").opacity(0.55), lineWidth: viewModel.searchMode == .book ? 0 : 1)
-                            )
-                    }
-                    .disabled(viewModel.isLoading || viewModel.isBookSearchLoading)
-
-                    Button {
-                        selectSearchMode(.savedWords)
-                    } label: {
-                        Text("내 기록 검색")
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(viewModel.searchMode == .savedWords ? .white : Color("TextPrimary"))
-                            .padding(.vertical, 9)
-                            .padding(.horizontal, 14)
-                            .background(
-                                Capsule().fill(viewModel.searchMode == .savedWords ? Color("Primary") : Color("SurfaceElevated").opacity(0.96))
-                            )
-                            .overlay(
-                                Capsule()
-                                    .stroke(Color("Border").opacity(0.55), lineWidth: viewModel.searchMode == .savedWords ? 0 : 1)
-                            )
-                            .clipShape(Capsule())
-                    }
-                    .disabled(viewModel.isLoading)
-
-                    Spacer()
-                }
+        VStack(alignment: .leading, spacing: 10) {
+            Picker("검색 범위", selection: Binding(
+                get: { viewModel.searchMode },
+                set: { selectSearchMode($0) }
+            )) {
+                Text("사전").tag(BookMateViewModel.SearchMode.dictionary)
+                Text("도서").tag(BookMateViewModel.SearchMode.book)
+                Text("내 기록").tag(BookMateViewModel.SearchMode.savedWords)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .pickerStyle(.segmented)
+            .disabled(viewModel.isLoading || viewModel.isBookSearchLoading)
 
             HStack{
                 Button {
@@ -242,8 +187,8 @@ struct HomeSearchSection: View {
                 }
             }
             .padding(.horizontal, 16)
-            .frame(height: 52)
-            .background(Color("Surface"))
+            .frame(height: 46)
+            .background(Color("Surface").opacity(0.55))
             .clipShape(Capsule())
             .overlay {
                 Capsule()
@@ -258,19 +203,11 @@ struct HomeSearchSection: View {
                 searchResultsPanel
             }
         }
-        .padding(16)
-        .background {
-            RoundedRectangle(cornerRadius: 32)
-                .fill(Color("SurfaceElevated").opacity(0.64))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 32)
-                        .stroke(Color("Surface").opacity(0.75), lineWidth: 1)
-                }
-                .shadow(color: Color("Shadow").opacity(0.055), radius: 18, x: 0, y: 10)
-        }
+        .padding(12)
+        .modifier(BookMateGlassSurface())
         .padding(.horizontal, 24)
         .padding(.top, 10)
-        .padding(.bottom, 14)
+        .padding(.bottom, 4)
         .frame(maxWidth: .infinity)
         .navigationDestination(isPresented: $isShowingSearchResult) {
             SearchResultView(viewModel: viewModel, onSaveComplete: {
@@ -549,7 +486,7 @@ struct HomeSearchSection: View {
                                 .foregroundStyle(Color("TextMuted"))
                         }
                         .padding(14)
-                        .background(Color("Surface"))
+                        .background(Color("Surface").opacity(0.55))
                         .clipShape(RoundedRectangle(cornerRadius: 18))
                     }
                     .buttonStyle(.plain)

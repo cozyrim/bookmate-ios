@@ -20,7 +20,9 @@ final class UIFixtureExternal: DictionaryRepository, DictionaryExampleRepository
     func scheduleContinueReadingReminderIfEnabled(book: Book?, shelfBook: ShelfBook?) async {}
     func syncTokenWithServerIfPossible(forceRefreshToken: Bool) async {}
     func disableCurrentTokenOnServer(accessToken: String?) async {}
-    func load(for scope: RecentSearchScope) -> [String] { history[scope] ?? [] }
+    func load(for scope: RecentSearchScope) -> [String] {
+        history[scope] ?? (ProcessInfo.processInfo.arguments.contains("--recent-search-fixture") ? ["난잡하다", "몽돌"] : [])
+    }
     func save(_ searches: [String], for scope: RecentSearchScope) { history[scope] = searches }
     func load(ownerID: UUID?) -> [UUID] { shelfOrders[ownerID?.uuidString ?? "guest"] ?? [] }
     func save(_ bookIDs: [UUID], ownerID: UUID?) { shelfOrders[ownerID?.uuidString ?? "guest"] = bookIDs }
