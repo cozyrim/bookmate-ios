@@ -145,7 +145,9 @@ struct HomeView: View {
             ) { sheet in
                 switch sheet {
                 case .options(let book):
-                    MoreOptionsSheet(
+                    BookOptionsSheet(
+                        library: viewModel.libraryFeature,
+                        bookID: book.id,
                         editTitle: "책 수정하기",
                         deleteTitle: "책 삭제하기",
                         moveTitle: "읽은 쪽수 업데이트",
@@ -167,7 +169,7 @@ struct HomeView: View {
                             activeBookSheet = nil
                         }
                     )
-                    .presentationDetents([.height(360)])
+                    .presentationDetents([.height(540), .large])
                     .presentationDragIndicator(.visible)
                     .presentationBackground(Color("AppBackground"))
 
@@ -700,6 +702,10 @@ struct HomeView: View {
                 .scaledToFit()
                 .frame(width: 28, height: 28)
                 .accessibilityHidden(true)
+
+            Text("bookmate")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Color("TextPrimary"))
 
             Spacer(minLength: 8)
 

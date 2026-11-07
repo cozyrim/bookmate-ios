@@ -126,7 +126,9 @@ struct ShelfView: View {
             ) { sheet in
                 switch sheet {
                 case .options(let book):
-                    MoreOptionsSheet(
+                    BookOptionsSheet(
+                        library: viewModel.libraryFeature,
+                        bookID: book.id,
                         editTitle: "책 수정하기",
                         deleteTitle: "책 삭제하기",
                         moveTitle: "읽은 쪽수 업데이트",
@@ -148,7 +150,7 @@ struct ShelfView: View {
                             activeBookSheet = nil
                         }
                     )
-                    .presentationDetents([.height(360)])
+                    .presentationDetents([.height(540), .large])
                     .presentationDragIndicator(.visible)
                     .presentationBackground(Color("AppBackground"))
 
@@ -376,7 +378,7 @@ struct ShelfView: View {
 
     private var shelfHeader: some View {
         HStack(alignment: .center) {
-            Text("내 책장")
+            Text("책")
                 .font(.title)
                 .fontWeight(.bold)
 
@@ -395,12 +397,12 @@ struct ShelfView: View {
                     Image(systemName: "plus")
                         .font(.system(size: 12, weight: .semibold))
 
-                    Text("새 책 추가")
+                    Text("책 추가")
                         .font(.caption2)
                         .fontWeight(.semibold)
                 }
                 .foregroundStyle(Color("PrimaryDeep").opacity(0.82))
-                .frame(height: 36)
+                .frame(height: 44)
                 .padding(.leading, 11)
                 .padding(.trailing, 14)
             }
@@ -417,12 +419,7 @@ struct ShelfView: View {
 
             layoutToggleButton
         }
-        .background(Color("Surface").opacity(0.78), in: Capsule())
-        .overlay {
-            Capsule()
-                .stroke(Color("Border").opacity(0.24), lineWidth: 1)
-        }
-        .shadow(color: Color("Shadow").opacity(0.025), radius: 8, x: 0, y: 3)
+        .glassEffect(.regular, in: Capsule())
     }
 
     private var layoutToggleButton: some View {
@@ -434,7 +431,7 @@ struct ShelfView: View {
             Image(systemName: shelfLayoutStyle.toggleIconName)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(Color("PrimaryDeep").opacity(0.82))
-                .frame(width: 40, height: 36)
+                .frame(width: 44, height: 44)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(shelfLayoutStyle.toggleAccessibilityLabel)

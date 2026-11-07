@@ -10,6 +10,7 @@ import SwiftUI
 struct ProfileView: View {
     @ObservedObject var authViewModel: AuthSessionViewModel
     @ObservedObject var viewModel: BookMateViewModel
+    @Environment(\.compactTabBarHeight) private var tabBarHeight
     @State private var path = NavigationPath()
     @State private var isShowingProfilePreview = false
     @State private var toast: AppToast?
@@ -85,10 +86,10 @@ struct ProfileView: View {
                                 handleMenuTap(item)
                             }
                         }
-                        .padding(.horizontal, 28)
+                        .padding(.horizontal, 24)
                     }
                     .padding(.top, 18)
-                    .padding(.bottom, 24)
+                    .padding(.bottom, tabBarHeight + 24)
                 }
             }
             .navigationDestination(for: ProfileRoute.self) { route in

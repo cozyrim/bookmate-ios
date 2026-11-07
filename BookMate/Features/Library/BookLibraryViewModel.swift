@@ -248,6 +248,21 @@ final class BookLibraryViewModel: ObservableObject {
         }
     }
 
+    func changeReadingStatus(bookID: UUID, to status: ReadingStatus) async -> Bool {
+        guard let book = book(for: bookID) else { return false }
+        if book.readingStatus == status { return true }
+        let reset = status == .wantToRead || (book.progress >= 0.999 && status != .completed)
+        let updated = Book(
+            id: book.id, title: book.title, author: book.author, imageName: book.imageName,
+            category: book.category, progress: status == .completed ? 1 : (reset ? 0 : book.progress),
+            totalPages: book.totalPages,
+            currentPage: status == .completed ? (book.totalPages ?? book.currentPage) : (reset ? (book.totalPages == nil ? nil : 0) : book.currentPage),
+            rating: book.rating, review: book.review, readingStatus: status,
+            startDate: book.startDate, endDate: book.endDate
+        )
+        return await updateBook(updated, successMessage: "독서 상태를 바꿨어요.")
+    }
+
     // 책 정보와 독서 상태를 서버에 수정 요청하고 로컬 상태를 갱신한다.
     func updateBook(_ book: Book, successMessage: String = "책 정보를 수정했어요.") async -> Bool {
         let bookToUpdate = normalizedBookForReadingState(book)
