@@ -223,8 +223,9 @@ struct ThemeOptionCard: View {
         case .skyblue:
             LinearGradient(
                 colors: [
-                    Color("Primary").opacity(0.5),
-                    Color("Surface").opacity(0.8)
+                    Color("AppBackgroundSoft"),
+                    Color("AppBackground"),
+                    Color("Surface")
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
