@@ -47,9 +47,19 @@ final class ArchitectureSmokeTests: XCTestCase {
         let providerLink = app.descendants(matching: .any)["bestsellers.providerLink"].firstMatch
         XCTAssertTrue(providerLink.waitForExistence(timeout: 10))
         XCTAssertEqual(providerLink.label, "YES24에서 도서 정보 보기")
+        XCTAssertFalse(app.buttons["홈"].exists, "Book actions must not overlap the tab bar")
+        XCTAssertTrue(app.staticTexts["book.discovery.introduction"].label.contains("생각을 넓히는"))
+        capture("bestseller-introduction", app: app)
+        app.buttons["리뷰"].tap()
+        XCTAssertFalse(app.buttons["홈"].exists)
+        let registerButton = app.buttons["book.registration.save"]
+        XCTAssertTrue(registerButton.isHittable)
+        XCTAssertLessThan(registerButton.frame.maxY, app.frame.maxY - 20)
+        capture("bestseller-review-footer", app: app)
         app.buttons["book.registration.save"].tap()
         let saved = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "베스트셀러 테스트 도서,")).firstMatch
         XCTAssertTrue(saved.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["홈"].waitForExistence(timeout: 5), "Returning to the shelf restores tab navigation")
     }
 
     func testBestsellerFailureKeepsManualRegistrationAvailable() {
@@ -137,6 +147,11 @@ final class ArchitectureSmokeTests: XCTestCase {
             button.tap()
         }
         XCTAssertTrue(app.staticTexts["독서 기록"].waitForExistence(timeout: 5))
+        let diarySave = app.buttons["book.diary.save"]
+        XCTAssertTrue(diarySave.waitForExistence(timeout: 5))
+        XCTAssertTrue(diarySave.isHittable)
+        XCTAssertFalse(app.buttons["홈"].exists)
+        XCTAssertLessThan(diarySave.frame.maxY, app.frame.maxY - 20)
         capture("book-detail-diary", app: app)
     }
 

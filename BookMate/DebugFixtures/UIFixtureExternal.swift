@@ -20,7 +20,7 @@ final class UIFixtureExternal: BestsellerRepository, DictionaryRepository, Dicti
         return BestsellerFeed(source: "YES24", fetchedAt: "2026-11-08T00:00:00Z", items: [
             Bestseller(rank: 1, id: "123", title: "베스트셀러 테스트 도서", author: "테스트 저자",
                        publisher: "테스트 출판사", isbn: "9780000000001", cover: "",
-                       productUrl: "https://www.yes24.com/product/goods/123", totalPages: 248)
+                       productUrl: "https://www.yes24.com/product/goods/123", totalPages: 248, introduction: "책과 함께 생각을 넓히는 이야기입니다.")
         ])
     }
     func fetchPageCount(isbn: String) async -> Int? { 200 }

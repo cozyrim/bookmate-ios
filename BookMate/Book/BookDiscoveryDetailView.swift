@@ -103,6 +103,8 @@ struct BookDiscoveryDetailView: View {
                 author: draft.author
             )
         }
+        .preference(key: CompactTabBarHiddenKey.self, value: true)
+        .toolbar(.hidden, for: .tabBar)
         .onDisappear { presentationID = UUID() }
         .navigationTitle("북메이트")
         .navigationBarTitleDisplayMode(.inline)
@@ -178,10 +180,11 @@ struct BookDiscoveryDetailView: View {
                 .foregroundStyle(Color("TextMuted"))
 
             Text(descriptionText)
+                .accessibilityIdentifier("book.discovery.introduction")
                 .font(.callout)
                 .foregroundStyle(Color("TextSecondary"))
                 .lineSpacing(4)
-                .lineLimit(isDescriptionExpanded ? nil : 6)
+                .lineLimit(!isDescriptionExpanded && descriptionText.count > 120 ? 6 : nil)
 
             if descriptionText.count > 120 {
                 Button(isDescriptionExpanded ? "접기" : "더보기") {
