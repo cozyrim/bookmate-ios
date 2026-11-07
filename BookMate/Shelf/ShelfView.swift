@@ -9,6 +9,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ShelfView: View {
+    @Environment(\.compactTabBarHeight) private var compactTabBarHeight
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ObservedObject var viewModel: BookMateViewModel
     @Binding var selectedTab: Int
@@ -363,16 +364,16 @@ struct ShelfView: View {
             }
             .padding(.horizontal, 24)
             .padding(.top, 16)
-            .padding(.bottom, 110)
+            .padding(.bottom, 24 + compactTabBarHeight)
 
         case .list:
-            LazyVStack(spacing: 16) {
+            LazyVStack(spacing: 12) {
                 ForEach(viewModel.shelfBooks) { shelfBook in
                     shelfBookCard(for: shelfBook, style: .list)
                         .id(shelfBook.bookId)
                 }
             }
-            .padding(.bottom, 110)
+            .padding(.bottom, 24 + compactTabBarHeight)
         }
     }
 

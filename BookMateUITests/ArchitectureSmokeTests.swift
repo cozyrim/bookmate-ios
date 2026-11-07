@@ -38,9 +38,35 @@ final class ArchitectureSmokeTests: XCTestCase {
             menu.tap()
             XCTAssertTrue(app.buttons["책 수정하기"].waitForExistence(timeout: 5))
             XCTAssertFalse(app.staticTexts["다이어리"].exists)
+            let memo = app.buttons["메모하기"]
+            let delete = app.buttons["책 삭제하기"]
+            XCTAssertLessThanOrEqual(delete.frame.minY - memo.frame.maxY, 2,
+                                     "Memo and delete share the same row rhythm with one divider")
+            capture("\(appearance)-book-actions", app: app)
             app.buttons["취소"].tap()
             books[0].tap()
             XCTAssertTrue(app.staticTexts["다이어리"].waitForExistence(timeout: 5))
+            app.terminate()
+        }
+    }
+
+    func testShelfListAndLargeTextKeepProgressAndMenuUsable() {
+        for largeText in [false, true] {
+            let arguments = largeText ? ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"] : []
+            let app = launch(extraArguments: ["--home-reading-carousel"] + arguments)
+            tab("책", in: app).tap()
+            if !largeText { app.buttons["가로형 보기로 전환"].tap() }
+            let book = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "완독한 책,")).firstMatch
+            XCTAssertTrue(book.waitForExistence(timeout: 5))
+            XCTAssertTrue(book.label.contains("100% 읽음"))
+            let menu = app.buttons["완독한 책 책 메뉴"]
+            XCTAssertTrue(menu.isHittable)
+            // CGRect subtraction can put an exact 44pt height a few floating-point ULPs below 44.
+            XCTAssertEqual(menu.frame.height, 44, accuracy: 16 * CGFloat(44).ulp)
+            capture(largeText ? "large-text-shelf" : "list-shelf", app: app)
+            menu.tap()
+            XCTAssertTrue(app.buttons["책 수정하기"].waitForExistence(timeout: 5))
+            XCTAssertFalse(app.staticTexts["다이어리"].exists)
             app.terminate()
         }
     }
