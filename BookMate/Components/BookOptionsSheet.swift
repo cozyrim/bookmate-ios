@@ -25,7 +25,7 @@ struct BookOptionsSheet: View {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 4) {
                         ForEach(ReadingStatus.allCases, id: \.self) { status in
                             Button {
-                                let resets = book.progress > 0 && (status == .wantToRead || (book.progress >= 0.999 && status != .completed))
+                                let resets = (book.progress > 0 || (book.currentPage ?? 0) > 0) && (status == .wantToRead || (book.progress >= 0.999 && status != .completed))
                                 if resets && book.readingStatus != status {
                                     pendingStatus = status
                                     confirmsReset = true
