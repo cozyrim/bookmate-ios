@@ -18,6 +18,54 @@ final class ArchitectureSmokeTests: XCTestCase {
         }
     }
 
+    func testShelfRowsAlignAndMenuDoesNotOpenBook() {
+        for appearance in ["light", "dark"] {
+            let app = launch(appearance: appearance, extraArguments: ["--home-reading-carousel"])
+            tab("책", in: app).tap()
+            let titles = ["완독한 책", "싯타르타", "참을 수 없는 존재의 가벼움", "낭만적 연애와 그 후의 일상"]
+            let books = titles.map { title in
+                app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title + ",")).firstMatch
+            }
+            for book in books { XCTAssertTrue(book.waitForExistence(timeout: 10)) }
+            XCTAssertEqual(books[0].frame.minY, books[1].frame.minY, accuracy: 1)
+            XCTAssertEqual(books[2].frame.minY, books[3].frame.minY, accuracy: 1)
+            XCTAssertEqual(books[0].frame.minX, books[2].frame.minX, accuracy: 1)
+            XCTAssertEqual(books[1].frame.minX, books[3].frame.minX, accuracy: 1)
+            XCTAssertGreaterThan(books[2].frame.minY, books[0].frame.maxY)
+            capture("\(appearance)-aligned-shelf", app: app)
+            let menu = app.buttons["완독한 책 책 메뉴"]
+            XCTAssertTrue(menu.isHittable)
+            menu.tap()
+            XCTAssertTrue(app.buttons["책 수정하기"].waitForExistence(timeout: 5))
+            XCTAssertFalse(app.staticTexts["다이어리"].exists)
+            app.buttons["취소"].tap()
+            books[0].tap()
+            XCTAssertTrue(app.staticTexts["다이어리"].waitForExistence(timeout: 5))
+            app.terminate()
+        }
+    }
+
+    func testCompactWordFiltersAndGlassSearchKeepWorking() {
+        let app = launch()
+        tab("단어장", in: app).tap()
+        let all = app.buttons["전체"]
+        XCTAssertGreaterThanOrEqual(all.frame.height, 44)
+        all.tap()
+        app.buttons["전체 책"].tap()
+        XCTAssertTrue(app.staticTexts["책 선택"].waitForExistence(timeout: 5))
+        app.buttons["싯타르타"].firstMatch.tap()
+        app.buttons["최신순"].tap()
+        XCTAssertTrue(app.staticTexts["정렬 기준"].waitForExistence(timeout: 5))
+        app.buttons["가나다순"].tap()
+        XCTAssertTrue(app.buttons["가나다순"].waitForExistence(timeout: 5))
+        let search = app.textFields["저장한 단어 검색..."]
+        search.tap()
+        search.typeText("zzzz")
+        XCTAssertTrue(app.staticTexts["검색 결과가 없어요."].waitForExistence(timeout: 5))
+        app.buttons["검색어 지우기"].tap()
+        XCTAssertTrue(app.staticTexts["찰나"].waitForExistence(timeout: 5))
+    }
+
     func testDictionarySearchShowsRepositoryResultAndSaveAction() {
         let app = launch()
         let input = app.textFields.firstMatch
