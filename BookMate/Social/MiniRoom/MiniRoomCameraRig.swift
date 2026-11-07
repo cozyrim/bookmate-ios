@@ -6,12 +6,19 @@ import RealityKit
 final class MiniRoomCameraRig {
     let entity = Entity()
     private(set) var focused = true
+    private var viewport = CGSize.zero
     private var angle: Float = 0.40
 
     init() { update() }
 
     func setFocus(_ focused: Bool) {
         self.focused = focused
+        update()
+    }
+
+    func setViewport(_ size: CGSize) {
+        guard size != viewport else { return }
+        viewport = size
         update()
     }
 
@@ -40,6 +47,16 @@ final class MiniRoomCameraRig {
         return (entity.position(relativeTo: nil), entity.orientation(relativeTo: nil).act(simd_normalize(local)))
     }
 
+    func project(_ world: SIMD3<Float>, viewport: CGSize) -> CGPoint? {
+        guard viewport.width > 0, viewport.height > 0 else { return nil }
+        let local = entity.orientation(relativeTo: nil).inverse.act(world - entity.position(relativeTo: nil))
+        guard local.z < -0.05 else { return nil }
+        let halfWidth = tan(horizontalFieldOfView * .pi / 360)
+        let x = (local.x / (-local.z * halfWidth) + 1) * Float(viewport.width) / 2
+        let y = (1 - local.y / (-local.z * halfWidth * Float(viewport.height / viewport.width))) * Float(viewport.height) / 2
+        return CGPoint(x: CGFloat(x), y: CGFloat(y))
+    }
+
     private var horizontalFieldOfView: Float { focused ? 62 : 54 }
 
     private func update() {
@@ -51,5 +68,11 @@ final class MiniRoomCameraRig {
         let distance: Float = focused ? 2.9 : 7.8
         let elevation: Float = focused ? 0.8 : 3.7
         entity.look(at: target, from: target + [sin(angle) * distance, elevation, cos(angle) * distance], relativeTo: nil)
+        if !focused, viewport.width > 0 {
+            // Compose the room above the bottom controls while retaining matching hit projection.
+            let aspect = Float(viewport.height / viewport.width)
+            let offset = 0.24 * aspect * sqrt(distance * distance + elevation * elevation) * tan(horizontalFieldOfView * .pi / 360)
+            entity.position -= entity.orientation.act([0, offset, 0])
+        }
     }
 }

@@ -4,9 +4,10 @@ import UIKit
 /// Geometry, colors and local transforms are exported from the approved room prototype.
 @MainActor
 final class MiniRoomRealityScene {
-    enum Hit { case book(UUID), guestbook, lamp }
+    enum Hit { case book(UUID), guestbook, lamp, seat }
     static let shelfCapacity = 9
     static let initialAngle: Float = 0.40
+    let character = RoomCharacterController()
     let anchor = AnchorEntity(world: .zero)
     private let cameraRig = MiniRoomCameraRig()
     private let fill = PointLight()
@@ -23,6 +24,7 @@ final class MiniRoomRealityScene {
 
     init() {
         anchor.addChild(cameraRig.entity)
+        anchor.addChild(character.root)
         if let url = Bundle.main.url(forResource: "MiniRoomBlueprint", withExtension: "json"),
            let data = try? Data(contentsOf: url), let blueprint = try? JSONDecoder().decode(Node.self, from: data) {
             anchor.addChild(make(blueprint))
@@ -58,6 +60,12 @@ final class MiniRoomRealityScene {
         foregroundDecorations.forEach { $0.isEnabled = !value }
         resetOpenedBook()
         cameraRig.setFocus(value)
+    }
+
+    func setViewport(_ size: CGSize) { cameraRig.setViewport(size) }
+
+    func characterScreenPoint(in viewport: CGSize) -> CGPoint? {
+        cameraRig.project(character.headPosition, viewport: viewport)
     }
 
     func aimCamera(atAngle angle: Float) {
@@ -113,6 +121,7 @@ final class MiniRoomRealityScene {
     func hit(for entity: Entity) -> Hit? {
         var current: Entity? = entity
         while let node = current {
+            if node.name == "seat" { return .seat }
             if node.name == "guest" { return .guestbook }
             if node.name == "lamp" { return .lamp }
             if node.name.hasPrefix("book:"), let id = UUID(uuidString: String(node.name.dropFirst(5))) { return .book(id) }
@@ -177,13 +186,13 @@ final class MiniRoomRealityScene {
         }
         if node.bookSlot != nil {
             entity.isEnabled = false
-        } else if node.action == "guest" || node.action == "lamp" {
+        } else if node.action == "guest" || node.action == "lamp" || node.action == "seat" {
             let target = Entity()
             target.name = node.action ?? ""
             let isLamp = node.action == "lamp"
-            target.position = isLamp ? [0, 0.59, 0] : [0, 0.08, 0]
+            target.position = node.action == "seat" ? [0, 0.8, 0] : (isLamp ? [0, 0.59, 0] : [0, 0.08, 0])
             target.components.set(CollisionComponent(shapes: [
-                .generateBox(size: isLamp ? [0.60, 0.45, 0.60] : [0.65, 0.22, 0.51])
+                .generateBox(size: node.action == "seat" ? [1.3, 0.5, 1.1] : (isLamp ? [0.60, 0.45, 0.60] : [0.65, 0.22, 0.51]))
             ]))
             entity.addChild(target)
         }

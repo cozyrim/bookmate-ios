@@ -22,7 +22,8 @@ extension AppDependencies {
                 pushTokens: external, dictionary: external, searchPreferences: external,
                 books: library, words: library, quotes: library, memos: library, reviews: library,
                 bestsellers: external, bookSearch: external, bookPages: external, bookMetadata: external,
-                dictionaryExamples: external, recentSearches: external, shelfOrder: external
+                dictionaryExamples: external, recentSearches: external,
+                readingSessions: FileReadingSessionRepository(environment: "ui-fixture"), shelfOrder: external
             )
         }
         #endif

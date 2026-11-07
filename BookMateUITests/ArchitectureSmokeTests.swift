@@ -282,11 +282,11 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertEqual(lamp.value as? String, "켜짐")
         capture("wood-room-lamp-on", app: app)
         // The room renders edge-to-edge; target the visible objects in screen coordinates.
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.44, dy: 0.525)).tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.436, dy: 0.383)).tap()
         XCTAssertEqual(lamp.value as? String, "꺼짐")
         capture("wood-room-lamp-off", app: app)
 
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.51, dy: 0.563)).tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.514, dy: 0.419)).tap()
         XCTAssertTrue(app.staticTexts["좋은 책장을 구경했어요."].waitForExistence(timeout: 10))
         let guestbookTitle = app.staticTexts["독서가님의 방명록"]
         let dismissal = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.88))
@@ -315,6 +315,69 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: visible, object: home)], timeout: 5), .completed)
         tab("서재", in: app).tap()
         assertDestination("서재", in: app)
+    }
+
+    func testQuickBookStatusAndPersonalReadingSession() {
+        let app = launch(extraArguments: ["--room-books"])
+        XCTAssertTrue(app.staticTexts["bookmate"].exists)
+        tab("책", in: app).tap()
+        XCTAssertTrue(app.staticTexts["책 추가"].exists)
+        app.buttons["싯타르타 책 메뉴"].tap()
+        let completed = app.buttons["book.status.completed"]
+        XCTAssertTrue(completed.waitForExistence(timeout: 5))
+        completed.tap()
+        XCTAssertTrue(completed.waitForExistence(timeout: 5))
+        app.buttons["book.status.wantToRead"].tap()
+        XCTAssertTrue(app.buttons["진행률 초기화"].waitForExistence(timeout: 5))
+        let resetCancel = app.buttons.matching(NSPredicate(format: "label == %@", "취소"))
+            .allElementsBoundByIndex.first(where: { $0.isHittable })
+        if let resetCancel { resetCancel.tap() }
+        else {
+            // iOS 26 presents this confirmation as a popover; tapping its outside cancels it.
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.60)).tap()
+        }
+        let dismissed = NSPredicate(format: "exists == false")
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: dismissed, object: app.buttons["진행률 초기화"])], timeout: 5), .completed)
+        capture("quick-book-status", app: app)
+        app.buttons["취소"].tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "100% 읽음")).firstMatch.waitForExistence(timeout: 5))
+        tab("서재", in: app).tap()
+        if !app.buttons["miniRoom.wood3D.lamp"].exists {
+            app.buttons["배경"].tap()
+            app.buttons["miniRoom.theme.wood3D"].tap()
+            app.buttons["배경 적용하기"].tap()
+        }
+        // End a previous fixture run if the test was interrupted. Real accounts use another namespace.
+        if app.buttons["reading.finish"].exists { app.buttons["reading.finish"].tap() }
+        let start = app.buttons["reading.start"]
+        XCTAssertTrue(start.waitForExistence(timeout: 10))
+        start.tap()
+        let timer = app.staticTexts["reading.timer"]
+        XCTAssertTrue(timer.waitForExistence(timeout: 5))
+        let elapsed = NSPredicate(format: "label != %@", "00:00:00")
+        expectation(for: elapsed, evaluatedWith: timer)
+        waitForExpectations(timeout: 5)
+        XCTAssertTrue(app.staticTexts["소파에서 읽고 있어요."].waitForExistence(timeout: 20))
+        capture("personal-room-reading", app: app)
+        app.buttons["reading.pause"].tap()
+        let paused = timer.label
+        XCTAssertTrue(app.staticTexts["잠시 쉬고 있어요."].waitForExistence(timeout: 5))
+        app.buttons["배경"].tap()
+        XCTAssertTrue(app.alerts["독서를 마치고 배경을 바꿀까요?"].waitForExistence(timeout: 5))
+        app.alerts.buttons["계속 읽기"].tap()
+        app.terminate()
+        app.launch()
+        tab("서재", in: app).tap()
+        XCTAssertTrue(app.buttons["reading.pause"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.buttons["reading.pause"].label, "계속 읽기")
+        XCTAssertEqual(app.staticTexts["reading.timer"].label, paused)
+        app.buttons["reading.pause"].tap()
+        app.buttons["reading.finish"].tap()
+        XCTAssertTrue(app.buttons["reading.start"].waitForExistence(timeout: 5))
+        app.buttons["reading.history"].tap()
+        XCTAssertTrue(app.staticTexts["독서 기록"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "reading.record.")).firstMatch.exists)
+        capture("personal-reading-history", app: app)
     }
 
     private func launch(appearance: String = "light", extraArguments: [String] = []) -> XCUIApplication {

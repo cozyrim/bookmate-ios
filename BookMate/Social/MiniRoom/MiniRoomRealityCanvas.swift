@@ -1,5 +1,6 @@
 import RealityKit
 import SwiftUI
+import Combine
 
 struct MiniRoomRealityCanvas: UIViewRepresentable {
     let books: [Book]
@@ -9,6 +10,9 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
     let lampIsOn: Bool
     let reduceMotion: Bool
     let darkMode: Bool
+    @Binding var characterIsMoving: Bool
+    let characterIntent: RoomCharacterController.Intent
+    let timerText: String?
     let onHit: (MiniRoomRealityScene.Hit) -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -17,6 +21,7 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
         let view = ARView(frame: .zero, cameraMode: .nonAR, automaticallyConfigureSession: false)
         let coordinator = context.coordinator
         view.scene.addAnchor(coordinator.room.anchor)
+        coordinator.attach(to: view)
         // Render the native scene without camera access.
         view.renderOptions.insert([.disableMotionBlur, .disableDepthOfField, .disableCameraGrain, .disableAREnvironmentLighting])
 
@@ -34,6 +39,10 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
         let coordinator = context.coordinator
         coordinator.onHit = onHit
         coordinator.reduceMotion = reduceMotion
+        coordinator.active = active
+        coordinator.onMovementChanged = { characterIsMoving = $0 }
+        coordinator.timerLabel.text = timerText
+        coordinator.room.character.setIntent(characterIntent, reduceMotion: reduceMotion)
         coordinator.openingChanged = { opening = $0 }
         coordinator.room.updateBooks(books)
         coordinator.room.setFocus(focused)
@@ -46,12 +55,50 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
 
     static func dismantleUIView(_ view: ARView, coordinator: Coordinator) {
         coordinator.cancel()
+        coordinator.frameSubscription?.cancel()
+        coordinator.timerLabel.removeFromSuperview()
         view.scene.anchors.removeAll()
     }
 
     @MainActor
     final class Coordinator: NSObject, UIGestureRecognizerDelegate {
         let room = MiniRoomRealityScene()
+        var frameSubscription: (any Cancellable)?
+        var active = true
+        var onMovementChanged: ((Bool) -> Void)?
+        private var lastMoving = false
+        let timerLabel = UILabel()
+
+        func attach(to view: ARView) {
+            timerLabel.font = .monospacedDigitSystemFont(ofSize: 15, weight: .semibold)
+            timerLabel.textColor = .label
+            timerLabel.backgroundColor = .secondarySystemBackground.withAlphaComponent(0.94)
+            timerLabel.textAlignment = .center
+            timerLabel.layer.cornerRadius = 16
+            timerLabel.clipsToBounds = true
+            timerLabel.isUserInteractionEnabled = false
+            timerLabel.isAccessibilityElement = false
+            timerLabel.isHidden = true
+            view.addSubview(timerLabel)
+            frameSubscription = view.scene.subscribe(to: SceneEvents.Update.self) { [weak self, weak view] event in
+                guard let self, let view, self.active else { return }
+                self.room.setViewport(view.bounds.size)
+                self.room.character.update(deltaTime: event.deltaTime)
+                let moving = self.room.character.isWalking
+                if moving != self.lastMoving {
+                    self.lastMoving = moving
+                    self.onMovementChanged?(moving)
+                }
+                guard self.timerLabel.text != nil, let point = self.room.characterScreenPoint(in: view.bounds.size),
+                      view.bounds.insetBy(dx: 65, dy: 30).contains(point) else {
+                    self.timerLabel.isHidden = true
+                    return
+                }
+                self.timerLabel.frame = CGRect(x: point.x - 65, y: point.y - 16, width: 130, height: 32)
+                self.timerLabel.isHidden = false
+            }
+        }
+
         var onHit: ((MiniRoomRealityScene.Hit) -> Void)?
         var reduceMotion = false
         var openingChanged: ((UUID?) -> Void)?
