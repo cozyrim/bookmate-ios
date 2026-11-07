@@ -81,7 +81,7 @@ struct WordArchiveView: View {
 
                 } else {
                     ScrollView {
-                        VStack {
+                        VStack(spacing: 4) {
 
                             HStack {
                                 Image(systemName: "magnifyingglass")
@@ -108,9 +108,11 @@ struct WordArchiveView: View {
                                         archiveSearchText = ""
                                     } label: {
                                         Image(systemName: "xmark.circle.fill")
-                                            .foregroundStyle(Color("TextMuted").opacity(0.6))
+                                            .foregroundStyle(Color("TextSecondary"))
+                                            .frame(width: 44, height: 44)
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityLabel("검색어 지우기")
                                     .simultaneousGesture(
                                         TapGesture().onEnded {
                                             BMAnalytics.wordCardTap(entryPoint: "word_archive")
@@ -119,17 +121,15 @@ struct WordArchiveView: View {
                                 }
                             }
                             .padding(.horizontal, 16)
-                            .frame(height: 50)
-                            .background(Color("Surface"))
-                            .clipShape(Capsule())
+                            .frame(height: 48)
+                            .modifier(BookMateGlassSurface(radius: 24))
                             .padding(.horizontal, 24)
                             .padding(.top, 18)
 
                             categoryChips
-                                .padding(.top, 12)
+                                .padding(.top, 8)
                             
                             filterAndSortBar
-                                .padding(.top, 8)
                             
                             
                             
@@ -274,10 +274,11 @@ struct WordArchiveView: View {
             Text(title)
                 .font(.caption.weight(selected ? .bold : .medium))
                 .foregroundStyle(selected ? Color("Primary") : Color("TextSecondary"))
-                .padding(.horizontal, 16)
-                .frame(minHeight: 44)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 32)
                 .overlay(Capsule().strokeBorder(selected ? Color("Primary") : Color("TextMuted").opacity(0.55), lineWidth: selected ? 1.5 : 0.75))
-                .contentShape(Capsule())
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
@@ -304,14 +305,15 @@ struct WordArchiveView: View {
                         .font(.caption2)
                 }
                 .foregroundStyle(viewModel.archiveSelectedBookId == nil ? Color("TextSecondary") : Color("Primary"))
-                .padding(.vertical, 8)
-                .padding(.horizontal, 14)
-                .frame(minHeight: 44)
-                .contentShape(Capsule())
+                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 32)
                 .overlay(
                     Capsule()
                         .stroke(viewModel.archiveSelectedBookId == nil ? Color("Border").opacity(0.5) : Color("Primary").opacity(0.5), lineWidth: 1)
                 )
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
@@ -331,14 +333,15 @@ struct WordArchiveView: View {
                         .font(.caption2)
                 }
                 .foregroundStyle(Color("TextSecondary"))
-                .padding(.vertical, 8)
-                .padding(.horizontal, 14)
-                .frame(minHeight: 44)
-                .contentShape(Capsule())
+                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 32)
                 .overlay(
                     Capsule()
                         .stroke(Color("Border").opacity(0.5), lineWidth: 1)
                 )
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
