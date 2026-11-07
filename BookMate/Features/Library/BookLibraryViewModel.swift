@@ -258,7 +258,7 @@ final class BookLibraryViewModel: ObservableObject {
             totalPages: book.totalPages,
             currentPage: status == .completed ? (book.totalPages ?? book.currentPage) : (reset ? (book.totalPages == nil ? nil : 0) : book.currentPage),
             rating: book.rating, review: book.review, readingStatus: status,
-            startDate: book.startDate, endDate: status == .completed ? book.endDate : nil
+            startDate: book.startDate, endDate: book.endDate
         )
         return await updateBook(updated, successMessage: "독서 상태를 바꿨어요.")
     }

@@ -14,6 +14,8 @@ struct BookOptionsSheet: View {
     let onMemo: () -> Void
     @State private var saving = false
     @State private var error: String?
+    @State private var pendingStatus: ReadingStatus?
+    @State private var confirmsReset = false
 
     var body: some View {
         ScrollView {
@@ -23,13 +25,11 @@ struct BookOptionsSheet: View {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 4) {
                         ForEach(ReadingStatus.allCases, id: \.self) { status in
                             Button {
-                                saving = true
-                                error = nil
-                                Task {
-                                    let success = await library.changeReadingStatus(bookID: bookID, to: status)
-                                    saving = false
-                                    if !success { error = "상태를 저장하지 못했어요. 다시 선택해 주세요." }
-                                }
+                                let resets = book.progress > 0 && (status == .wantToRead || (book.progress >= 0.999 && status != .completed))
+                                if resets && book.readingStatus != status {
+                                    pendingStatus = status
+                                    confirmsReset = true
+                                } else { save(status) }
                             } label: {
                                 HStack(spacing: 6) {
                                     Text(status.displayName)
@@ -62,5 +62,25 @@ struct BookOptionsSheet: View {
         }
         .disabled(saving)
         .interactiveDismissDisabled(saving)
+        .confirmationDialog("진행률을 0%로 바꿀까요?", isPresented: $confirmsReset, titleVisibility: .visible) {
+            Button("진행률 초기화", role: .destructive) {
+                if let status = pendingStatus { save(status) }
+                pendingStatus = nil
+            }
+            Button("취소", role: .cancel) { pendingStatus = nil }
+        } message: {
+            Text("이 상태로 바꾸면 읽은 쪽수와 진행률이 초기화돼요. 감상평과 메모는 유지돼요.")
+        }
     }
+
+    private func save(_ status: ReadingStatus) {
+        saving = true
+        error = nil
+        Task {
+            let success = await library.changeReadingStatus(bookID: bookID, to: status)
+            saving = false
+            if !success { error = "상태를 저장하지 못했어요. 다시 선택해 주세요." }
+        }
+    }
+
 }
