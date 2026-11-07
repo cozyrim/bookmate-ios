@@ -43,37 +43,33 @@ struct WordDetailsView: View {
                 topBar
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 28) {
+                    VStack(alignment: .leading, spacing: 24) {
                         wordHeader
                         exampleSentenceSection
                         savedBookSection
                     }
-                    .padding(.horizontal, 28)
-                    .padding(.top, 34)
-                    .padding(.bottom, 120)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
+                    .padding(.bottom, 24)
                 }
             }
             
-            VStack {
-                Spacer()
-                
-                Button {
-                    isShowingEditSheet = true
-                } label: {
-                    Label("기록 수정하기", systemImage: "pencil")
-                        .font(.headline)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color("PrimaryButtonText"))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 62)
-                        .background(Color("Primary"))
-                        .clipShape(Capsule())
-                        .shadow(color: Color("Primary").opacity(0.28), radius: 14, x: 0, y: 8)
-                }
-                .padding(.horizontal, 28)
-                .padding(.bottom, 24)
-            }
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Button { isShowingEditSheet = true } label: {
+                Label("기록 수정하기", systemImage: "pencil")
+                    .font(.headline)
+                    .foregroundStyle(Color("PrimaryButtonText"))
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .background(Color("Primary"), in: .rect(cornerRadius: ReadingStyle.fieldRadius))
+            }
+            .accessibilityIdentifier("word.detail.edit")
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
+            .background(.regularMaterial)
+        }
+        .preference(key: CompactTabBarHiddenKey.self, value: true)
+        .toolbar(.hidden, for: .tabBar)
         .sheet(isPresented: $isShowingEditSheet) {
             WordRecordEditSheet(word: currentWord,
                                 onSave: { updateWord in
@@ -81,9 +77,9 @@ struct WordDetailsView: View {
                     await viewModel.updateWord(updateWord)
             }
             )
-            .presentationDetents([.height(620)])
+            .presentationDetents([.large])
             .presentationDragIndicator(.visible)
-            .presentationBackground(Color.clear)
+            .presentationBackground(Color("AppBackground"))
         }
         .sheet(isPresented: $isShowingMoveBookSheet) {
             MoveWordBookSheet(
@@ -122,8 +118,9 @@ struct WordDetailsView: View {
             CircleIconButton(systemName: "chevron.left") {
                 dismiss()
             }
-            .frame(width: 50, height: 50)
-            
+            .frame(width: 44, height: 44)
+            .accessibilityLabel("뒤로")
+
             Spacer()
             
             MoreOptionsMenu(
@@ -135,31 +132,31 @@ struct WordDetailsView: View {
                     isShowingMoveBookSheet = true
                 }
             )
-            .frame(width: 50, height: 50)
+            .frame(width: 44, height: 44)
             .background(Color("Surface").opacity(0.18))
             .clipShape(Circle())
         }
-        .padding(.horizontal, 28)
-        .padding(.top, 16)
+        .padding(.horizontal, 24)
+        .padding(.top, 8)
     }
     
     private var wordHeader: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 12) {
             Text(currentWord.text)
-                .font(.system(size: 44, weight: .bold))
-                .foregroundStyle(Color("TextPrimary").opacity(0.82))
+                .font(.largeTitle.bold())
+                .foregroundStyle(Color("TextPrimary"))
             
             PartOfSpeechBadge(
                 text: currentWord.partOfSpeech,
-                font: .callout,
-                horizontalPadding: 12,
-                verticalPadding: 8
+                font: .caption,
+                horizontalPadding: 10,
+                verticalPadding: 4
             )
             
             Text(currentWord.meaning)
                 .font(.title3)
                 .fontWeight(.regular)
-                .foregroundStyle(Color("TextPrimary").opacity(0.78))
+                .foregroundStyle(Color("TextPrimary"))
                 .lineSpacing(6)
             
         }
@@ -167,64 +164,58 @@ struct WordDetailsView: View {
     
     private var exampleSentenceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("책 속 문장")
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundStyle(Color("TextPrimary").opacity(0.82))
-            
-            Text(currentWord.exampleSentence?.isEmpty == false ? currentWord.exampleSentence! : "아직 저장한 책 속 문장이 없어요.")
-                .font(.title3)
-                .foregroundStyle(Color("TextPrimary").opacity(currentWord.exampleSentence == nil ? 0.42 : 0.78))
-                .lineSpacing(8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(22)
-                .background(Color("Surface").opacity(0.18))
-                .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius))
-                .shadow(color: Color("Shadow").opacity(0.05), radius: 12, x: 0, y: 6)
+            Text("책 속 문장").font(.headline).foregroundStyle(Color("TextPrimary"))
+            if let sentence = currentWord.exampleSentence, !sentence.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text(sentence).font(.body).foregroundStyle(Color("TextPrimary"))
+                    .lineSpacing(5).textSelection(.enabled)
+            } else {
+                Text("기록 수정에서 이 단어를 만난 문장을 남겨보세요.")
+                    .font(.body).foregroundStyle(Color("TextSecondary"))
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
-    
-    
+
     private var savedBookSection: some View {
         VStack(alignment: .leading, spacing: 14) {
+            Divider()
             Text("저장한 책")
-                .font(.title3)
+                .font(.headline)
                 .fontWeight(.bold)
-                .foregroundStyle(Color("TextPrimary").opacity(0.82))
+                .foregroundStyle(Color("TextPrimary"))
             
             if let relatedBook {
                 NavigationLink {
                     BookDetailView(viewModel: viewModel, book: relatedBook)
                 } label: {
                     HStack(spacing: 14) {
-                        BookCoverCell(imageName: relatedBook.imageName, width: 46)
+                        BookCoverCell(imageName: relatedBook.imageName, width: 54, trailingPadding: 0)
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text(relatedBook.title)
                                 .font(.headline)
-                                .foregroundStyle(Color("TextPrimary").opacity(0.82))
+                                .foregroundStyle(Color("TextPrimary"))
                                 .lineLimit(1)
                             
                             Text(relatedBook.author)
                                 .font(.caption)
-                                .foregroundStyle(Color("TextPrimary").opacity(0.55))
+                                .foregroundStyle(Color("TextSecondary"))
                         }
                         
                         Spacer()
                         
                         Image(systemName: "chevron.right")
                             .font(.callout)
-                            .foregroundStyle(Color("TextPrimary").opacity(0.45))
+                            .foregroundStyle(Color("TextSecondary"))
                     }
-                    .padding(16)
-                    .background(Color("Surface").opacity(0.18))
-                    .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius))
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }else {
                 Text("연결된 책 정보를 찾을 수 없습니다.")
                     .font(.callout)
-                    .foregroundStyle(Color("TextPrimary").opacity(0.55))
+                    .foregroundStyle(Color("TextSecondary"))
             }
         }
     }
