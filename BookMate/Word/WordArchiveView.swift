@@ -110,6 +110,7 @@ struct WordArchiveView: View {
                                         Image(systemName: "xmark.circle.fill")
                                             .foregroundStyle(Color("TextSecondary"))
                                             .frame(width: 44, height: 44)
+                                            .contentShape(Rectangle())
                                     }
                                     .buttonStyle(.plain)
                                     .accessibilityLabel("검색어 지우기")
