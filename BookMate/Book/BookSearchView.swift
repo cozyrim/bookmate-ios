@@ -10,12 +10,20 @@ import SwiftUI
 // 책 등록을 위해 검색하고, 검색 결과까지 보여주는 화면
 struct BookSearchView: View {
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var bestsellers: BestsellerViewModel
     @State private var query = ""
     @State private var searchTask: Task<Void, Never>?
     @ObservedObject var viewModel: BookMateViewModel
 
     @Binding var selectedTab: Int
     let onFinishRegistration: (Int) -> Void
+
+    init(viewModel: BookMateViewModel, selectedTab: Binding<Int>, onFinishRegistration: @escaping (Int) -> Void) {
+        self.viewModel = viewModel
+        self._selectedTab = selectedTab
+        self.onFinishRegistration = onFinishRegistration
+        _bestsellers = StateObject(wrappedValue: BestsellerViewModel(repository: viewModel.dependencies.bestsellers))
+    }
 
     private var trimmedQuery: String {
         query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -54,6 +62,7 @@ struct BookSearchView: View {
                     VStack(spacing: 18) {
                         resultTitleArea
                         resultArea
+                        if trimmedQuery.isEmpty { bestsellerSection }
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 18)
@@ -61,6 +70,7 @@ struct BookSearchView: View {
                 }
             }
         }
+        .task { await bestsellers.load() }
         .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
         .onAppear {
@@ -182,6 +192,55 @@ struct BookSearchView: View {
         .padding(22)
         .frame(maxWidth: .infinity)
         .modifier(ReadingSurface())
+    }
+
+    private var bestsellerSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("YES24 실시간 베스트셀러").font(.headline)
+                Spacer()
+                Button { Task { await bestsellers.load() } } label: {
+                    Image(systemName: "arrow.clockwise").frame(width: 44, height: 44)
+                }
+                .disabled(bestsellers.isLoading)
+                .accessibilityLabel("베스트셀러 새로고침")
+            }
+            .foregroundStyle(Color("TextPrimary"))
+            if bestsellers.isLoading {
+                ProgressView("순위를 불러오고 있어요")
+            } else if let error = bestsellers.errorMessage {
+                Text(error).font(.callout).foregroundStyle(Color("TextSecondary"))
+                    .accessibilityIdentifier("bestsellers.error")
+            } else if let feed = bestsellers.feed {
+                if feed.items.isEmpty {
+                    Text("현재 제공되는 순위가 없어요.").foregroundStyle(Color("TextSecondary"))
+                }
+                ForEach(feed.items) { book in
+                    NavigationLink {
+                        BookDiscoveryDetailView(viewModel: viewModel, draft: book.registrationDraft,
+                                                selectedTab: $selectedTab, onFinishRegistration: finishRegistration,
+                                                sourceURL: book.sourceURL)
+                    } label: {
+                        HStack(alignment: .center, spacing: 12) {
+                            Text(String(book.rank)).font(.headline).monospacedDigit()
+                                .foregroundStyle(Color("Primary")).frame(width: 24)
+                            BookCoverCell(imageName: book.registrationDraft.imageName, width: 66, trailingPadding: 0)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(book.title).font(.callout.weight(.semibold)).foregroundStyle(Color("TextPrimary")).lineLimit(2)
+                                Text(book.author).font(.caption).foregroundStyle(Color("TextSecondary")).lineLimit(2)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("bestsellers.item.\(book.id)")
+                }
+                Text("출처 YES24 · 국내도서 · \(bestsellers.updatedTimeText) 조회")
+                    .font(.caption).foregroundStyle(Color("TextSecondary"))
+            }
+        }
     }
 
     private var quickSearchExamples: some View {

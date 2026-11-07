@@ -21,7 +21,7 @@ extension AppDependencies {
                 social: social, moderation: social, auth: UIFixtureAuth(), tokens: UIFixtureTokens(),
                 pushTokens: external, dictionary: external, searchPreferences: external,
                 books: library, words: library, quotes: library, memos: library, reviews: library,
-                bookSearch: external, bookPages: external, bookMetadata: external,
+                bestsellers: external, bookSearch: external, bookPages: external, bookMetadata: external,
                 dictionaryExamples: external, recentSearches: external, shelfOrder: external
             )
         }
