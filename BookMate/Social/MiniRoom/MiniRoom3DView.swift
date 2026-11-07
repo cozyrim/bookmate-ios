@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct MiniRoom3DView: View {
+    @ObservedObject var reading: ReadingSessionViewModel
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var characterIsMoving = false
+    @State private var characterIntent: RoomCharacterController.Intent = .shelf
     @Environment(\.compactTabBarHeight) private var compactTabBarHeight
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @Environment(\.colorScheme) private var colorScheme
@@ -27,11 +31,9 @@ struct MiniRoom3DView: View {
 
     var body: some View {
         ZStack {
-            MiniRoomRealityCanvas(
-                books: visibleBooks, focused: focused, opening: $opening,
-                active: active, lampIsOn: lampIsOn, reduceMotion: reduceMotion,
-                darkMode: colorScheme == .dark, onHit: handleHit
-            )
+            TimelineView(.periodic(from: .now, by: reading.active == nil ? 60 : 1)) { context in
+                canvas(at: context.date)
+            }
             // A consistent dusk grade accompanies the practical light on every renderer.
             .colorMultiply(lampIsOn ? .white : Color(red: 0.80, green: 0.84, blue: 0.92))
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: lampIsOn)
@@ -45,6 +47,10 @@ struct MiniRoom3DView: View {
                 VStack(spacing: 12) {
                     roomHeader
                     Spacer(minLength: 16)
+                    ReadingRoomControls(model: reading, books: books,
+                                        onStart: { focused = false; characterIntent = .seated },
+                                        onSit: { focused = false; characterIntent = .seated },
+                                        onWalk: { focused = false; characterIntent = $0 })
                     roomControls
                 }
                 .padding(.horizontal, 16)
@@ -54,11 +60,32 @@ struct MiniRoom3DView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .onAppear { active = true }
+        .onAppear { active = true; if reading.active != nil { focused = false } }
+        .onChange(of: reading.active?.id) { _, id in if id != nil { focused = false } }
         .onDisappear { active = false; opening = nil }
+        .onChange(of: scenePhase) { _, phase in if phase != .active { opening = nil } }
         .onChange(of: books.map(\.id)) { _, _ in page = min(page, pageCount - 1); opening = nil }
         .tint(Color("PrimaryDeep"))
         .toolbarBackground(.hidden, for: .tabBar)
+    }
+
+    private var renderedIntent: RoomCharacterController.Intent {
+        guard let session = reading.active else { return characterIntent }
+        return session.isPaused ? .seated : .reading
+    }
+
+    private func canvas(at date: Date) -> some View {
+        let session = reading.active
+        let timerText: String? = session.map {
+            let prefix = $0.isPaused ? "휴식 " : ""
+            return prefix + ReadingSession.durationText($0.elapsed(at: date))
+        }
+        return MiniRoomRealityCanvas(
+            books: visibleBooks, focused: focused, opening: $opening,
+            active: active && scenePhase == .active, lampIsOn: lampIsOn, reduceMotion: reduceMotion,
+            darkMode: colorScheme == .dark, characterIsMoving: $characterIsMoving, characterIntent: renderedIntent,
+            timerText: timerText, onHit: handleHit
+        )
     }
 
     private var roomHeader: some View {
@@ -160,6 +187,8 @@ struct MiniRoom3DView: View {
     }
 
     private var sceneHint: String {
+        if characterIsMoving { return "자리로 이동하고 있어요." }
+        if let session = reading.active { return session.isPaused ? "잠시 쉬고 있어요." : "소파에서 읽고 있어요." }
         if books.isEmpty { return "책을 등록하면 이곳에 꽂혀요." }
         if reduceMotion { return "책을 눌러 기록을 열어보세요." }
         return opening == nil ? "표지를 눌러 펼쳐보세요" : "책을 펼치고 있어요…"
@@ -182,6 +211,9 @@ struct MiniRoom3DView: View {
             onOpenGuestbook()
         case .lamp:
             toggleLamp()
+        case .seat:
+            focused = false
+            characterIntent = .seated
         }
     }
 

@@ -24,6 +24,7 @@ struct AppDependencies {
     let bookMetadata: any BookMetadataRepository
     let dictionaryExamples: any DictionaryExampleRepository
     let recentSearches: any RecentSearchRepository
+    let readingSessions: any ReadingSessionRepository
     let shelfOrder: any ShelfOrderRepository
 
     init(
@@ -49,6 +50,7 @@ struct AppDependencies {
         bookMetadata: (any BookMetadataRepository)? = nil,
         dictionaryExamples: (any DictionaryExampleRepository)? = nil,
         recentSearches: (any RecentSearchRepository)? = nil,
+        readingSessions: (any ReadingSessionRepository)? = nil,
         shelfOrder: (any ShelfOrderRepository)? = nil
     ) {
         self.readingReminders = readingReminders ?? ReadingNotificationService.shared
@@ -73,6 +75,7 @@ struct AppDependencies {
         self.bookMetadata = bookMetadata ?? AladinBookLookupService()
         self.dictionaryExamples = dictionaryExamples ?? DictionaryExampleLookupService()
         self.recentSearches = recentSearches ?? UserDefaultsRecentSearchRepository()
+        self.readingSessions = readingSessions ?? FileReadingSessionRepository()
         self.shelfOrder = shelfOrder ?? UserDefaultsShelfOrderRepository()
     }
 }

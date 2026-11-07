@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MyRoomView: View {
     let books: [Book]
+    @StateObject private var reading: ReadingSessionViewModel
     @StateObject private var model: MyRoomViewModel
     @EnvironmentObject var authViewModel: AuthSessionViewModel
     @Binding var path: NavigationPath
@@ -11,6 +12,7 @@ struct MyRoomView: View {
     @State private var showingGuestbook = false
     @State private var highlightedGuestbookMessageId: UUID?
     @State private var showingThemePicker = false
+    @State private var confirmsEndBeforeTheme = false
     @State private var roomWith3DEnabled: String?
 
     private var currentTheme: MiniRoomTheme {
@@ -34,7 +36,9 @@ struct MyRoomView: View {
         dependencies: AppDependencies? = nil
     ) {
         self.books = books
-        _model = StateObject(wrappedValue: MyRoomViewModel(dependencies: dependencies ?? AppDependencies()))
+        let resolved = dependencies ?? AppDependencies()
+        _model = StateObject(wrappedValue: MyRoomViewModel(dependencies: resolved))
+        _reading = StateObject(wrappedValue: ReadingSessionViewModel(repository: resolved.readingSessions))
         self._path = path
         self._notificationRequest = notificationRequest
     }
@@ -44,6 +48,7 @@ struct MyRoomView: View {
             if let user = authViewModel.currentUser {
                 if usesWoodRoom {
                     MiniRoom3DView(
+                        reading: reading,
                         nickname: user.nickname,
                         profileImageUrl: user.profileImageUrl,
                         books: books,
@@ -73,6 +78,9 @@ struct MyRoomView: View {
                 AppBackgroundView()
             }
         }
+            .onChange(of: authViewModel.currentUser?.id, initial: true) { _, id in
+                reading.selectOwner(id)
+            }
             .onChange(of: roomPreferenceKey, initial: true) { _, key in
                 roomWith3DEnabled = key.flatMap { UserDefaults.standard.bool(forKey: $0) ? $0 : nil }
             }
@@ -101,6 +109,14 @@ struct MyRoomView: View {
                     .environmentObject(authViewModel)
                     .presentationDetents([.medium, .large])
                 }
+            }
+            .alert("독서를 마치고 배경을 바꿀까요?", isPresented: $confirmsEndBeforeTheme) {
+                Button("독서 마치고 변경") {
+                    if reading.finish() { showingThemePicker = true }
+                }
+                Button("계속 읽기", role: .cancel) { }
+            } message: {
+                Text("현재 독서 시간을 기록한 뒤 배경을 선택할 수 있어요.")
             }
             .sheet(isPresented: $showingThemePicker) {
                 MiniRoomThemePickerView(
@@ -132,7 +148,8 @@ struct MyRoomView: View {
 
     private func changeTheme() {
         PerformanceLogger.event("MiniRoomThemePickerTapped")
-        showingThemePicker = true
+        if reading.active != nil { confirmsEndBeforeTheme = true }
+        else { showingThemePicker = true }
     }
 
     private func openGuestbook() {
