@@ -42,15 +42,10 @@ final class MiniRoomRealityScene {
         fill.light.attenuationRadius = 10
         anchor.addChild(fill)
         lamp.position = [-0.22, 1.42, 1.34]
-        lamp.light.color = UIColor(roomHex: 0xFFBA6C)
+        lamp.light.color = UIColor(roomHex: 0xFFE0AC)
         lamp.light.intensity = 2_200
         lamp.light.attenuationRadius = 7
         anchor.addChild(lamp)
-        let floor = ModelEntity(mesh: .generatePlane(width: 28, depth: 28), materials: [
-            SimpleMaterial(color: UIColor(roomHex: 0xB78E68), roughness: 0.9, isMetallic: false)
-        ])
-        floor.position.y = -0.05
-        anchor.addChild(floor)
         setLamp(isOn: true)
     }
 
@@ -61,6 +56,8 @@ final class MiniRoomRealityScene {
         resetOpenedBook()
         cameraRig.setFocus(value)
     }
+
+    func setZoom(_ zoom: Float) { cameraRig.setZoom(zoom) }
 
     func setViewport(_ size: CGSize) { cameraRig.setViewport(size) }
 
@@ -136,7 +133,7 @@ final class MiniRoomRealityScene {
         lamp.isEnabled = isOn
         daylight.light.intensity = 260
         fill.light.intensity = isOn ? 200 : 140
-        fill.light.color = UIColor(roomHex: isOn ? 0xEFC99D : 0xA7BAD4)
+        fill.light.color = UIColor(roomHex: isOn ? 0xE8D6C0 : 0xA7BAD4)
         shade?.model?.materials = isOn
             ? [UnlitMaterial(color: UIColor(roomHex: 0xE6BB7B))]
             : [SimpleMaterial(color: UIColor(roomHex: 0xD6A75E), roughness: 0.87, isMetallic: false)]
@@ -163,7 +160,7 @@ final class MiniRoomRealityScene {
             let mesh: MeshResource
             let d = node.dimensions
             switch shape {
-            case "box": mesh = .generateBox(size: [d[0], d[1], d[2]])
+            case "box": mesh = .generateBox(size: [d[0], d[1], d[2]], cornerRadius: min(d[0], d[1], d[2]) * (inheritedAction == "seat" ? 0.24 : 0.10))
             case "cylinder": mesh = taperedCylinder(top: d[0], bottom: d[1], height: d[2], sides: Int(d[3]))
             case "triangle": mesh = triangle(node.vertices)
             case "leaf": mesh = leaf(radius: d[0])

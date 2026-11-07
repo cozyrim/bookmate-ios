@@ -13,6 +13,7 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
     @Binding var characterIsMoving: Bool
     let characterIntent: RoomCharacterController.Intent
     let timerText: String?
+    @Binding var zoom: Float
     let onHit: (MiniRoomRealityScene.Hit) -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -29,7 +30,11 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
         let pan = UIPanGestureRecognizer(target: coordinator, action: #selector(Coordinator.pan(_:)))
         pan.delegate = coordinator
         pan.maximumNumberOfTouches = 1
+        let pinch = UIPinchGestureRecognizer(target: coordinator, action: #selector(Coordinator.pinch(_:)))
+        pinch.delegate = coordinator
         tap.require(toFail: pan)
+        tap.require(toFail: pinch)
+        view.addGestureRecognizer(pinch)
         view.addGestureRecognizer(tap)
         view.addGestureRecognizer(pan)
         return view
@@ -42,6 +47,11 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
         coordinator.active = active
         coordinator.onMovementChanged = { characterIsMoving = $0 }
         coordinator.timerLabel.text = timerText
+        coordinator.zoom = zoom
+        coordinator.onZoomChanged = { zoom = $0 }
+        coordinator.room.setZoom(zoom)
+        coordinator.timerLabel.textColor = UIColor(named: "PrimaryDeep")
+        coordinator.timerLabel.backgroundColor = darkMode ? UIColor(roomHex: 0x243B59) : UIColor(roomHex: 0xE4EDF9)
         coordinator.room.character.setIntent(characterIntent, reduceMotion: reduceMotion)
         coordinator.openingChanged = { opening = $0 }
         coordinator.room.updateBooks(books)
@@ -50,7 +60,7 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
         else if let opening, coordinator.openingID != opening { coordinator.open(opening) }
         coordinator.room.setLamp(isOn: lampIsOn)
         view.environment.lighting.intensityExponent = lampIsOn ? -1.0 : -1.8
-        view.environment.background = .color(darkMode ? UIColor(roomHex: 0x343A46) : UIColor(roomHex: 0xD4CBC0))
+        view.environment.background = .color(darkMode ? UIColor(roomHex: 0x171E2B) : UIColor(roomHex: 0xF8FAFD))
     }
 
     static func dismantleUIView(_ view: ARView, coordinator: Coordinator) {
@@ -70,11 +80,11 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
         let timerLabel = UILabel()
 
         func attach(to view: ARView) {
-            timerLabel.font = .monospacedDigitSystemFont(ofSize: 15, weight: .semibold)
+            timerLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .semibold)
             timerLabel.textColor = .label
             timerLabel.backgroundColor = .secondarySystemBackground.withAlphaComponent(0.94)
             timerLabel.textAlignment = .center
-            timerLabel.layer.cornerRadius = 16
+            timerLabel.layer.cornerRadius = 13
             timerLabel.clipsToBounds = true
             timerLabel.isUserInteractionEnabled = false
             timerLabel.isAccessibilityElement = false
@@ -94,7 +104,8 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
                     self.timerLabel.isHidden = true
                     return
                 }
-                self.timerLabel.frame = CGRect(x: point.x - 65, y: point.y - 16, width: 130, height: 32)
+                let width = max(76, min(140, self.timerLabel.intrinsicContentSize.width + 20))
+                self.timerLabel.frame = CGRect(x: point.x - width / 2, y: point.y - 13, width: width, height: 26)
                 self.timerLabel.isHidden = false
             }
         }
@@ -129,25 +140,48 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
                 openingChanged?(nil)
             }
         }
+        var zoom: Float = 1
+        var onZoomChanged: ((Float) -> Void)?
+        private var zoomBeforePinch: Float = 1
+
+        @objc func pinch(_ gesture: UIPinchGestureRecognizer) {
+            guard active, openingID == nil else { return }
+            if gesture.state == .began { zoomBeforePinch = zoom }
+            guard gesture.state == .began || gesture.state == .changed else { return }
+            zoom = MiniRoomCameraRig.clampedZoom(zoomBeforePinch * Float(gesture.scale))
+            room.setZoom(zoom)
+            onZoomChanged?(zoom)
+        }
+
         private var angle: Float = MiniRoomRealityScene.initialAngle
         private var angleBeforePan: Float = MiniRoomRealityScene.initialAngle
 
         @objc func tap(_ gesture: UITapGestureRecognizer) {
-            guard let view = gesture.view as? ARView,
+            guard active, let view = gesture.view as? ARView,
                   let hit = room.hit(at: gesture.location(in: view), in: view) else { return }
             guard openingID == nil else { return }
             if case .book(let id) = hit { open(id) } else { onHit?(hit) }
         }
 
         @objc func pan(_ gesture: UIPanGestureRecognizer) {
+            guard active, openingID == nil else { return }
             if gesture.state == .began { angleBeforePan = angle }
             guard gesture.state == .began || gesture.state == .changed else { return }
             angle = min(0.75, max(0.12, angleBeforePan - Float(gesture.translation(in: gesture.view).x) / 420))
             room.aimCamera(atAngle: angle)
         }
 
+        func gestureRecognizer(_ first: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith second: UIGestureRecognizer) -> Bool {
+            // A second finger may arrive after orbit begins. Allow the one-finger
+            // pan to cancel without making the two-finger pinch fail with it.
+            (first is UIPanGestureRecognizer && second is UIPinchGestureRecognizer)
+                || (first is UIPinchGestureRecognizer && second is UIPanGestureRecognizer)
+        }
+
         func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-            guard openingID == nil, !reduceMotion, let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
+            guard active, openingID == nil else { return false }
+            if gestureRecognizer is UIPinchGestureRecognizer { return true }
+            guard !reduceMotion, let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
             let velocity = pan.velocity(in: pan.view)
             return abs(velocity.x) > abs(velocity.y)
         }

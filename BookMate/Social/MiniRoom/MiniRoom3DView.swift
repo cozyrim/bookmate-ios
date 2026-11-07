@@ -22,6 +22,7 @@ struct MiniRoom3DView: View {
 
     @State private var lampIsOn = true
     @State private var focused = true
+    @State private var cameraZoom: Float = 1
     @State private var page = 0
     @State private var opening: UUID?
     @State private var active = true
@@ -40,11 +41,11 @@ struct MiniRoom3DView: View {
             .ignoresSafeArea()
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("원목 서재 3D 공간")
-            .accessibilityHint("책 표지를 누르거나, 좌우로 드래그해 둘러볼 수 있어요.")
+            .accessibilityHint("표지를 누르면 책이 열려요. 좌우로 둘러보고 두 손가락으로 확대하거나 축소할 수 있어요.")
             .accessibilityIdentifier("miniRoom.wood3D.canvas")
 
             GlassEffectContainer(spacing: 16) {
-                VStack(spacing: 12) {
+                VStack(spacing: 4) {
                     roomHeader
                     Spacer(minLength: 16)
                     ReadingRoomControls(model: reading, books: books,
@@ -61,6 +62,7 @@ struct MiniRoom3DView: View {
             }
         }
         .onAppear { active = true; if reading.active != nil { focused = false } }
+        .onChange(of: focused) { _, _ in cameraZoom = 1 }
         .onChange(of: reading.active?.id) { _, id in if id != nil { focused = false } }
         .onDisappear { active = false; opening = nil }
         .onChange(of: scenePhase) { _, phase in if phase != .active { opening = nil } }
@@ -84,7 +86,7 @@ struct MiniRoom3DView: View {
             books: visibleBooks, focused: focused, opening: $opening,
             active: active && scenePhase == .active, lampIsOn: lampIsOn, reduceMotion: reduceMotion,
             darkMode: colorScheme == .dark, characterIsMoving: $characterIsMoving, characterIntent: renderedIntent,
-            timerText: timerText, onHit: handleHit
+            timerText: timerText, zoom: $cameraZoom, onHit: handleHit
         )
     }
 
@@ -151,6 +153,20 @@ struct MiniRoom3DView: View {
                 VStack(spacing: 2) { roomActions }
             }
             .disabled(opening != nil)
+            HStack(spacing: 4) {
+                Spacer()
+                zoomButton("축소", symbol: "minus.magnifyingglass", change: -0.15)
+                Button { cameraZoom = 1 } label: {
+                    Text("\(Int((cameraZoom * 100).rounded()))%")
+                        .font(.caption.monospacedDigit().weight(.medium))
+                        .frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+                }
+                .accessibilityLabel("확대 배율 초기화")
+                .accessibilityValue("\(Int((cameraZoom * 100).rounded()))퍼센트")
+                .accessibilityIdentifier("room.zoom.reset")
+                .disabled(opening != nil)
+                zoomButton("확대", symbol: "plus.magnifyingglass", change: 0.15)
+            }
             if voiceOver {
                 ScrollView {
                     ForEach(visibleBooks) { book in
@@ -166,7 +182,17 @@ struct MiniRoom3DView: View {
         .padding(6)
         .buttonStyle(.plain)
         .foregroundStyle(Color("TextPrimary"))
-        .modifier(BookMateGlassSurface(radius: 26))
+
+    }
+
+    private func zoomButton(_ title: String, symbol: String, change: Float) -> some View {
+        Button { cameraZoom = MiniRoomCameraRig.clampedZoom(cameraZoom + change) } label: {
+            Image(systemName: symbol).font(.footnote.weight(.semibold))
+                .frame(width: 44, height: 44).contentShape(Rectangle())
+        }
+        .accessibilityLabel(title)
+        .accessibilityIdentifier(change > 0 ? "room.zoom.in" : "room.zoom.out")
+        .disabled(opening != nil)
     }
 
     @ViewBuilder
@@ -197,9 +223,9 @@ struct MiniRoom3DView: View {
     private func actionLabel(_ title: String, icon: String) -> some View {
         Label(title, systemImage: icon)
             .labelStyle(.titleAndIcon)
-            .font(.subheadline.weight(.semibold))
+            .font(.footnote.weight(.semibold))
             .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity, minHeight: 48)
+            .frame(maxWidth: .infinity, minHeight: 44)
             .contentShape(Rectangle())
     }
 
