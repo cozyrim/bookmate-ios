@@ -184,7 +184,7 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
             }
             guard pinchIsActive, !room.isCameraTransitioning else { return }
             zoom = MiniRoomCameraRig.clampedZoom(zoomBeforePinch * Float(gesture.scale))
-            room.setZoom(zoom)
+            room.setZoom(zoom, smooth: !reduceMotion)
             onZoomChanged?(zoom)
         }
 
@@ -209,8 +209,8 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
                 return
             }
             guard panIsActive, !room.isCameraTransitioning else { return }
-            angle = min(0.75, max(0.12, angleBeforePan - Float(gesture.translation(in: gesture.view).x) / 420))
-            room.aimCamera(atAngle: angle)
+            angle = min(0.90, max(-0.10, angleBeforePan - Float(gesture.translation(in: gesture.view).x) / 360))
+            room.aimCamera(atAngle: angle, smooth: !reduceMotion)
         }
 
         func gestureRecognizer(_ first: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith second: UIGestureRecognizer) -> Bool {

@@ -26,6 +26,7 @@ struct ReadingRoomControls: View {
             if let session = model.active {
                 HStack {
                     Text(session.bookTitle).font(.subheadline.weight(.semibold)).lineLimit(1)
+                        .accessibilityIdentifier("reading.book")
                     Spacer()
                     historyButton
                 }

@@ -31,6 +31,7 @@ final class MiniRoomCameraRig {
         var elapsed: Float = 0
     }
     private var transition: Transition?
+    private var interactiveTarget: Transform?
     private var viewport = CGSize.zero
     private var angle: Float = 0.40
     private(set) var zoom: Float = 1
@@ -39,11 +40,11 @@ final class MiniRoomCameraRig {
         value.isFinite ? min(1.45, max(0.85, value)) : 1
     }
 
-    func setZoom(_ value: Float) {
+    func setZoom(_ value: Float, smooth: Bool = false) {
         let value = Self.clampedZoom(value)
         guard value != zoom else { return }
         zoom = value
-        update(animated: isTransitioning)
+        update(animated: isTransitioning, smooth: smooth)
     }
 
     init() { update() }
@@ -63,8 +64,21 @@ final class MiniRoomCameraRig {
         update(animated: animated && viewport.width > 0)
     }
 
-    func advance(deltaTime: TimeInterval) {
-        guard var step = transition, deltaTime.isFinite, deltaTime > 0 else { return }
+    func advance(deltaTime: TimeInterval, interactiveEnabled: Bool = true) {
+        guard deltaTime.isFinite, deltaTime > 0 else { return }
+        guard var step = transition else {
+            guard interactiveEnabled else { return }
+            if let target = interactiveTarget {
+                let fraction = Float(1 - exp(-min(deltaTime, 0.1) / 0.055))
+                entity.position += (target.translation - entity.position) * fraction
+                entity.orientation = simd_slerp(entity.orientation, target.rotation, fraction)
+                if simd_distance(entity.position, target.translation) < 0.0001 {
+                    entity.transform = target
+                    interactiveTarget = nil
+                }
+            }
+            return
+        }
         step.elapsed = min(0.65, step.elapsed + Float(min(deltaTime, 0.1)))
         let fraction = step.elapsed / 0.65
         let eased = fraction * fraction * (3 - 2 * fraction)
@@ -75,11 +89,16 @@ final class MiniRoomCameraRig {
         transition = fraction >= 1 ? nil : step
     }
 
-    func finishTransition() {
-        guard let step = transition else { return }
-        entity.transform = step.end
-        horizontalFieldOfView = step.endFOV
-        transition = nil
+    func finishTransition(settleInteractive: Bool = true) {
+        if let step = transition {
+            entity.transform = step.end
+            horizontalFieldOfView = step.endFOV
+            transition = nil
+        }
+        if settleInteractive, let target = interactiveTarget {
+            entity.transform = target
+            interactiveTarget = nil
+        }
         updateLens()
     }
 
@@ -89,13 +108,15 @@ final class MiniRoomCameraRig {
         update(animated: isTransitioning)
     }
 
-    func orbit(to angle: Float) {
-        self.angle = min(0.75, max(0.12, angle))
-        update(animated: isTransitioning)
+    func orbit(to angle: Float, smooth: Bool = false) {
+        self.angle = min(0.90, max(-0.10, angle))
+        update(animated: isTransitioning, smooth: smooth)
     }
 
     var presentedBookTransform: Transform {
-        let position = entity.position + entity.orientation.act([0.33, -0.66, -2.5])
+        let aspect = viewport.width > 0 ? Float(viewport.height / viewport.width) : 1
+        let distance = max(2.5, 1.2 / (tan(horizontalFieldOfView * .pi / 360) * max(0.25, aspect)))
+        let position = entity.position + entity.orientation.act([0.20, -0.15, -distance])
         return Transform(scale: SIMD3(repeating: 1.55), rotation: entity.orientation, translation: position)
     }
 
@@ -131,39 +152,46 @@ final class MiniRoomCameraRig {
         ))
     }
 
-    private func update(animated: Bool = false) {
+    private func update(animated: Bool = false, smooth: Bool = false) {
         let previous = entity.transform
         let previousFOV = horizontalFieldOfView
         let target: SIMD3<Float>
-        let baseDistance: Float, baseElevation: Float, framing: Float, azimuth: Float, fieldOfView: Float
+        let baseDistance: Float, baseElevation: Float, azimuth: Float, fieldOfView: Float
         switch viewpoint {
         case .shelf:
-            target = [-1.5, 1.15, -1.5]
-            (baseDistance, baseElevation, framing, azimuth, fieldOfView) = (2.9, 0.8, 0, angle, 62)
+            target = [-1.5, 1.65, -1.5]
+            (baseDistance, baseElevation, azimuth, fieldOfView) = (3.5, 0.8, angle, 62)
         case .room:
             target = [-0.25, 1.35, -0.1]
-            (baseDistance, baseElevation, framing, azimuth, fieldOfView) = (7.8, 3.7, 0.24, angle, 54)
+            (baseDistance, baseElevation, azimuth, fieldOfView) = (7.8, 3.7, angle, 54)
         case .reading:
             target = [1.3, 1.4, 0.55]
-            (baseDistance, baseElevation, framing, azimuth, fieldOfView) = (3.6, 1.2, 0.18, angle - 0.7, 58)
+            (baseDistance, baseElevation, azimuth, fieldOfView) = (3.6, 1.2, angle - 0.7, 58)
         case .window:
             target = [0.95, 1.95, -1.65]
-            (baseDistance, baseElevation, framing, azimuth, fieldOfView) = (4.1, 1.1, 0.16, angle - 1.0, 58)
+            (baseDistance, baseElevation, azimuth, fieldOfView) = (4.1, 1.1, angle - 1.0, 58)
         }
-        let distance = baseDistance / zoom
+        // A short landscape viewport needs more distance, not a crop behind the controls.
+        let aspect = viewport.width > 0 ? Float(viewport.height / viewport.width) : 1.8
+        let verticalSpan: Float = switch viewpoint {
+        case .shelf: 3.8
+        case .room: 4.8
+        case .reading: 3.0
+        case .window: 3.5
+        }
+        let fitDistance = verticalSpan / (2 * tan(fieldOfView * .pi / 360) * max(0.25, aspect))
+        let distance = max(baseDistance, fitDistance) / zoom
         let elevation = baseElevation / zoom
         entity.look(at: target, from: target + [sin(azimuth) * distance, elevation, cos(azimuth) * distance], relativeTo: nil)
-        if viewport.width > 0 {
-            let aspect = Float(viewport.height / viewport.width)
-            let offset = framing * aspect * sqrt(distance * distance + elevation * elevation) * tan(fieldOfView * .pi / 360)
-            entity.position -= entity.orientation.act([0, offset, 0])
-        }
         if animated {
+            interactiveTarget = nil
             transition = Transition(start: previous, end: entity.transform, startFOV: previousFOV, endFOV: fieldOfView)
             entity.transform = previous
         } else {
             transition = nil
             horizontalFieldOfView = fieldOfView
+            interactiveTarget = smooth ? entity.transform : nil
+            if smooth { entity.transform = previous }
         }
         updateLens()
     }

@@ -133,6 +133,54 @@ final class RoomCharacterTests: XCTestCase {
         XCTAssertTrue(navigated, "A fresh request must still open the same book")
     }
 
+    func testPausingInteractiveCameraPreservesTargetAndReduceMotionSettlesPendingInput() async {
+        let rig = MiniRoomCameraRig()
+        let viewport = CGSize(width: 390, height: 440)
+        rig.setViewport(viewport)
+        rig.orbit(to: 0.8, smooth: true)
+        rig.advance(deltaTime: 1.0 / 60)
+        let selectedPose = rig.entity.transform
+        rig.finishTransition(settleInteractive: false)
+        for _ in 0..<90 { rig.advance(deltaTime: 1.0 / 60, interactiveEnabled: false) }
+        XCTAssertEqual(rig.entity.position, selectedPose.translation)
+        XCTAssertEqual(rig.entity.orientation, selectedPose.rotation)
+
+        for _ in 0..<90 { rig.advance(deltaTime: 1.0 / 60) }
+        let direct = MiniRoomCameraRig()
+        direct.setViewport(viewport)
+        direct.orbit(to: 0.8)
+        XCTAssertLessThan(simd_distance(rig.entity.position, direct.entity.position), 0.001)
+        rig.setZoom(1.45, smooth: true)
+        rig.setViewpoint(.shelf, animated: false)
+        direct.setZoom(1.45)
+        XCTAssertLessThan(simd_distance(rig.entity.position, direct.entity.position), 0.001)
+        let settled = rig.entity.position
+        rig.advance(deltaTime: 0.1)
+        XCTAssertEqual(rig.entity.position, settled)
+    }
+
+    func testInteractiveCameraMotionConvergesWithoutJumpingAndKeepsProjectionAligned() async throws {
+        let rig = MiniRoomCameraRig()
+        let size = CGSize(width: 390, height: 440)
+        rig.setViewport(size)
+        let before = rig.entity.position
+        rig.orbit(to: 0.8, smooth: true)
+        rig.setZoom(1.3, smooth: true)
+        XCTAssertEqual(before, rig.entity.position)
+        for _ in 0..<90 {
+            rig.advance(deltaTime: 1.0 / 60)
+            let world = SIMD3<Float>(-1.5, 1.15, -1.5)
+            let point = try XCTUnwrap(rig.project(world, viewport: size))
+            let ray = try XCTUnwrap(rig.ray(through: point, viewport: size))
+            XCTAssertLessThan(simd_distance(ray.direction, simd_normalize(world - ray.origin)), 0.001)
+        }
+        let direct = MiniRoomCameraRig()
+        direct.setViewport(size)
+        direct.orbit(to: 0.8)
+        direct.setZoom(1.3)
+        XCTAssertLessThan(simd_distance(rig.entity.position, direct.entity.position), 0.001)
+    }
+
     func testLatestDestinationWinsDuringMovement() async {
         let character = RoomCharacterController()
         character.setIntent(.window, reduceMotion: false)
