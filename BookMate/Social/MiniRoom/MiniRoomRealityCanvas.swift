@@ -40,7 +40,7 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
         if !active { coordinator.cancel() }
         else if let opening, coordinator.openingID != opening { coordinator.open(opening) }
         coordinator.room.setLamp(isOn: lampIsOn)
-        view.environment.lighting.intensityExponent = lampIsOn ? -1.5 : -3.8
+        view.environment.lighting.intensityExponent = lampIsOn ? -1.0 : -1.8
         view.environment.background = .color(darkMode ? UIColor(roomHex: 0x343A46) : UIColor(roomHex: 0xD4CBC0))
     }
 

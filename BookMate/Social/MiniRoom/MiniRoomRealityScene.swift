@@ -30,12 +30,12 @@ final class MiniRoomRealityScene {
             assertionFailure("Missing approved mini room blueprint")
         }
         daylight.light.color = UIColor(roomHex: 0xB9CDE6)
-        daylight.light.intensity = 180
+        daylight.light.intensity = 260
         daylight.shadow = DirectionalLightComponent.Shadow(maximumDistance: 12, depthBias: 0.1)
         daylight.look(at: [-1.6, 0.5, -1.2], from: [3.5, 5, 1.0], relativeTo: anchor)
         anchor.addChild(daylight)
         fill.light.color = UIColor(roomHex: 0xA7BAD4)
-        fill.light.intensity = 55
+        fill.light.intensity = 140
         fill.position = [-3, 4, 1]
         fill.light.attenuationRadius = 10
         anchor.addChild(fill)
@@ -125,8 +125,8 @@ final class MiniRoomRealityScene {
         guard lampIsOn != isOn else { return }
         lampIsOn = isOn
         lamp.isEnabled = isOn
-        daylight.light.intensity = 180
-        fill.light.intensity = isOn ? 140 : 55
+        daylight.light.intensity = 260
+        fill.light.intensity = isOn ? 200 : 140
         fill.light.color = UIColor(roomHex: isOn ? 0xEFC99D : 0xA7BAD4)
         shade?.model?.materials = isOn
             ? [UnlitMaterial(color: UIColor(roomHex: 0xE6BB7B))]

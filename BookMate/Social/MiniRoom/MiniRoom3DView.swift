@@ -32,7 +32,7 @@ struct MiniRoom3DView: View {
                 darkMode: colorScheme == .dark, onHit: handleHit
             )
             // A consistent dusk grade accompanies the practical light on every renderer.
-            .colorMultiply(lampIsOn ? .white : Color(red: 0.52, green: 0.61, blue: 0.78))
+            .colorMultiply(lampIsOn ? .white : Color(red: 0.80, green: 0.84, blue: 0.92))
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: lampIsOn)
             .ignoresSafeArea()
             .accessibilityElement(children: .ignore)
