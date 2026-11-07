@@ -32,17 +32,26 @@ struct ReadingRoomControls: View {
                 HStack {
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         Text(ReadingSession.durationText(session.elapsed(at: context.date)))
-                            .font(.title3.monospacedDigit().weight(.semibold))
+                            .font(.headline.monospacedDigit())
                             .accessibilityIdentifier("reading.timer")
                     }
                     Spacer()
-                    Button(session.isPaused ? "계속 읽기" : "잠시 쉬기") {
+                    Button {
                         if session.isPaused { model.resume() } else { model.pause() }
+                    } label: {
+                        Label(session.isPaused ? "계속 읽기" : "잠시 쉬기", systemImage: session.isPaused ? "play.fill" : "pause.fill")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Color("PrimaryDeep"))
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
                     }
-                    .frame(minHeight: 44)
                     .accessibilityIdentifier("reading.pause")
-                    Button("종료") { _ = model.finish() }
-                        .frame(minWidth: 44, minHeight: 44)
+                    Button { _ = model.finish() } label: {
+                        Label("종료", systemImage: "stop.fill")
+                            .font(.footnote.weight(.semibold))
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
                         .accessibilityIdentifier("reading.finish")
                 }
 
@@ -63,11 +72,15 @@ struct ReadingRoomControls: View {
                     }
                     .disabled(books.isEmpty)
                     .accessibilityLabel("읽을 책 선택")
-                    Button("읽기 시작") {
+                    Button {
                         if let book = selectedBook, model.start(book: book) { onStart() }
+                    } label: {
+                        Text("읽기 시작")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Color("PrimaryDeep"))
+                            .frame(minWidth: 72, minHeight: 44)
+                            .contentShape(Rectangle())
                     }
-                    .font(.subheadline.weight(.semibold))
-                    .frame(minWidth: 72, minHeight: 44)
                     .disabled(selectedBook == nil || !model.isLoaded)
                     .accessibilityIdentifier("reading.start")
                 }
@@ -94,10 +107,10 @@ struct ReadingRoomControls: View {
                 }
             }
         }
-        .padding(.horizontal, 16).padding(.vertical, 8)
+        .padding(.horizontal, 8)
         .foregroundStyle(Color("TextPrimary"))
         .buttonStyle(.plain)
-        .modifier(BookMateGlassSurface(radius: 24))
+
         .sheet(isPresented: $showsHistory) {
             ReadingSessionHistoryView(model: model)
                 .presentationDetents([.medium, .large])

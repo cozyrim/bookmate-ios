@@ -18,6 +18,45 @@ final class RoomCharacterTests: XCTestCase {
         }
     }
 
+    func testZoomClampsAndKeepsHitProjectionAligned() async throws {
+        let rig = MiniRoomCameraRig()
+        let viewport = CGSize(width: 402, height: 874)
+        rig.setViewport(viewport)
+        for focused in [true, false] {
+            rig.setFocus(focused)
+            for request: Float in [-100, 0.85, 1, 1.45, 100, .nan, .infinity] {
+                rig.setZoom(request)
+                XCTAssertGreaterThanOrEqual(rig.zoom, 0.85)
+                XCTAssertLessThanOrEqual(rig.zoom, 1.45)
+                let world = SIMD3<Float>(-1.69, 1.4, -1.2)
+                let point = try XCTUnwrap(rig.project(world, viewport: viewport))
+                let ray = try XCTUnwrap(rig.ray(through: point, viewport: viewport))
+                XCTAssertLessThan(simd_length(simd_normalize(world - ray.origin) - ray.direction), 0.001)
+            }
+        }
+        rig.setZoom(100)
+        XCTAssertEqual(rig.zoom, 1.45)
+        rig.setZoom(-100)
+        XCTAssertEqual(rig.zoom, 0.85)
+        rig.setZoom(.nan)
+        XCTAssertEqual(rig.zoom, 1)
+    }
+
+    func testCameraGesturesCanTransitionFromPanToPinch() async {
+        let coordinator = MiniRoomRealityCanvas.Coordinator()
+        let pan = UIPanGestureRecognizer()
+        let pinch = UIPinchGestureRecognizer()
+        let tap = UITapGestureRecognizer()
+        XCTAssertTrue(coordinator.gestureRecognizer(pan, shouldRecognizeSimultaneouslyWith: pinch))
+        XCTAssertFalse(coordinator.gestureRecognizer(tap, shouldRecognizeSimultaneouslyWith: pinch))
+        XCTAssertTrue(coordinator.gestureRecognizerShouldBegin(pinch))
+        coordinator.active = false
+        XCTAssertFalse(coordinator.gestureRecognizerShouldBegin(pinch))
+        coordinator.active = true
+        coordinator.openingID = UUID()
+        XCTAssertFalse(coordinator.gestureRecognizerShouldBegin(pinch))
+    }
+
     func testLatestDestinationWinsDuringMovement() async {
         let character = RoomCharacterController()
         character.setIntent(.window, reduceMotion: false)

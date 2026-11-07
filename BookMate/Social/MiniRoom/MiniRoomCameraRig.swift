@@ -8,6 +8,18 @@ final class MiniRoomCameraRig {
     private(set) var focused = true
     private var viewport = CGSize.zero
     private var angle: Float = 0.40
+    private(set) var zoom: Float = 1
+
+    static func clampedZoom(_ value: Float) -> Float {
+        value.isFinite ? min(1.45, max(0.85, value)) : 1
+    }
+
+    func setZoom(_ value: Float) {
+        let value = Self.clampedZoom(value)
+        guard value != zoom else { return }
+        zoom = value
+        update()
+    }
 
     init() { update() }
 
@@ -65,8 +77,8 @@ final class MiniRoomCameraRig {
             fieldOfViewOrientation: .horizontal
         ))
         let target: SIMD3<Float> = focused ? [-1.5, 1.15, -1.5] : [-0.25, 1.35, -0.1]
-        let distance: Float = focused ? 2.9 : 7.8
-        let elevation: Float = focused ? 0.8 : 3.7
+        let distance: Float = (focused ? 2.9 : 7.8) / zoom
+        let elevation: Float = (focused ? 0.8 : 3.7) / zoom
         entity.look(at: target, from: target + [sin(angle) * distance, elevation, cos(angle) * distance], relativeTo: nil)
         if !focused, viewport.width > 0 {
             // Compose the room above the bottom controls while retaining matching hit projection.

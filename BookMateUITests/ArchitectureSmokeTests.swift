@@ -273,6 +273,17 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertTrue(lamp.waitForExistence(timeout: 15))
         let canvas = app.descendants(matching: .any)["miniRoom.wood3D.canvas"].firstMatch
         XCTAssertTrue(canvas.exists)
+        let zoomReset = app.buttons["room.zoom.reset"]
+        XCTAssertEqual(zoomReset.value as? String, "100퍼센트")
+        app.buttons["room.zoom.in"].tap()
+        XCTAssertEqual(zoomReset.value as? String, "115퍼센트")
+        zoomReset.tap()
+        canvas.pinch(withScale: 1.2, velocity: 0.5)
+        XCTAssertNotEqual(zoomReset.value as? String, "100퍼센트")
+        XCTAssertFalse(app.staticTexts["다이어리"].exists, "Pinch must not open a book")
+        capture("room-after-pinch", app: app)
+        zoomReset.tap()
+        XCTAssertEqual(zoomReset.value as? String, "100퍼센트")
         capture("real-book-shelf", app: app)
         app.buttons["다음 책장"].tap()
         XCTAssertFalse(app.buttons["다음 책장"].isEnabled)
@@ -301,6 +312,30 @@ final class ArchitectureSmokeTests: XCTestCase {
         capture("immersive-after-orbit", app: app)
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.40, dy: 0.32)).tap()
         XCTAssertTrue(app.staticTexts["다이어리"].waitForExistence(timeout: 10))
+    }
+
+    func testRoomControlsInDarkAppearance() {
+        let app = launch(appearance: "dark", extraArguments: ["--room-books"])
+        tab("서재", in: app).tap()
+        if !app.buttons["miniRoom.wood3D.lamp"].exists {
+            app.buttons["배경"].tap()
+            app.buttons["miniRoom.theme.wood3D"].tap()
+            app.buttons["배경 적용하기"].tap()
+        }
+        if app.buttons["reading.finish"].exists { app.buttons["reading.finish"].tap() }
+        let start = app.buttons["reading.start"]
+        XCTAssertGreaterThanOrEqual(start.frame.height, 44)
+        start.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.85)).tap()
+        XCTAssertTrue(app.staticTexts["소파에서 읽고 있어요."].waitForExistence(timeout: 20))
+        for identifier in ["reading.pause", "reading.finish", "room.zoom.in", "room.zoom.out"] {
+            let button = app.buttons[identifier]
+            XCTAssertTrue(button.isHittable)
+            XCTAssertGreaterThanOrEqual(button.frame.height, 44)
+        }
+        capture("dark-room-reading", app: app)
+        app.buttons["miniRoom.wood3D.lamp"].tap()
+        capture("dark-room-lamp-off", app: app)
+        app.buttons["reading.finish"].tap()
     }
 
     func testTabBarReturnsWhenScrollingStops() {
