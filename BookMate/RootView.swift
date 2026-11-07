@@ -36,16 +36,10 @@ struct RootView: View {
     var body: some View {
         Group {
             if authViewModel.isCheckingSession {
-                ZStack {
-                    Color("AppBackground")
-                        .ignoresSafeArea()
-
-                    Image("LaunchBrand")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 112, height: 112)
-                        .clipShape(.rect(cornerRadius: 25))
-                        .accessibilityLabel("앱을 여는 중")
+                SessionLoadingView()
+            } else if let message = authViewModel.sessionRestoreError {
+                ContentStateView(type: .error, iconName: "wifi.exclamationmark", title: "연결을 확인해 주세요", message: message, buttonTitle: "다시 시도", buttonIconName: "arrow.clockwise") {
+                    Task { await authViewModel.restoreSession() }
                 }
             } else if !hasSeenOnboarding {
                 OnboardingView {

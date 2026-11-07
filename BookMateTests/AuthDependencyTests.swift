@@ -15,6 +15,22 @@ final class AuthDependencyTests: XCTestCase {
         XCTAssertFalse(model.isCheckingSession)
     }
 
+    func testRestoredSessionLeavesLaunchScreenBeforePushSync() async {
+        let repository = AuthRepositoryStub()
+        let tokens = AuthMemoryTokens()
+        tokens.save("stored-access")
+        repository.profileResponse = ProfileResponse(id: UUID(), email: "reader@example.invalid", provider: "LOCAL", nickname: "독서가", profileImageUrl: nil, createdAt: nil, togetherDays: 1, savedWordCount: 0, readBookCount: 0, isPublic: true, roomTheme: nil)
+        let push = PushTokenStub()
+        let model = AuthSessionViewModel(dependencies: AppDependencies(auth: repository, tokens: tokens, pushTokens: push), restoreSessionOnInit: false)
+        model.isCheckingSession = true
+        push.onSync = {
+            XCTAssertTrue(model.isLoggedIn)
+            XCTAssertFalse(model.isCheckingSession, "Push synchronization must not keep the launch screen visible")
+        }
+        await model.restoreSession()
+        XCTAssertEqual(push.syncCount, 1)
+    }
+
     func testEmailLoginSavesReturnedTokensAndLoadsProfile() async {
         let repository = AuthRepositoryStub()
         let tokens = AuthMemoryTokens()
@@ -87,7 +103,8 @@ private final class AuthMemoryTokens: AuthTokenStore {
 @MainActor
 private final class PushTokenStub: PushTokenManaging {
     var syncCount = 0
-    func syncTokenWithServerIfPossible(forceRefreshToken: Bool) async { syncCount += 1 }
+    var onSync: (() -> Void)?
+    func syncTokenWithServerIfPossible(forceRefreshToken: Bool) async { syncCount += 1; onSync?() }
     func disableCurrentTokenOnServer(accessToken: String?) async {}
 }
 
