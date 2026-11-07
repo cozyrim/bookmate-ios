@@ -30,11 +30,24 @@ struct HomeReadingCarousel: View {
                         .offset(x: reduceMotion ? 0 : -geometry.size.width * 0.09)
                         .accessibilityIdentifier("home.reading.progress")
                 }
-                .frame(height: progressHeight)
+                .frame(height: max(progressHeight, 44))
+                .overlay(alignment: .trailing) {
+                    Button {
+                        onMore(selectedBook)
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.headline)
+                            .foregroundStyle(Color("TextSecondary"))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(selectedBook.title) 메뉴")
+                    .accessibilityIdentifier("home.reading.menu")
+                }
                 if books.count > 1 {
                     pageControls
                 }
-                HomeReadingBookInfo(book: selectedBook, onOpen: onOpen, onMore: onMore)
             }
         }
         .onChange(of: bookIDs, initial: true) { _, ids in
@@ -104,7 +117,7 @@ struct HomeReadingCarousel: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(book.title)
+        .accessibilityLabel("\(book.title), \(book.author)")
         .accessibilityHint(isSelected ? "책 상세 열기" : "이 책 선택")
         .accessibilityIdentifier("home.reading.cover.\(book.id)")
         .frame(width: step, height: height)
@@ -170,58 +183,5 @@ struct HomeReadingCarousel: View {
         withAnimation(reduceMotion ? nil : .smooth(duration: 0.27)) {
             selectedID = id
         }
-    }
-}
-
-private struct HomeReadingBookInfo: View {
-    let book: Book
-    let onOpen: (Book) -> Void
-    let onMore: (Book) -> Void
-
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top, spacing: 8) {
-                Button {
-                    onOpen(book)
-                } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(book.title)
-                            .font(.headline)
-                            .lineLimit(2)
-                            .foregroundStyle(Color("TextPrimary"))
-                        Text(book.author)
-                            .font(.subheadline)
-                            .lineLimit(1)
-                            .foregroundStyle(Color("TextSecondary"))
-                    }
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint("책 상세 열기")
-                .accessibilityIdentifier("home.reading.detail")
-
-                Button {
-                    onMore(book)
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.headline)
-                        .foregroundStyle(Color("TextSecondary"))
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(book.title) 메뉴")
-                .accessibilityIdentifier("home.reading.menu")
-            }
-
-
-        }
-        .padding(.leading, 16)
-        .padding(.trailing, 12)
-        .padding(.vertical, 12)
-
     }
 }
