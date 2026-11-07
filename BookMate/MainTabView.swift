@@ -49,7 +49,7 @@ struct MainTabView: View {
                 WordArchiveView(viewModel: viewModel, selectedTab: $tabIndex)
                     .modifier(ScrollingTabBarModifier())
             } label: {
-                tabLabel("단어장", icon: Image("TabWordIcon").renderingMode(.template))
+                tabLabel("단어장", icon: VocabularyTabIcon())
             }
             .accessibilityLabel("단어장")
 
@@ -57,7 +57,7 @@ struct MainTabView: View {
                 RoomTabView(viewModel: viewModel, notificationRequest: $roomNotificationRequest)
                     .modifier(ScrollingTabBarModifier())
             } label: {
-                tabLabel("서재", icon: Image(systemName: "books.vertical"))
+                tabLabel("서재", icon: Image(systemName: "lamp.desk"))
             }
             .accessibilityLabel("서재")
 
@@ -137,7 +137,7 @@ struct MainTabView: View {
     }
 
     @ViewBuilder
-    private func tabLabel(_ title: LocalizedStringKey, icon: Image) -> some View {
+    private func tabLabel<Icon: View>(_ title: LocalizedStringKey, icon: Icon) -> some View {
         if UIDevice.current.userInterfaceIdiom != .phone && horizontalSizeClass == .regular {
             Label {
                 Text(title)

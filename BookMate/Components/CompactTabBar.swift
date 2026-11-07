@@ -20,7 +20,7 @@ struct CompactTabBar: View {
     static let height: CGFloat = 58
     @Binding var selection: Int
     private let labels = ["홈", "책", "단어장", "서재", "프로필"]
-    private let symbols = ["house", "book", "character.book.closed", "books.vertical", "person.crop.circle"]
+    private let symbols = ["house", "book", "character.book.closed", "lamp.desk", "person.crop.circle"]
 
     var body: some View {
         HStack(spacing: 0) {
@@ -28,7 +28,7 @@ struct CompactTabBar: View {
                 Button { selection = index } label: {
                     Group {
                         if index == 2 {
-                            Image("TabWordIcon").renderingMode(.template).resizable().scaledToFit().frame(width: 20, height: 20)
+                            VocabularyTabIcon()
                         } else {
                             Image(systemName: symbols[index]).font(.system(size: 20, weight: selection == index ? .semibold : .regular))
                         }
