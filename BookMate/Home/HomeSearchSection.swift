@@ -91,7 +91,17 @@ struct HomeSearchSection: View {
     var body: some View {
 
         VStack(alignment: .leading, spacing: 10) {
-            searchModeSelector
+            Picker("검색 범위", selection: Binding(
+                get: { viewModel.searchMode },
+                set: { selectSearchMode($0) }
+            )) {
+                Text("사전").tag(BookMateViewModel.SearchMode.dictionary)
+                Text("도서").tag(BookMateViewModel.SearchMode.book)
+                Text("내 기록").tag(BookMateViewModel.SearchMode.savedWords)
+            }
+            .pickerStyle(.segmented)
+            .disabled(viewModel.isLoading || viewModel.isBookSearchLoading)
+
 
             HStack{
                 Button {
@@ -225,44 +235,6 @@ struct HomeSearchSection: View {
             guard !isShowingSearchResult else { return }
             clearSearchText()
         }
-    }
-
-    private var searchModeSelector: some View {
-        HStack(spacing: 6) {
-            searchModeButton("사전", mode: .dictionary)
-            searchModeButton("도서", mode: .book)
-            searchModeButton("내 기록", mode: .savedWords)
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("검색 범위")
-        .disabled(viewModel.isLoading || viewModel.isBookSearchLoading)
-    }
-
-    private func searchModeButton(_ title: String, mode: BookMateViewModel.SearchMode) -> some View {
-        let isSelected = viewModel.searchMode == mode
-        return Button {
-            guard !isSelected else { return }
-            selectSearchMode(mode)
-        } label: {
-            Text(title)
-                .font(.footnote.weight(isSelected ? .semibold : .regular))
-                .foregroundStyle(isSelected ? Color("Primary") : Color("TextPrimary"))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .frame(maxWidth: .infinity, minHeight: 32)
-                .overlay {
-                    Capsule().strokeBorder(
-                        isSelected ? Color("Primary") : Color("Border"),
-                        lineWidth: isSelected ? 1 : 0.75
-                    )
-                }
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityIdentifier("home.search.mode.\(mode.rawValue)")
     }
 
     private func presentPendingDictionarySearchIfNeeded() {

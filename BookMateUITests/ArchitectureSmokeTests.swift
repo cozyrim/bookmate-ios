@@ -95,16 +95,16 @@ final class ArchitectureSmokeTests: XCTestCase {
     func testDictionarySearchShowsRepositoryResultAndSaveAction() {
         let app = launch(extraArguments: ["--recent-search-fixture"])
         for (mode, placeholder) in [
-            ("book", "책 제목 또는 저자 검색..."),
-            ("savedWords", "저장한 책 또는 단어 검색..."),
-            ("dictionary", "사전에서 단어 검색...")
+            ("도서", "책 제목 또는 저자 검색..."),
+            ("내 기록", "저장한 책 또는 단어 검색..."),
+            ("사전", "사전에서 단어 검색...")
         ] {
-            let selector = app.buttons["home.search.mode.\(mode)"]
+            let selector = app.segmentedControls.buttons[mode]
             selector.tap()
             XCTAssertTrue(selector.isSelected)
             XCTAssertTrue(app.textFields[placeholder].exists)
         }
-        capture("home-outline-search-with-recents", app: app)
+        capture("home-grouped-search-with-recents", app: app)
         let input = app.textFields.firstMatch
         XCTAssertTrue(input.waitForExistence(timeout: 10))
         input.tap()
@@ -252,6 +252,7 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertEqual(position.label, "5권 중 1번째")
         XCTAssertTrue(firstCover.label.contains("싯타르타"))
         XCTAssertFalse(app.buttons["home.reading.detail"].exists)
+        XCTAssertFalse(app.buttons["home.reading.menu"].exists)
         capture("home-reading-initial", app: app)
 
         let start = shelf.coordinate(withNormalizedOffset: CGVector(dx: 0.69, dy: 0.49))
@@ -260,7 +261,9 @@ final class ArchitectureSmokeTests: XCTestCase {
         let second = NSPredicate(format: "label == %@", "5권 중 2번째")
         expectation(for: second, evaluatedWith: position)
         waitForExpectations(timeout: 5)
-        XCTAssertTrue(app.buttons["home.reading.menu"].label.contains("참을 수 없는 존재의 가벼움"))
+        let secondCover = app.buttons["home.reading.cover.22222222-2222-2222-2222-222222222222"]
+        XCTAssertTrue(secondCover.isSelected)
+        XCTAssertTrue(secondCover.label.contains("참을 수 없는 존재의 가벼움"))
         capture("home-reading-swiped", app: app)
 
         app.buttons["다음 책"].tap()
