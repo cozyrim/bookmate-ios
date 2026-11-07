@@ -331,8 +331,13 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertTrue(app.buttons["진행률 초기화"].waitForExistence(timeout: 5))
         let resetCancel = app.buttons.matching(NSPredicate(format: "label == %@", "취소"))
             .allElementsBoundByIndex.first(where: { $0.isHittable })
-        XCTAssertNotNil(resetCancel)
-        resetCancel?.tap()
+        if let resetCancel { resetCancel.tap() }
+        else {
+            // iOS 26 presents this confirmation as a popover; tapping its outside cancels it.
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.60)).tap()
+        }
+        let dismissed = NSPredicate(format: "exists == false")
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: dismissed, object: app.buttons["진행률 초기화"])], timeout: 5), .completed)
         capture("quick-book-status", app: app)
         app.buttons["취소"].tap()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "100% 읽음")).firstMatch.waitForExistence(timeout: 5))
