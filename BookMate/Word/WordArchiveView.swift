@@ -251,58 +251,38 @@ struct WordArchiveView: View {
     private var categoryChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                // "전체" 칩
-                Button {
+                categoryChip("전체", selected: viewModel.archiveSelectedCategory == nil) {
                     BMAnalytics.wordFilterTap(filterType: "category_all")
                     viewModel.archiveSelectedCategory = nil
-                    viewModel.archiveSelectedBookId = nil  // 카테고리 바뀌면 책 선택도 초기화
-                } label: {
-                    Text("전체")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(viewModel.archiveSelectedCategory == nil ? .white : Color("TextPrimary"))
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(
-                            Capsule()
-                                .fill(viewModel.archiveSelectedCategory == nil ? Color("Primary") : Color("SurfaceElevated").opacity(0.96))
-                        )
-                        .overlay(
-                            Capsule()
-                                .stroke(Color("Border").opacity(0.5), lineWidth: viewModel.archiveSelectedCategory == nil ? 0 : 1)
-                        )
+                    viewModel.archiveSelectedBookId = nil
                 }
-                .buttonStyle(.plain)
-                // 카테고리별 칩
                 ForEach(availableCategories, id: \.self) { category in
-                    let isSelected = viewModel.archiveSelectedCategory == category
-                    Button {
+                    let selected = viewModel.archiveSelectedCategory == category
+                    categoryChip(category, selected: selected) {
                         BMAnalytics.wordFilterTap(filterType: "category")
-                        viewModel.archiveSelectedCategory = isSelected ? nil : category
-                        viewModel.archiveSelectedBookId = nil  // 카테고리 바뀌면 책 선택 초기화
-                    } label: {
-                        Text(category)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(isSelected ? .white : Color("TextPrimary"))
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 16)
-                            .background(
-                                Capsule()
-                                    .fill(isSelected ? Color("Primary") : Color("SurfaceElevated").opacity(0.96))
-                            )
-                            .overlay(
-                                Capsule()
-                                    .stroke(Color("Border").opacity(0.5), lineWidth: isSelected ? 0 : 1)
-                            )
+                        viewModel.archiveSelectedCategory = selected ? nil : category
+                        viewModel.archiveSelectedBookId = nil
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 24)
         }
     }
-    
+
+    private func categoryChip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.caption.weight(selected ? .bold : .medium))
+                .foregroundStyle(selected ? Color("Primary") : Color("TextSecondary"))
+                .padding(.horizontal, 16)
+                .frame(minHeight: 44)
+                .overlay(Capsule().strokeBorder(selected ? Color("Primary") : Color("TextMuted").opacity(0.55), lineWidth: selected ? 1.5 : 0.75))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
+    }
+
     private var filterAndSortBar: some View {
         HStack {
             // 책 선택 버튼
@@ -326,8 +306,8 @@ struct WordArchiveView: View {
                 .foregroundStyle(viewModel.archiveSelectedBookId == nil ? Color("TextSecondary") : Color("Primary"))
                 .padding(.vertical, 8)
                 .padding(.horizontal, 14)
-                .background(Color("SurfaceElevated").opacity(0.96))
-                .clipShape(Capsule())
+                .frame(minHeight: 44)
+                .contentShape(Capsule())
                 .overlay(
                     Capsule()
                         .stroke(viewModel.archiveSelectedBookId == nil ? Color("Border").opacity(0.5) : Color("Primary").opacity(0.5), lineWidth: 1)
@@ -353,8 +333,8 @@ struct WordArchiveView: View {
                 .foregroundStyle(Color("TextSecondary"))
                 .padding(.vertical, 8)
                 .padding(.horizontal, 14)
-                .background(Color("SurfaceElevated").opacity(0.96))
-                .clipShape(Capsule())
+                .frame(minHeight: 44)
+                .contentShape(Capsule())
                 .overlay(
                     Capsule()
                         .stroke(Color("Border").opacity(0.5), lineWidth: 1)

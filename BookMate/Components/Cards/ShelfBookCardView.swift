@@ -31,24 +31,6 @@ struct ShelfBookCardView: View {
         return "\(author) · \(trimmedCategory)"
     }
 
-    private var cardBackground: Color {
-        colorScheme == .dark
-        ? Color("SurfaceElevated").opacity(0.94)
-        : Color("Surface").opacity(0.96)
-    }
-
-    private var cardBorder: Color {
-        colorScheme == .dark
-        ? Color.white.opacity(0.08)
-        : Color("Border").opacity(0.45)
-    }
-
-    private var cardShadow: Color {
-        colorScheme == .dark
-        ? Color.black.opacity(0.28)
-        : Color("Shadow").opacity(0.055)
-    }
-
     private var progressPercent: Int {
         Int((min(max(progress, 0), 1) * 100).rounded())
     }
@@ -66,7 +48,7 @@ struct ShelfBookCardView: View {
                     Text(title)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundStyle(Color("TextPrimary").opacity(0.92))
+                        .foregroundStyle(Color("TextPrimary"))
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
@@ -74,7 +56,7 @@ struct ShelfBookCardView: View {
 
                     Text(authorLine)
                         .font(.caption2)
-                        .foregroundStyle(Color("TextSecondary").opacity(0.82))
+                        .foregroundStyle(Color("TextSecondary"))
                         .lineLimit(1)
                         .minimumScaleFactor(0.82)
                 }
@@ -100,7 +82,7 @@ struct ShelfBookCardView: View {
                     }
                 }
             }
-            .padding(.horizontal, 13)
+            .padding(.horizontal, 4)
             .padding(.top, 14)
             .padding(.bottom, 12)
 
@@ -110,26 +92,13 @@ struct ShelfBookCardView: View {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(Color("TextPrimary").opacity(0.64))
-                    .frame(width: 30, height: 30)
-                    .background(cardBackground.opacity(0.82), in: Circle())
+                    .frame(width: 44, height: 44)
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
             .padding(10)
         }
         .frame(maxWidth: .infinity)
-        .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous)
-                .stroke(cardBorder, lineWidth: 1)
-        }
-        .shadow(
-            color: cardShadow,
-            radius: colorScheme == .dark ? 10 : 12,
-            x: 0,
-            y: colorScheme == .dark ? 6 : 5
-        )
         .contentShape(Rectangle())
         .onTapGesture {
             onTap()
@@ -149,10 +118,6 @@ struct ShelfBookCardView: View {
             Spacer(minLength: 0)
 
             ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color("SurfaceSoft").opacity(colorScheme == .dark ? 0.42 : 0.78))
-                    .frame(width: 126, height: 154)
-
                 BookCoverCell(
                     imageName: imageName,
                     width: 112,
@@ -209,18 +174,6 @@ struct ShelfBookListCardView: View {
         return "\(author) · \(trimmedCategory)"
     }
 
-    private var cardBackground: Color {
-        colorScheme == .dark
-        ? Color("SurfaceElevated").opacity(0.94)
-        : Color("Surface").opacity(0.96)
-    }
-
-    private var cardBorder: Color {
-        colorScheme == .dark
-        ? Color.white.opacity(0.08)
-        : Color("Border").opacity(0.45)
-    }
-
     private var progressPercent: Int {
         Int((min(max(progress, 0), 1) * 100).rounded())
     }
@@ -238,7 +191,7 @@ struct ShelfBookListCardView: View {
                     Text(title)
                         .font(.headline)
                         .fontWeight(.semibold)
-                        .foregroundStyle(Color("TextPrimary").opacity(0.92))
+                        .foregroundStyle(Color("TextPrimary"))
                         .lineLimit(2)
 
                     Spacer(minLength: 0)
@@ -259,7 +212,7 @@ struct ShelfBookListCardView: View {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(Color("TextPrimary").opacity(0.65))
-                            .frame(width: 28, height: 28)
+                            .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -267,7 +220,7 @@ struct ShelfBookListCardView: View {
 
                 Text(authorLine)
                     .font(.caption2)
-                    .foregroundStyle(Color("TextSecondary").opacity(0.82))
+                    .foregroundStyle(Color("TextSecondary"))
                     .lineLimit(1)
 
                 ReadingStatusBadge(
@@ -296,18 +249,6 @@ struct ShelfBookListCardView: View {
         .padding(.horizontal)
         .frame(maxWidth: .infinity)
         .frame(height: 160)
-        .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: ReadingStyle.cardRadius, style: .continuous)
-                .stroke(cardBorder, lineWidth: 1)
-        }
-        .shadow(
-            color: colorScheme == .dark ? .black.opacity(0.28) : Color("Shadow").opacity(0.055),
-            radius: colorScheme == .dark ? 10 : 12,
-            x: 0,
-            y: colorScheme == .dark ? 6 : 5
-        )
         .padding(.horizontal, 24)
         .contentShape(Rectangle())
         .onTapGesture {
