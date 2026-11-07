@@ -76,6 +76,9 @@ struct MainTabView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .environment(\.compactTabBarHeight,
+                     UIDevice.current.userInterfaceIdiom == .phone && !hidesCompactBar && !keyboardIsPresented
+                     ? CompactTabBar.height : 0)
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
             keyboardIsPresented = true
         }

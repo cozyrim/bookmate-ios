@@ -153,6 +153,10 @@ final class ArchitectureSmokeTests: XCTestCase {
             app.buttons["배경 적용하기"].tap()
         }
         XCTAssertTrue(lamp.waitForExistence(timeout: 10))
+        if app.frame.width < 600 {
+            XCTAssertLessThan(lamp.frame.maxY, tab("서재", in: app).frame.minY,
+                              "Room controls must remain above the compact tab bar")
+        }
         capture("immersive-lamp-on", app: app)
         lamp.tap()
         XCTAssertEqual(lamp.value as? String, "꺼짐")
