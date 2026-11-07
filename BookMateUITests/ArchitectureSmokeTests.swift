@@ -314,6 +314,30 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["다이어리"].waitForExistence(timeout: 10))
     }
 
+    func testRoomViewpointMenuChangesViewsAndKeepsReadingActive() {
+        let app = launch(extraArguments: ["--room-books"])
+        tab("서재", in: app).tap()
+        if !app.buttons["miniRoom.wood3D.lamp"].exists {
+            app.buttons["배경"].tap()
+            app.buttons["miniRoom.theme.wood3D"].tap()
+            app.buttons["배경 적용하기"].tap()
+        }
+        if app.buttons["reading.finish"].exists { app.buttons["reading.finish"].tap() }
+        app.buttons["reading.start"].tap()
+        let menu = app.buttons["room.viewpoint.menu"]
+        XCTAssertEqual(menu.value as? String, "독서 자리")
+        XCTAssertTrue(app.staticTexts["소파에서 읽고 있어요."].waitForExistence(timeout: 20))
+        for (value, title) in [("window", "창가"), ("room", "방 전체"), ("shelf", "책장"), ("reading", "독서 자리")] {
+            menu.tap()
+            app.buttons["room.viewpoint.\(value)"].tap()
+            XCTAssertEqual(menu.value as? String, title)
+            XCTAssertTrue(app.buttons["reading.pause"].isHittable)
+            capture("viewpoint-\(value)", app: app)
+        }
+        app.buttons["reading.finish"].tap()
+        XCTAssertTrue(app.buttons["reading.start"].waitForExistence(timeout: 5))
+    }
+
     func testRoomControlsInDarkAppearance() {
         let app = launch(appearance: "dark", extraArguments: ["--room-books"])
         tab("서재", in: app).tap()

@@ -49,13 +49,19 @@ final class MiniRoomRealityScene {
         setLamp(isOn: true)
     }
 
-    func setFocus(_ value: Bool) {
-        guard focused != value else { return }
-        focused = value
-        foregroundDecorations.forEach { $0.isEnabled = !value }
-        resetOpenedBook()
-        cameraRig.setFocus(value)
+    var isCameraTransitioning: Bool { cameraRig.isTransitioning }
+
+    func setViewpoint(_ value: MiniRoomViewpoint, animated: Bool) {
+        let nextFocused = value == .shelf
+        if focused != nextFocused {
+            focused = nextFocused
+            foregroundDecorations.forEach { $0.isEnabled = !nextFocused }
+            resetOpenedBook()
+        }
+        cameraRig.setViewpoint(value, animated: animated)
     }
+
+    func advanceCamera(deltaTime: TimeInterval) { cameraRig.advance(deltaTime: deltaTime) }
 
     func setZoom(_ zoom: Float) { cameraRig.setZoom(zoom) }
 
@@ -90,6 +96,7 @@ final class MiniRoomRealityScene {
         openedBook = model
         defer { if openingGeneration == generation { resetOpenedBook() } }
         if reduceMotion { return true }
+        cameraRig.finishTransition()
         let lifted = cameraRig.presentedBookTransform
         model.root.move(to: lifted, relativeTo: anchor, duration: 0.36, timingFunction: .easeInOut)
         do {

@@ -21,7 +21,8 @@ struct MiniRoom3DView: View {
     let onBookTap: (Book) -> Void
 
     @State private var lampIsOn = true
-    @State private var focused = true
+    @State private var viewpoint: MiniRoomViewpoint = .shelf
+    private var focused: Bool { viewpoint == .shelf }
     @State private var cameraZoom: Float = 1
     @State private var page = 0
     @State private var opening: UUID?
@@ -48,11 +49,26 @@ struct MiniRoom3DView: View {
                 VStack(spacing: 4) {
                     roomHeader
                     Spacer(minLength: 16)
-                    ReadingRoomControls(model: reading, books: books,
-                                        onStart: { focused = false; characterIntent = .seated },
-                                        onSit: { focused = false; characterIntent = .seated },
-                                        onWalk: { focused = false; characterIntent = $0 })
-                    roomControls
+                    VStack(spacing: 4) {
+                        ReadingRoomControls(model: reading, books: books,
+                                            onStart: { selectViewpoint(.reading); characterIntent = .seated },
+                                            onSit: { selectViewpoint(.reading); characterIntent = .seated },
+                                            onWalk: { selectViewpoint($0 == .window ? .window : .shelf); characterIntent = $0 })
+                        roomControls
+                    }
+                    .background {
+                        // Fade the scene under text, without separate backing cards.
+                        VStack(spacing: 0) {
+                            LinearGradient(colors: [sceneBackground.opacity(0), sceneBackground],
+                                           startPoint: .top, endPoint: .bottom)
+                                .frame(height: 64)
+                            sceneBackground
+                        }
+                        .padding(.top, -64)
+                        .padding(.bottom, -(12 + compactTabBarHeight))
+                        .padding(.horizontal, -16)
+                        .allowsHitTesting(false)
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -61,14 +77,19 @@ struct MiniRoom3DView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .onAppear { active = true; if reading.active != nil { focused = false } }
-        .onChange(of: focused) { _, _ in cameraZoom = 1 }
-        .onChange(of: reading.active?.id) { _, id in if id != nil { focused = false } }
+        .onAppear { active = true; if reading.active != nil { selectViewpoint(.reading) } }
+        .onChange(of: reading.active?.id) { _, id in if id != nil { selectViewpoint(.reading) } }
         .onDisappear { active = false; opening = nil }
         .onChange(of: scenePhase) { _, phase in if phase != .active { opening = nil } }
         .onChange(of: books.map(\.id)) { _, _ in page = min(page, pageCount - 1); opening = nil }
         .tint(Color("PrimaryDeep"))
         .toolbarBackground(.hidden, for: .tabBar)
+    }
+
+    private var sceneBackground: Color {
+        colorScheme == .dark
+            ? Color(red: 23 / 255, green: 30 / 255, blue: 43 / 255)
+            : Color(red: 248 / 255, green: 250 / 255, blue: 253 / 255)
     }
 
     private var renderedIntent: RoomCharacterController.Intent {
@@ -83,7 +104,7 @@ struct MiniRoom3DView: View {
             return prefix + ReadingSession.durationText($0.elapsed(at: date))
         }
         return MiniRoomRealityCanvas(
-            books: visibleBooks, focused: focused, opening: $opening,
+            books: visibleBooks, viewpoint: viewpoint, opening: $opening,
             active: active && scenePhase == .active, lampIsOn: lampIsOn, reduceMotion: reduceMotion,
             darkMode: colorScheme == .dark, characterIsMoving: $characterIsMoving, characterIntent: renderedIntent,
             timerText: timerText, zoom: $cameraZoom, onHit: handleHit
@@ -154,6 +175,22 @@ struct MiniRoom3DView: View {
             }
             .disabled(opening != nil)
             HStack(spacing: 4) {
+                Menu {
+                    ForEach(MiniRoomViewpoint.allCases, id: \.self) { choice in
+                        Button { selectViewpoint(choice) } label: {
+                            Label(choice.title, systemImage: choice == viewpoint ? "checkmark" : "viewfinder")
+                        }
+                        .accessibilityIdentifier("room.viewpoint.\(choice.rawValue)")
+                    }
+                } label: {
+                    Label(viewpoint.title, systemImage: "viewfinder")
+                        .font(.footnote.weight(.semibold))
+                        .frame(minHeight: 44).contentShape(Rectangle())
+                }
+                .accessibilityLabel("시점 선택")
+                .accessibilityValue(viewpoint.title)
+                .accessibilityIdentifier("room.viewpoint.menu")
+                .disabled(opening != nil)
                 Spacer()
                 zoomButton("축소", symbol: "minus.magnifyingglass", change: -0.15)
                 Button { cameraZoom = 1 } label: {
@@ -197,7 +234,7 @@ struct MiniRoom3DView: View {
 
     @ViewBuilder
     private var roomActions: some View {
-        Button { focused.toggle() } label: {
+        Button { selectViewpoint(focused ? .room : .shelf) } label: {
             actionLabel(focused ? "방 전체" : "책장 가까이", icon: focused ? "viewfinder" : "books.vertical")
         }
         .accessibilityIdentifier("miniRoom.wood3D.books")
@@ -238,9 +275,16 @@ struct MiniRoom3DView: View {
         case .lamp:
             toggleLamp()
         case .seat:
-            focused = false
+            selectViewpoint(.reading)
             characterIntent = .seated
         }
+    }
+
+    private func selectViewpoint(_ value: MiniRoomViewpoint) {
+        guard value != viewpoint else { return }
+        viewpoint = value
+        cameraZoom = 1
+        opening = nil
     }
 
     private func toggleLamp() { lampIsOn.toggle() }

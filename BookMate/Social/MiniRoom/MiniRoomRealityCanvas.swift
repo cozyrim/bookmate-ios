@@ -4,7 +4,7 @@ import Combine
 
 struct MiniRoomRealityCanvas: UIViewRepresentable {
     let books: [Book]
-    let focused: Bool
+    let viewpoint: MiniRoomViewpoint
     @Binding var opening: UUID?
     let active: Bool
     let lampIsOn: Bool
@@ -47,17 +47,14 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
         coordinator.active = active
         coordinator.onMovementChanged = { characterIsMoving = $0 }
         coordinator.timerLabel.text = timerText
-        coordinator.zoom = zoom
         coordinator.onZoomChanged = { zoom = $0 }
-        coordinator.room.setZoom(zoom)
         coordinator.timerLabel.textColor = UIColor(named: "PrimaryDeep")
         coordinator.timerLabel.backgroundColor = darkMode ? UIColor(roomHex: 0x243B59) : UIColor(roomHex: 0xE4EDF9)
         coordinator.room.character.setIntent(characterIntent, reduceMotion: reduceMotion)
         coordinator.openingChanged = { opening = $0 }
         coordinator.room.updateBooks(books)
-        coordinator.room.setFocus(focused)
-        if !active { coordinator.cancel() }
-        else if let opening, coordinator.openingID != opening { coordinator.open(opening) }
+        coordinator.configureCamera(viewpoint: viewpoint, zoom: zoom, animated: !reduceMotion)
+        coordinator.synchronizeOpening(opening, active: active)
         coordinator.room.setLamp(isOn: lampIsOn)
         view.environment.lighting.intensityExponent = lampIsOn ? -1.0 : -1.8
         view.environment.background = .color(darkMode ? UIColor(roomHex: 0x171E2B) : UIColor(roomHex: 0xF8FAFD))
@@ -93,6 +90,7 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
             frameSubscription = view.scene.subscribe(to: SceneEvents.Update.self) { [weak self, weak view] event in
                 guard let self, let view, self.active else { return }
                 self.room.setViewport(view.bounds.size)
+                self.room.advanceCamera(deltaTime: event.deltaTime)
                 self.room.character.update(deltaTime: event.deltaTime)
                 let moving = self.room.character.isWalking
                 if moving != self.lastMoving {
@@ -117,6 +115,17 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
         var openingTask: Task<Void, Never>?
         private var openingGeneration = UUID()
 
+        func synchronizeOpening(_ requestedID: UUID?, active: Bool) {
+            guard active, let requestedID else {
+                if openingID != nil { cancel() }
+                return
+            }
+            if openingID != requestedID {
+                cancel()
+                open(requestedID)
+            }
+        }
+
         func cancel() {
             openingGeneration = UUID()
             openingTask?.cancel()
@@ -140,14 +149,40 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
                 openingChanged?(nil)
             }
         }
+        private var selectedViewpoint: MiniRoomViewpoint = .shelf
+
+        private var panIsActive = false
+        private var pinchIsActive = false
+
+        func configureCamera(viewpoint value: MiniRoomViewpoint, zoom: Float, animated: Bool) {
+            if selectedViewpoint != value {
+                selectedViewpoint = value
+                panIsActive = false
+                pinchIsActive = false
+                angle = MiniRoomRealityScene.initialAngle
+                angleBeforePan = angle
+            }
+            // Select before applying the reset zoom: capture the actual current pose.
+            room.setViewpoint(value, animated: animated)
+            self.zoom = zoom
+            room.setZoom(zoom)
+        }
+
         var zoom: Float = 1
         var onZoomChanged: ((Float) -> Void)?
         private var zoomBeforePinch: Float = 1
 
         @objc func pinch(_ gesture: UIPinchGestureRecognizer) {
             guard active, openingID == nil else { return }
-            if gesture.state == .began { zoomBeforePinch = zoom }
-            guard gesture.state == .began || gesture.state == .changed else { return }
+            if gesture.state == .began {
+                pinchIsActive = !room.isCameraTransitioning
+                zoomBeforePinch = zoom
+            }
+            guard gesture.state == .began || gesture.state == .changed else {
+                pinchIsActive = false
+                return
+            }
+            guard pinchIsActive, !room.isCameraTransitioning else { return }
             zoom = MiniRoomCameraRig.clampedZoom(zoomBeforePinch * Float(gesture.scale))
             room.setZoom(zoom)
             onZoomChanged?(zoom)
@@ -157,7 +192,7 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
         private var angleBeforePan: Float = MiniRoomRealityScene.initialAngle
 
         @objc func tap(_ gesture: UITapGestureRecognizer) {
-            guard active, let view = gesture.view as? ARView,
+            guard active, !room.isCameraTransitioning, let view = gesture.view as? ARView,
                   let hit = room.hit(at: gesture.location(in: view), in: view) else { return }
             guard openingID == nil else { return }
             if case .book(let id) = hit { open(id) } else { onHit?(hit) }
@@ -165,8 +200,15 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
 
         @objc func pan(_ gesture: UIPanGestureRecognizer) {
             guard active, openingID == nil else { return }
-            if gesture.state == .began { angleBeforePan = angle }
-            guard gesture.state == .began || gesture.state == .changed else { return }
+            if gesture.state == .began {
+                panIsActive = !room.isCameraTransitioning
+                angleBeforePan = angle
+            }
+            guard gesture.state == .began || gesture.state == .changed else {
+                panIsActive = false
+                return
+            }
+            guard panIsActive, !room.isCameraTransitioning else { return }
             angle = min(0.75, max(0.12, angleBeforePan - Float(gesture.translation(in: gesture.view).x) / 420))
             room.aimCamera(atAngle: angle)
         }
@@ -179,7 +221,7 @@ struct MiniRoomRealityCanvas: UIViewRepresentable {
         }
 
         func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-            guard active, openingID == nil else { return false }
+            guard active, openingID == nil, !room.isCameraTransitioning else { return false }
             if gestureRecognizer is UIPinchGestureRecognizer { return true }
             guard !reduceMotion, let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
             let velocity = pan.velocity(in: pan.view)

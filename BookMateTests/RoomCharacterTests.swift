@@ -57,6 +57,82 @@ final class RoomCharacterTests: XCTestCase {
         XCTAssertFalse(coordinator.gestureRecognizerShouldBegin(pinch))
     }
 
+    func testViewpointTransitionIsContinuousAndLatestSelectionWins() async throws {
+        let rig = MiniRoomCameraRig()
+        let size = CGSize(width: 402, height: 874)
+        rig.setViewport(size)
+        let start = rig.entity.position
+        rig.setViewpoint(.reading, animated: true)
+        XCTAssertTrue(rig.isTransitioning)
+        XCTAssertEqual(rig.entity.position, start, "Selecting a view must not jump")
+        for _ in 0..<3 { rig.advance(deltaTime: 0.05) }
+        XCTAssertGreaterThan(simd_distance(start, rig.entity.position), 0.01)
+        let interrupted = rig.entity.position
+        rig.setViewpoint(.window, animated: true)
+        XCTAssertEqual(rig.entity.position, interrupted)
+        for _ in 0..<20 {
+            rig.advance(deltaTime: 0.05)
+            let world = SIMD3<Float>(0.95, 1.95, -1.65)
+            let point = try XCTUnwrap(rig.project(world, viewport: size))
+            let ray = try XCTUnwrap(rig.ray(through: point, viewport: size))
+            XCTAssertLessThan(simd_length(simd_normalize(world - ray.origin) - ray.direction), 0.001)
+        }
+        XCTAssertFalse(rig.isTransitioning)
+        let direct = MiniRoomCameraRig()
+        direct.setViewport(size)
+        direct.setViewpoint(.window, animated: false)
+        XCTAssertLessThan(simd_distance(rig.entity.position, direct.entity.position), 0.001)
+    }
+
+    func testReduceMotionFinishesCameraTransitionAndPresetsResetZoom() async {
+        let rig = MiniRoomCameraRig()
+        rig.setViewport(CGSize(width: 402, height: 874))
+        rig.setZoom(1.45)
+        rig.setViewpoint(.reading, animated: true)
+        XCTAssertEqual(rig.zoom, 1)
+        XCTAssertTrue(rig.isTransitioning)
+        rig.setViewpoint(.reading, animated: false)
+        XCTAssertFalse(rig.isTransitioning)
+        let direct = MiniRoomCameraRig()
+        direct.setViewport(CGSize(width: 402, height: 874))
+        direct.setViewpoint(.reading, animated: false)
+        XCTAssertLessThan(simd_distance(rig.entity.position, direct.entity.position), 0.001)
+    }
+
+    func testCoordinatorResetsZoomAfterCapturingVisiblePose() async throws {
+        let coordinator = MiniRoomRealityCanvas.Coordinator()
+        let size = CGSize(width: 402, height: 874)
+        coordinator.room.setViewport(size)
+        coordinator.configureCamera(viewpoint: .shelf, zoom: 1.45, animated: false)
+        let before = try XCTUnwrap(coordinator.room.characterScreenPoint(in: size))
+        coordinator.configureCamera(viewpoint: .reading, zoom: 1, animated: true)
+        let after = try XCTUnwrap(coordinator.room.characterScreenPoint(in: size))
+        XCTAssertEqual(after.x, before.x, accuracy: 0.001)
+        XCTAssertEqual(after.y, before.y, accuracy: 0.001)
+        XCTAssertTrue(coordinator.room.isCameraTransitioning)
+        XCTAssertEqual(coordinator.zoom, 1)
+    }
+
+    func testClearingOpeningIntentCancelsPendingNavigation() async {
+        let coordinator = MiniRoomRealityCanvas.Coordinator()
+        var navigated = false
+        coordinator.onHit = { _ in navigated = true }
+        let book = Book(title: "취소 확인", author: "", imageName: "", progress: 0)
+        coordinator.room.updateBooks([book])
+        coordinator.open(book.id)
+        let cancelledTask = coordinator.openingTask
+        XCTAssertNotNil(coordinator.openingID)
+        coordinator.synchronizeOpening(nil, active: true)
+        XCTAssertNil(coordinator.openingID)
+        XCTAssertNil(coordinator.openingTask)
+        await cancelledTask?.value
+        XCTAssertFalse(navigated)
+        coordinator.reduceMotion = true
+        coordinator.synchronizeOpening(book.id, active: true)
+        await coordinator.openingTask?.value
+        XCTAssertTrue(navigated, "A fresh request must still open the same book")
+    }
+
     func testLatestDestinationWinsDuringMovement() async {
         let character = RoomCharacterController()
         character.setIntent(.window, reduceMotion: false)
