@@ -150,6 +150,16 @@ struct BookDetailView: View {
                 }
             }
         }
+        .preference(key: CompactTabBarHiddenKey.self, value: true)
+        .toolbar(.hidden, for: .tabBar)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if selectedTab == .diary {
+                diarySaveButton
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(.regularMaterial)
+            }
+        }
         .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
         .onAppear {
@@ -638,7 +648,6 @@ struct BookDetailView: View {
             diaryPeriodPicker
             diaryReviewEditor
             diaryPublicToggle
-            diarySaveButton
         }
         .padding(.vertical, 18)
         .overlay(alignment: .top) { Divider() }
@@ -792,9 +801,9 @@ struct BookDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(Color("Primary"), in: Capsule())
-                .shadow(color: Color("Primary").opacity(0.22), radius: 10, x: 0, y: 5)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("book.diary.save")
     }
 
     private var readingTimelineSection: some View {

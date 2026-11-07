@@ -57,6 +57,8 @@ struct PublicReviewDetailView: View {
                             .padding(24)
                         }
                     }
+                    .preference(key: CompactTabBarHiddenKey.self, value: true)
+                    .toolbar(.hidden, for: .tabBar)
                     .navigationTitle("리뷰")
                     .navigationBarTitleDisplayMode(.inline)
             }
