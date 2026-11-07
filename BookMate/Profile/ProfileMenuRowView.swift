@@ -19,11 +19,11 @@ struct ProfileMenuRowView: View {
     }
 
             var body: some View {
-                HStack(spacing: 14) {
+                HStack(spacing: 12) {
                     Image(systemName: item.imageName)
-                        .font(.system(size: 21, weight: .regular))
+                        .font(.body)
                         .foregroundStyle(tintColor)
-                        .frame(width: 22, height: 22)
+                        .frame(width: 24)
 
                     Text(item.title)
                         .font(.callout)
@@ -33,11 +33,12 @@ struct ProfileMenuRowView: View {
 
                     if item.showChevron {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(Color("TextSecondary").opacity(0.8))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color("TextSecondary"))
                     }
                 }
-                .frame(height: 42)
+                .padding(.vertical, 8)
+                .frame(minHeight: 44)
     }
 }
 

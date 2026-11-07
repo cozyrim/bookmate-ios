@@ -9,7 +9,6 @@ struct ProfileMenuCardView: View {
             ForEach(rows) { row in
                 Button { onTap(row) } label: {
                     ProfileMenuRowView(item: row)
-                        .padding(.vertical, 6)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -18,6 +17,5 @@ struct ProfileMenuCardView: View {
                 }
             }
         }
-        .padding(.vertical, 8)
     }
 }
