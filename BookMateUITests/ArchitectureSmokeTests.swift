@@ -268,6 +268,8 @@ final class ArchitectureSmokeTests: XCTestCase {
             XCTAssertGreaterThan(progress.frame.minY, homeTab.frame.maxY)
             XCTAssertLessThan(progress.frame.maxY, app.frame.maxY)
         }
+        XCTAssertLessThan(progress.frame.maxY, app.buttons["home.reading.detail"].frame.minY,
+                          "Reading progress belongs between the cover and book metadata")
         capture("compact-home-with-recents", app: app)
         tab("서재", in: app).tap()
         let lamp = app.buttons["miniRoom.wood3D.lamp"]
