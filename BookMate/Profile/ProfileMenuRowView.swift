@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ProfileMenuRowView: View {
+    @ScaledMetric(relativeTo: .body) private var iconColumnWidth: CGFloat = 24
 //        let imageName: String
 //        let title: String
 //        var showsChevron: Bool = true
@@ -23,7 +24,7 @@ struct ProfileMenuRowView: View {
                     Image(systemName: item.imageName)
                         .font(.body)
                         .foregroundStyle(tintColor)
-                        .frame(width: 24)
+                        .frame(width: iconColumnWidth)
 
                     Text(item.title)
                         .font(.callout)
