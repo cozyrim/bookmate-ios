@@ -115,6 +115,24 @@ final class LibraryFeatureTests: XCTestCase {
         XCTAssertEqual(app.wordSaveBookIdToSelectAfterRegistration, book.id)
     }
 
+    func testQuickStatusCompletesThenRestartsWithoutChangingOtherBookFields() async {
+        let app = makeModel(repository: LibraryBookStub())
+        let book = Book(title: "상태 변경", author: "저자", imageName: "cover", category: "소설", progress: 0.4,
+                        totalPages: 200, currentPage: 80, rating: 4, review: "메모", readingStatus: .reading)
+        app.books = [book]
+        let completed = await app.libraryFeature.changeReadingStatus(bookID: book.id, to: .completed)
+        XCTAssertTrue(completed)
+        XCTAssertEqual(app.books.first?.currentPage, 200)
+        XCTAssertEqual(app.books.first?.readingStatus, .completed)
+        let restarted = await app.libraryFeature.changeReadingStatus(bookID: book.id, to: .reading)
+        XCTAssertTrue(restarted)
+        XCTAssertEqual(app.books.first?.progress, 0)
+        XCTAssertEqual(app.books.first?.readingStatus, .reading)
+        XCTAssertEqual(app.books.first?.review, "메모")
+        XCTAssertEqual(app.books.first?.rating, 4)
+        XCTAssertEqual(app.books.first?.category, "소설")
+    }
+
     private func makeModel(repository: LibraryBookStub) -> BookMateViewModel {
         BookMateViewModel(dependencies: AppDependencies(readingReminders: ReminderStub(), books: repository, shelfOrder: LibraryShelfOrderStub()))
     }

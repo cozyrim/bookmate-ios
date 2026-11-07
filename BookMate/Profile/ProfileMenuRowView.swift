@@ -15,7 +15,7 @@ struct ProfileMenuRowView: View {
     let item: ProfileMenuItem
     
     private var tintColor: Color {
-        item.isDestructive ? Color("Error") : Color("TextSecondary").opacity(0.9)
+        item.isDestructive ? Color("Error") : Color("TextSecondary")
     }
 
             var body: some View {
@@ -27,7 +27,7 @@ struct ProfileMenuRowView: View {
 
                     Text(item.title)
                         .font(.callout)
-                        .foregroundStyle(item.isDestructive ? Color("Error") : Color("TextPrimary").opacity(0.82))
+                        .foregroundStyle(item.isDestructive ? Color("Error") : Color("TextPrimary"))
 
                     Spacer()
 
