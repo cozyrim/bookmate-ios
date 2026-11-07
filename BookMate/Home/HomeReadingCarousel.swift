@@ -8,6 +8,8 @@ struct HomeReadingCarousel: View {
     let onOpen: (Book) -> Void
     let onMore: (Book) -> Void
 
+    @ScaledMetric(relativeTo: .caption2) private var progressHeight: CGFloat = 28
+
     @State private var selectedID: Book.ID?
     @State private var scrollOffset: CGFloat = 0
 
@@ -21,6 +23,14 @@ struct HomeReadingCarousel: View {
         VStack(spacing: 4) {
             if let selectedBook = books.first(where: { $0.id == selectedID }) ?? books.first {
                 coverShelf
+                GeometryReader { geometry in
+                    BookReadingProgress(progress: selectedBook.progress, status: selectedBook.readingStatus ?? .reading)
+                        .frame(width: min(geometry.size.width * 0.56, 168) * 0.77)
+                        .frame(maxWidth: .infinity)
+                        .offset(x: reduceMotion ? 0 : -geometry.size.width * 0.09)
+                        .accessibilityIdentifier("home.reading.progress")
+                }
+                .frame(height: progressHeight)
                 if books.count > 1 {
                     pageControls
                 }
@@ -168,7 +178,6 @@ private struct HomeReadingBookInfo: View {
     let onOpen: (Book) -> Void
     let onMore: (Book) -> Void
 
-    private var progress: Double { min(max(book.progress, 0), 1) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -208,13 +217,7 @@ private struct HomeReadingBookInfo: View {
                 .accessibilityIdentifier("home.reading.menu")
             }
 
-            ProgressView(value: progress) {
-                Text("\(Int((progress * 100).rounded()))% 읽음")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(Color("TextSecondary"))
-            }
-            .tint(Color("Primary"))
-            .accessibilityIdentifier("home.reading.progress")
+
         }
         .padding(.leading, 16)
         .padding(.trailing, 12)
