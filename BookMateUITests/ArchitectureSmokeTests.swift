@@ -235,7 +235,13 @@ final class ArchitectureSmokeTests: XCTestCase {
         let app = launch(extraArguments: ["--room-books", "--recent-search-fixture"])
         let progress = app.progressIndicators["home.reading.progress"]
         XCTAssertTrue(progress.waitForExistence(timeout: 10))
-        XCTAssertLessThan(progress.frame.maxY, tab("홈", in: app).frame.minY)
+        let homeTab = tab("홈", in: app)
+        if homeTab.frame.midY > app.frame.midY {
+            XCTAssertLessThan(progress.frame.maxY, homeTab.frame.minY)
+        } else {
+            XCTAssertGreaterThan(progress.frame.minY, homeTab.frame.maxY)
+            XCTAssertLessThan(progress.frame.maxY, app.frame.maxY)
+        }
         capture("compact-home-with-recents", app: app)
         tab("서재", in: app).tap()
         let lamp = app.buttons["miniRoom.wood3D.lamp"]
@@ -254,7 +260,7 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertEqual(lamp.value as? String, "꺼짐")
         capture("immersive-lamp-off", app: app)
         lamp.tap()
-        app.buttons["miniRoom.wood3D.books"].tap()
+        selectRoomView("room", in: app)
         capture("immersive-room-wide", app: app)
     }
 
@@ -289,15 +295,17 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertFalse(app.buttons["다음 책장"].isEnabled)
         capture("real-book-second-page", app: app)
         app.buttons["이전 책장"].tap()
-        app.buttons["miniRoom.wood3D.books"].tap()
+        selectRoomView("room", in: app)
         XCTAssertEqual(lamp.value as? String, "켜짐")
         capture("wood-room-lamp-on", app: app)
-        // The room renders edge-to-edge; target the visible objects in screen coordinates.
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.436, dy: 0.383)).tap()
+        // Targets measured in the visible room viewport. Scale vertical offsets by width
+        // so portrait phone/tablet aspect ratios retain the same observed composition.
+        let aspect = canvas.frame.width / canvas.frame.height
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.436, dy: 0.5 + 0.055 * aspect)).tap()
         XCTAssertEqual(lamp.value as? String, "꺼짐")
         capture("wood-room-lamp-off", app: app)
 
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.514, dy: 0.419)).tap()
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.514, dy: 0.5 + 0.13 * aspect)).tap()
         XCTAssertTrue(app.staticTexts["좋은 책장을 구경했어요."].waitForExistence(timeout: 10))
         let guestbookTitle = app.staticTexts["독서가님의 방명록"]
         let dismissal = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.88))
@@ -305,12 +313,12 @@ final class ArchitectureSmokeTests: XCTestCase {
             .press(forDuration: 0.08, thenDragTo: dismissal)
         let visible = NSPredicate(format: "hittable == true")
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: visible, object: lamp)], timeout: 10), .completed)
-        app.buttons["miniRoom.wood3D.books"].tap()
+        selectRoomView("shelf", in: app)
         let orbitStart = canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.72, dy: 0.40))
         let orbitEnd = canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.67, dy: 0.40))
         orbitStart.press(forDuration: 0.1, thenDragTo: orbitEnd)
         capture("immersive-after-orbit", app: app)
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.40, dy: 0.32)).tap()
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.30, dy: 0.36)).tap()
         XCTAssertTrue(app.staticTexts["다이어리"].waitForExistence(timeout: 10))
     }
 
@@ -332,10 +340,41 @@ final class ArchitectureSmokeTests: XCTestCase {
             app.buttons["room.viewpoint.\(value)"].tap()
             XCTAssertEqual(menu.value as? String, title)
             XCTAssertTrue(app.buttons["reading.pause"].isHittable)
+            let canvas = app.descendants(matching: .any)["miniRoom.wood3D.canvas"].firstMatch
+            let controls = app.staticTexts["reading.book"]
+            XCTAssertLessThanOrEqual(canvas.frame.maxY, controls.frame.minY)
+            XCTAssertGreaterThan(canvas.frame.height, 250)
             capture("viewpoint-\(value)", app: app)
         }
         app.buttons["reading.finish"].tap()
         XCTAssertTrue(app.buttons["reading.start"].waitForExistence(timeout: 5))
+    }
+
+    func testRoomLandscapeKeepsSceneBesideControls() {
+        let app = launch(extraArguments: ["--room-books"])
+        tab("서재", in: app).tap()
+        if !app.buttons["miniRoom.wood3D.lamp"].exists {
+            app.buttons["배경"].tap()
+            app.buttons["miniRoom.theme.wood3D"].tap()
+            app.buttons["배경 적용하기"].tap()
+        }
+        if app.buttons["reading.finish"].exists { app.buttons["reading.finish"].tap() }
+        app.buttons["reading.start"].tap()
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { XCUIDevice.shared.orientation = .portrait }
+        let canvas = app.descendants(matching: .any)["miniRoom.wood3D.canvas"].firstMatch
+        XCTAssertTrue(canvas.waitForExistence(timeout: 5))
+        XCTAssertGreaterThan(canvas.frame.height, 150)
+        if app.frame.height < 600 {
+            XCTAssertLessThanOrEqual(canvas.frame.maxX, app.staticTexts["reading.book"].frame.minX)
+        }
+        XCTAssertTrue(app.buttons["reading.pause"].isHittable)
+        // Capture the full screen: application screenshots are cropped during landscape on iOS 26.
+        let landscape = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        landscape.name = "landscape-room-reading"
+        landscape.lifetime = .keepAlways
+        add(landscape)
+        app.buttons["reading.finish"].tap()
     }
 
     func testRoomControlsInDarkAppearance() {
@@ -436,6 +475,11 @@ final class ArchitectureSmokeTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["독서 기록"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "reading.record.")).firstMatch.exists)
         capture("personal-reading-history", app: app)
+    }
+
+    private func selectRoomView(_ value: String, in app: XCUIApplication) {
+        app.buttons["room.viewpoint.menu"].tap()
+        app.buttons["room.viewpoint.\(value)"].tap()
     }
 
     private func launch(appearance: String = "light", extraArguments: [String] = []) -> XCUIApplication {

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MiniRoom3DView: View {
     @ObservedObject var reading: ReadingSessionViewModel
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.scenePhase) private var scenePhase
     @State private var characterIsMoving = false
     @State private var characterIntent: RoomCharacterController.Intent = .shelf
@@ -32,51 +33,25 @@ struct MiniRoom3DView: View {
     private var visibleBooks: [Book] { Array(books.dropFirst(min(page, pageCount - 1) * 9).prefix(9)) }
 
     var body: some View {
-        ZStack {
-            TimelineView(.periodic(from: .now, by: reading.active == nil ? 60 : 1)) { context in
-                canvas(at: context.date)
-            }
-            // A consistent dusk grade accompanies the practical light on every renderer.
-            .colorMultiply(lampIsOn ? .white : Color(red: 0.80, green: 0.84, blue: 0.92))
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: lampIsOn)
-            .ignoresSafeArea()
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("원목 서재 3D 공간")
-            .accessibilityHint("표지를 누르면 책이 열려요. 좌우로 둘러보고 두 손가락으로 확대하거나 축소할 수 있어요.")
-            .accessibilityIdentifier("miniRoom.wood3D.canvas")
-
-            GlassEffectContainer(spacing: 16) {
-                VStack(spacing: 4) {
-                    roomHeader
-                    Spacer(minLength: 16)
-                    VStack(spacing: 4) {
-                        ReadingRoomControls(model: reading, books: books,
-                                            onStart: { selectViewpoint(.reading); characterIntent = .seated },
-                                            onSit: { selectViewpoint(.reading); characterIntent = .seated },
-                                            onWalk: { selectViewpoint($0 == .window ? .window : .shelf); characterIntent = $0 })
-                        roomControls
-                    }
-                    .background {
-                        // Fade the scene under text, without separate backing cards.
-                        VStack(spacing: 0) {
-                            LinearGradient(colors: [sceneBackground.opacity(0), sceneBackground],
-                                           startPoint: .top, endPoint: .bottom)
-                                .frame(height: 64)
-                            sceneBackground
-                        }
-                        .padding(.top, -64)
-                        .padding(.bottom, -(12 + compactTabBarHeight))
-                        .padding(.horizontal, -16)
-                        .allowsHitTesting(false)
-                    }
-                }
+        VStack(spacing: 8) {
+            roomHeader
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
-                .padding(.bottom, 12 + compactTabBarHeight)
-                .frame(maxWidth: 620)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: 652)
+
+            if verticalSizeClass == .compact {
+                HStack(alignment: .top, spacing: 8) {
+                    scene
+                    ScrollView { readingControls }
+                        .frame(width: 320)
+                }
+                .padding(.bottom, 8 + compactTabBarHeight)
+            } else {
+                scene
+                readingControls.padding(.bottom, 8 + compactTabBarHeight)
             }
         }
+        .background(sceneBackground.ignoresSafeArea())
         .onAppear { active = true; if reading.active != nil { selectViewpoint(.reading) } }
         .onChange(of: reading.active?.id) { _, id in if id != nil { selectViewpoint(.reading) } }
         .onDisappear { active = false; opening = nil }
@@ -84,6 +59,33 @@ struct MiniRoom3DView: View {
         .onChange(of: books.map(\.id)) { _, _ in page = min(page, pageCount - 1); opening = nil }
         .tint(Color("PrimaryDeep"))
         .toolbarBackground(.hidden, for: .tabBar)
+    }
+
+    private var scene: some View {
+        TimelineView(.periodic(from: .now, by: reading.active == nil ? 60 : 1)) { context in
+            canvas(at: context.date)
+        }
+        .colorMultiply(lampIsOn ? .white : Color(red: 0.80, green: 0.84, blue: 0.92))
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: lampIsOn)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("원목 서재 3D 공간")
+        .accessibilityHint("표지를 누르면 책이 열려요. 좌우로 둘러보고 두 손가락으로 확대하거나 축소할 수 있어요.")
+        .accessibilityIdentifier("miniRoom.wood3D.canvas")
+    }
+
+    private var readingControls: some View {
+        VStack(spacing: 4) {
+            ReadingRoomControls(model: reading, books: books,
+                                onStart: { selectViewpoint(.reading); characterIntent = .seated },
+                                onSit: { selectViewpoint(.reading); characterIntent = .seated },
+                                onWalk: { selectViewpoint($0 == .window ? .window : .shelf); characterIntent = $0 })
+            roomControls
+        }
+        .padding(.horizontal, 16)
+        .frame(maxWidth: 652)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var sceneBackground: Color {
@@ -143,38 +145,8 @@ struct MiniRoom3DView: View {
     }
 
     private var roomControls: some View {
-        VStack(spacing: 2) {
-            HStack(spacing: 8) {
-                Text(sceneHint)
-                    .font(.caption)
-                    .foregroundStyle(Color("TextSecondary"))
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-                if !books.isEmpty {
-                    Button { page -= 1 } label: {
-                        Image(systemName: "chevron.left").frame(width: 44, height: 44).contentShape(Rectangle())
-                    }
-                    .accessibilityLabel("이전 책장")
-                    .disabled(page == 0 || opening != nil)
-                    Text("\(page + 1)/\(pageCount)")
-                        .font(.caption.monospacedDigit())
-                        .accessibilityLabel("\(books.count)권, \(pageCount)개 책장 중 \(page + 1)번째")
-                    Button { page += 1 } label: {
-                        Image(systemName: "chevron.right").frame(width: 44, height: 44).contentShape(Rectangle())
-                    }
-                    .accessibilityLabel("다음 책장")
-                    .disabled(page + 1 >= pageCount || opening != nil)
-                }
-            }
-            .padding(.horizontal, 12)
-            .frame(minHeight: 44)
-
-            ViewThatFits {
-                HStack(spacing: 2) { roomActions }
-                VStack(spacing: 2) { roomActions }
-            }
-            .disabled(opening != nil)
-            HStack(spacing: 4) {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
                 Menu {
                     ForEach(MiniRoomViewpoint.allCases, id: \.self) { choice in
                         Button { selectViewpoint(choice) } label: {
@@ -184,26 +156,60 @@ struct MiniRoom3DView: View {
                     }
                 } label: {
                     Label(viewpoint.title, systemImage: "viewfinder")
-                        .font(.footnote.weight(.semibold))
-                        .frame(minHeight: 44).contentShape(Rectangle())
+                        .font(.caption.weight(.semibold))
+                        .lineLimit(1)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
                 .accessibilityLabel("시점 선택")
                 .accessibilityValue(viewpoint.title)
                 .accessibilityIdentifier("room.viewpoint.menu")
-                .disabled(opening != nil)
-                Spacer()
+                Spacer(minLength: 0)
+                Button(action: onOpenGuestbook) {
+                    Image(systemName: "heart.text.square").frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel("방명록")
+                .accessibilityIdentifier("miniRoom.wood3D.guestbook")
+                Button(action: toggleLamp) {
+                    Image(systemName: lampIsOn ? "lightbulb.fill" : "lightbulb")
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
+                }
+                .accessibilityLabel("조명")
+                .accessibilityValue(lampIsOn ? "켜짐" : "꺼짐")
+                .accessibilityIdentifier("miniRoom.wood3D.lamp")
                 zoomButton("축소", symbol: "minus.magnifyingglass", change: -0.15)
                 Button { cameraZoom = 1 } label: {
                     Text("\(Int((cameraZoom * 100).rounded()))%")
-                        .font(.caption.monospacedDigit().weight(.medium))
+                        .font(.caption.monospacedDigit())
                         .frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
                 }
                 .accessibilityLabel("확대 배율 초기화")
                 .accessibilityValue("\(Int((cameraZoom * 100).rounded()))퍼센트")
                 .accessibilityIdentifier("room.zoom.reset")
-                .disabled(opening != nil)
                 zoomButton("확대", symbol: "plus.magnifyingglass", change: 0.15)
             }
+            .disabled(opening != nil)
+
+            HStack(spacing: 4) {
+                Text(sceneHint).font(.caption).foregroundStyle(Color("TextSecondary"))
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+                if focused && pageCount > 1 {
+                    Button { page -= 1 } label: {
+                        Image(systemName: "chevron.left").frame(width: 44, height: 44).contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("이전 책장")
+                    .disabled(page == 0 || opening != nil)
+                    Text("\(page + 1)/\(pageCount)").font(.caption.monospacedDigit())
+                    Button { page += 1 } label: {
+                        Image(systemName: "chevron.right").frame(width: 44, height: 44).contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("다음 책장")
+                    .disabled(page + 1 >= pageCount || opening != nil)
+                }
+            }
+            .padding(.horizontal, 8)
             if voiceOver {
                 ScrollView {
                     ForEach(visibleBooks) { book in
@@ -213,13 +219,11 @@ struct MiniRoom3DView: View {
                             .disabled(opening != nil)
                     }
                 }
-                .frame(maxHeight: 132)
+                .frame(maxHeight: 88)
             }
         }
-        .padding(6)
         .buttonStyle(.plain)
         .foregroundStyle(Color("TextPrimary"))
-
     }
 
     private func zoomButton(_ title: String, symbol: String, change: Float) -> some View {
@@ -232,38 +236,12 @@ struct MiniRoom3DView: View {
         .disabled(opening != nil)
     }
 
-    @ViewBuilder
-    private var roomActions: some View {
-        Button { selectViewpoint(focused ? .room : .shelf) } label: {
-            actionLabel(focused ? "방 전체" : "책장 가까이", icon: focused ? "viewfinder" : "books.vertical")
-        }
-        .accessibilityIdentifier("miniRoom.wood3D.books")
-        Button(action: onOpenGuestbook) {
-            actionLabel("방명록", icon: "heart.text.square")
-        }
-        .accessibilityIdentifier("miniRoom.wood3D.guestbook")
-        Button(action: toggleLamp) {
-            actionLabel("조명", icon: lampIsOn ? "lightbulb.fill" : "lightbulb")
-        }
-        .accessibilityValue(lampIsOn ? "켜짐" : "꺼짐")
-        .accessibilityIdentifier("miniRoom.wood3D.lamp")
-    }
-
     private var sceneHint: String {
         if characterIsMoving { return "자리로 이동하고 있어요." }
         if let session = reading.active { return session.isPaused ? "잠시 쉬고 있어요." : "소파에서 읽고 있어요." }
         if books.isEmpty { return "책을 등록하면 이곳에 꽂혀요." }
         if reduceMotion { return "책을 눌러 기록을 열어보세요." }
         return opening == nil ? "표지를 눌러 펼쳐보세요" : "책을 펼치고 있어요…"
-    }
-
-    private func actionLabel(_ title: String, icon: String) -> some View {
-        Label(title, systemImage: icon)
-            .labelStyle(.titleAndIcon)
-            .font(.footnote.weight(.semibold))
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .contentShape(Rectangle())
     }
 
     private func handleHit(_ hit: MiniRoomRealityScene.Hit) {

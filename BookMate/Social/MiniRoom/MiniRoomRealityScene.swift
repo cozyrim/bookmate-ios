@@ -61,9 +61,11 @@ final class MiniRoomRealityScene {
         cameraRig.setViewpoint(value, animated: animated)
     }
 
-    func advanceCamera(deltaTime: TimeInterval) { cameraRig.advance(deltaTime: deltaTime) }
+    func advanceCamera(deltaTime: TimeInterval) {
+        cameraRig.advance(deltaTime: deltaTime, interactiveEnabled: openedBook == nil)
+    }
 
-    func setZoom(_ zoom: Float) { cameraRig.setZoom(zoom) }
+    func setZoom(_ zoom: Float, smooth: Bool = false) { cameraRig.setZoom(zoom, smooth: smooth) }
 
     func setViewport(_ size: CGSize) { cameraRig.setViewport(size) }
 
@@ -71,8 +73,8 @@ final class MiniRoomRealityScene {
         cameraRig.project(character.headPosition, viewport: viewport)
     }
 
-    func aimCamera(atAngle angle: Float) {
-        cameraRig.orbit(to: angle)
+    func aimCamera(atAngle angle: Float, smooth: Bool = false) {
+        cameraRig.orbit(to: angle, smooth: smooth)
     }
 
     func updateBooks(_ books: [Book]) {
@@ -96,7 +98,8 @@ final class MiniRoomRealityScene {
         openedBook = model
         defer { if openingGeneration == generation { resetOpenedBook() } }
         if reduceMotion { return true }
-        cameraRig.finishTransition()
+        // Hold the selected pose while lifting the book; keep the target for return/cancel.
+        cameraRig.finishTransition(settleInteractive: false)
         let lifted = cameraRig.presentedBookTransform
         model.root.move(to: lifted, relativeTo: anchor, duration: 0.36, timingFunction: .easeInOut)
         do {
